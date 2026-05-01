@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.michiru.LoginViewController"
+           styleClass="root-canvas"
+           stylesheets="@michiru-styles.css">
+    <padding>
+        <Insets top="30" right="30" bottom="30" left="30"/>
+    </padding>
+
+    <!-- ══════════════════════════════════════════════════
+         MASTER CARD — 1200×800 max, centered, shadowed
+    ══════════════════════════════════════════════════ -->
+    <GridPane fx:id="masterCard" maxWidth="1200" maxHeight="800"
+              styleClass="master-card"
+              StackPane.alignment="CENTER">
+
+        <columnConstraints>
+            <ColumnConstraints minWidth="380" prefWidth="480" maxWidth="520"
+                               percentWidth="40" hgrow="ALWAYS" fillWidth="true"/>
+            <ColumnConstraints minWidth="520" prefWidth="720" maxWidth="780"
+                               percentWidth="60" hgrow="ALWAYS" fillWidth="true"/>
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints vgrow="ALWAYS" fillHeight="true" minHeight="580"/>
+        </rowConstraints>
+
+        <!-- ─────────────────────────────────────────────
+             LEFT PANEL — The Input Form (40%)
+        ───────────────────────────────────────────── -->
+        <VBox fx:id="formPanel" GridPane.columnIndex="0" GridPane.rowIndex="0"
+              styleClass="form-panel"
+              alignment="TOP_LEFT" spacing="2">
+            <padding>
+                <Insets top="44" right="38" bottom="36" left="38"/>
+            </padding>
+
+            <!-- ── Brand Header ── -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <ImageView fx:id="appLogo"
+                           fitWidth="38" fitHeight="38"
+                           preserveRatio="true"
+                           pickOnBounds="true">
+                    <image>
+                        <Image url="@images/logo.png"/>
+                    </image>
+                </ImageView>
+                <VBox alignment="CENTER_LEFT" spacing="2">
+                    <Label text="MICHIRU" styleClass="form-logo-text"/>
+                    <Label text="満ちる — to become full" styleClass="form-kanji-text"/>
+                </VBox>
+            </HBox>
+
+            <Region prefHeight="28"/>
+
+            <!-- ── Login / Register Toggle ── -->
+            <HBox styleClass="tab-container" alignment="CENTER_LEFT">
+                <padding>
+                    <Insets top="4" right="4" bottom="4" left="4"/>
+                </padding>
+                <ToggleButton fx:id="loginTab" text="Sign In"
+                              styleClass="tab-btn" selected="true"
+                              maxWidth="Infinity" HBox.hgrow="ALWAYS">
+                    <toggleGroup>
+                        <ToggleGroup fx:id="authToggle"/>
+                    </toggleGroup>
+                </ToggleButton>
+                <ToggleButton fx:id="registerTab" text="Register"
+                              styleClass="tab-btn"
+                              maxWidth="Infinity" HBox.hgrow="ALWAYS">
+                    <toggleGroup>
+                        <fx:reference source="authToggle"/>
+                    </toggleGroup>
+                </ToggleButton>
+            </HBox>
+
+            <Region prefHeight="26"/>
+
+            <!-- ══ LOGIN FORM ══ -->
+            <VBox fx:id="loginForm" spacing="4"
+                  visible="true" managed="true">
+
+                <Label text="EMAIL" styleClass="field-label"/>
+                <TextField fx:id="loginEmail"
+                           promptText="you@example.com"
+                           styleClass="field-input"/>
+
+                <Region prefHeight="8"/>
+
+                <Label text="PASSWORD" styleClass="field-label"/>
+                <PasswordField fx:id="loginPassword"
+                               promptText="Enter your password"
+                               styleClass="field-input"/>
+
+                <Region prefHeight="18"/>
+
+                <Button fx:id="loginButton" text="Sign In"
+                        styleClass="btn-cta"
+                        onAction="#handleLogin"
+                        maxWidth="Infinity"/>
+            </VBox>
+
+            <!-- ══ REGISTER FORM ══ -->
+            <VBox fx:id="registerForm" spacing="4"
+                  visible="false" managed="false">
+
+                <Label text="FULL NAME" styleClass="field-label"/>
+                <TextField fx:id="registerName"
+                           promptText="Your full name"
+                           styleClass="field-input"/>
+
+                <Region prefHeight="6"/>
+
+                <Label text="EMAIL" styleClass="field-label"/>
+                <TextField fx:id="registerEmail"
+                           promptText="you@example.com"
+                           styleClass="field-input"/>
+
+                <Region prefHeight="6"/>
+
+                <Label text="PASSWORD" styleClass="field-label"/>
+                <PasswordField fx:id="registerPassword"
+                               promptText="Create a password"
+                               styleClass="field-input"/>
+
+                <Region prefHeight="6"/>
+
+                <Label text="ROLE" styleClass="field-label"/>
+                <ComboBox fx:id="registerRole"
+                          promptText="Select your role"
+                          styleClass="field-combo"
+                          maxWidth="Infinity"/>
+
+                <Region prefHeight="18"/>
+
+                <Button fx:id="registerButton" text="Create Account"
+                        styleClass="btn-cta"
+                        onAction="#handleRegister"
+                        maxWidth="Infinity"/>
+            </VBox>
+
+            <!-- ── Status / Error Feedback ── -->
+            <Region prefHeight="10"/>
+            <Label fx:id="statusLabel" styleClass="status-label" wrapText="true"/>
+
+            <!-- Spacer — pushes footer to the bottom -->
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- ── Footer ── -->
+            <Label text="© 2026 Michiru — All rights reserved."
+                   styleClass="form-footer"/>
+        </VBox>
+
+        <!-- ─────────────────────────────────────────────
+             RIGHT PANEL — Branding &amp; Kitsune (60%)
+             Uses StackPane → AnchorPane layering to prevent
+             widget overlap on any window resize.
+        ───────────────────────────────────────────── -->
+        <StackPane fx:id="brandPanel" GridPane.columnIndex="1" GridPane.rowIndex="0"
+                   styleClass="brand-panel" minWidth="420" minHeight="520">
+
+            <!-- Background Layer: Massive low-opacity watermark -->
+            <Label text="満ちる" styleClass="brand-watermark"
+                   StackPane.alignment="CENTER"
+                   mouseTransparent="true"/>
+
+            <!-- Foreground Layer: Image + Text stacked vertically -->
+            <VBox alignment="CENTER" spacing="10"
+                  StackPane.alignment="CENTER"
+                  mouseTransparent="true">
+                <padding>
+                    <Insets top="40" right="20" bottom="46" left="20"/>
+                </padding>
+
+                <!-- Cyber Kitsune mascot — wrapped in Group for parallax layer separation -->
+                <Group fx:id="kitsuneWrapper">
+                    <ImageView fx:id="kitsuneImage"
+                               fitWidth="400" fitHeight="400"
+                               preserveRatio="true"
+                               pickOnBounds="true">
+                        <image>
+                            <Image url="@images/Kitsune-2.png"/>
+                        </image>
+                    </ImageView>
+                </Group>
+
+                <!-- Integrated brand badge -->
+                <VBox alignment="CENTER" spacing="6" styleClass="brand-badge">
+                    <Label text="M I C H I R U" styleClass="brand-title"/>
+                    <Region prefHeight="1" prefWidth="40" maxWidth="40"
+                            styleClass="brand-divider"/>
+                    <Label text="Intelligent Readiness &amp; Mentorship Framework"
+                           styleClass="brand-tagline"/>
+                </VBox>
+            </VBox>
+
+            <!-- ── WIDGET LAYER — AnchorPane prevents overlap on resize ── -->
+            <AnchorPane pickOnBounds="false" mouseTransparent="true"
+                        StackPane.alignment="TOP_LEFT">
+
+                <!-- TOP-LEFT: "Active Mentors" pill widget -->
+                <HBox fx:id="bentoPill" styleClass="bento-pill"
+                      alignment="CENTER_LEFT" spacing="8"
+                      AnchorPane.topAnchor="36" AnchorPane.leftAnchor="24">
+                    <Label text="●" styleClass="mentor-dot"/>
+                    <Label text="1,204 Active Mentors" styleClass="bento-pill-text"/>
+                </HBox>
+
+                <!-- BOTTOM-RIGHT: "Readiness Gap" card widget — above the capsule -->
+                <VBox fx:id="bentoCard" styleClass="bento-card"
+                      spacing="8" maxWidth="210"
+                      AnchorPane.bottomAnchor="220" AnchorPane.rightAnchor="24">
+                    <Label text="Recent Readiness Gap Closed" styleClass="bento-card-title"/>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <Region styleClass="avatar-placeholder"/>
+                        <VBox spacing="2">
+                            <Label text="Aiko Tan" styleClass="bento-user-name"/>
+                            <Label text="+18% confidence this week" styleClass="bento-user-metric"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+            </AnchorPane>
+        </StackPane>
+
+    </GridPane>
+</StackPane>

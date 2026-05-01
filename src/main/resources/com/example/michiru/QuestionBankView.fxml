@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+  QuestionBankView — Configure Question Bank (UC05)
+  Master-Detail CRUD: skill selector at the top, questions list below.
+  Same three-layer StackPane pattern: content / overlay / modal-host.
+-->
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:id="root"
+           fx:controller="com.example.michiru.QuestionBankViewController"
+           maxWidth="Infinity" maxHeight="Infinity"
+           styleClass="internships-root">
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYER 0 — Main content
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <VBox fx:id="mainContentLayer" maxWidth="Infinity" maxHeight="Infinity"
+          spacing="0">
+        <padding><Insets top="28" right="28" bottom="28" left="28"/></padding>
+
+        <!-- Page header: title + skill selector + add button -->
+        <HBox alignment="CENTER_LEFT" spacing="14">
+
+            <VBox spacing="3">
+                <Label text="Question Bank" styleClass="page-title"/>
+                <Label fx:id="lblSubtitle" text="Select a skill to begin"
+                       styleClass="page-subtitle"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Skill selector -->
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Skill:" styleClass="skill-selector-label"/>
+                <ComboBox fx:id="skillSelector"
+                          promptText="Select a skill…"
+                          styleClass="glass-combo-box, skill-selector-combo"
+                          onAction="#handleSkillSelected"
+                          minWidth="240"/>
+            </HBox>
+
+            <!-- Add question button — disabled until a skill is selected -->
+            <Button fx:id="btnAdd"
+                    styleClass="action-btn-primary"
+                    onAction="#handleOpenAddModal"
+                    disable="true"
+                    mnemonicParsing="false">
+                <graphic>
+                    <HBox alignment="CENTER" spacing="8">
+                        <FontIcon iconLiteral="fas-plus" iconSize="13"
+                                  styleClass="action-btn-icon"/>
+                        <Label text="Add Question" styleClass="action-btn-label"
+                               mouseTransparent="true"/>
+                    </HBox>
+                </graphic>
+            </Button>
+
+        </HBox>
+
+        <Separator styleClass="section-divider">
+            <VBox.margin><Insets top="18" bottom="18"/></VBox.margin>
+        </Separator>
+
+        <!-- Scrollable question card list -->
+        <ScrollPane fx:id="listScrollPane"
+                    fitToWidth="true"
+                    styleClass="internship-scroll-pane"
+                    VBox.vgrow="ALWAYS"
+                    hbarPolicy="NEVER">
+            <VBox fx:id="cardContainer" spacing="10" fillWidth="true">
+                <padding><Insets top="2" right="2" bottom="8" left="2"/></padding>
+            </VBox>
+        </ScrollPane>
+
+    </VBox>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYER 1 — Overlay dim
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <Pane fx:id="overlayDim"
+          styleClass="overlay-dim"
+          maxWidth="Infinity" maxHeight="Infinity"
+          mouseTransparent="false"
+          visible="false"
+          onMouseClicked="#handleOverlayClick"/>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYER 2 — Modal host
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="modalHost"
+               maxWidth="Infinity" maxHeight="Infinity"
+               mouseTransparent="true"
+               visible="false">
+
+        <!-- ─── Add / Edit Modal ─────────────────────────────────────────── -->
+        <VBox fx:id="formModal"
+              styleClass="modal-card"
+              maxWidth="580" minWidth="480"
+              spacing="0"
+              visible="false"
+              mouseTransparent="false">
+
+            <!-- Header -->
+            <HBox styleClass="modal-header" alignment="CENTER_LEFT" spacing="10">
+                <padding><Insets top="20" right="20" bottom="16" left="24"/></padding>
+                <FontIcon iconLiteral="fas-question-circle" iconSize="17"
+                          styleClass="modal-header-icon"/>
+                <Label fx:id="lblModalTitle" text="New Question" styleClass="modal-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button styleClass="modal-close-btn"
+                        onAction="#handleCloseModal"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-times" iconSize="14"
+                                  styleClass="modal-close-icon"/>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <Separator styleClass="modal-separator"/>
+
+            <!-- Scrollable form body (prevents modal overflow on short screens) -->
+            <ScrollPane fitToWidth="true"
+                        styleClass="modal-scroll-pane"
+                        VBox.vgrow="ALWAYS"
+                        maxHeight="500"
+                        hbarPolicy="NEVER">
+
+                <VBox spacing="14" styleClass="modal-body">
+                    <padding><Insets top="20" right="24" bottom="16" left="24"/></padding>
+
+                    <!-- Question text -->
+                    <VBox spacing="6">
+                        <Label text="Question Text" styleClass="form-field-label"/>
+                        <TextArea fx:id="fieldQuestionText"
+                                  promptText="Enter the full question here…"
+                                  styleClass="glass-text-area"
+                                  prefRowCount="3"
+                                  wrapText="true"/>
+                    </VBox>
+
+                    <!-- Option A -->
+                    <VBox spacing="6">
+                        <Label text="Answer Options" styleClass="form-field-label"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label text="A" styleClass="question-option-label"/>
+                            <TextField fx:id="fieldOptionA"
+                                       promptText="Option A…"
+                                       styleClass="glass-text-field"
+                                       HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                    </VBox>
+
+                    <!-- Option B -->
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="B" styleClass="question-option-label"/>
+                        <TextField fx:id="fieldOptionB"
+                                   promptText="Option B…"
+                                   styleClass="glass-text-field"
+                                   HBox.hgrow="ALWAYS"/>
+                    </HBox>
+
+                    <!-- Option C -->
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="C" styleClass="question-option-label"/>
+                        <TextField fx:id="fieldOptionC"
+                                   promptText="Option C…"
+                                   styleClass="glass-text-field"
+                                   HBox.hgrow="ALWAYS"/>
+                    </HBox>
+
+                    <!-- Option D -->
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="D" styleClass="question-option-label"/>
+                        <TextField fx:id="fieldOptionD"
+                                   promptText="Option D…"
+                                   styleClass="glass-text-field"
+                                   HBox.hgrow="ALWAYS"/>
+                    </HBox>
+
+                    <!-- Correct answer + Difficulty + Status -->
+                    <HBox spacing="14" alignment="BOTTOM_LEFT">
+
+                        <VBox spacing="6">
+                            <Label text="Correct Answer" styleClass="form-field-label"/>
+                            <ComboBox fx:id="fieldCorrectOption"
+                                      promptText="Select…"
+                                      styleClass="glass-combo-box"
+                                      prefWidth="120"/>
+                        </VBox>
+
+                        <VBox spacing="6">
+                            <Label text="Difficulty" styleClass="form-field-label"/>
+                            <ComboBox fx:id="fieldDifficulty"
+                                      promptText="Select…"
+                                      styleClass="glass-combo-box"
+                                      prefWidth="140"/>
+                        </VBox>
+
+                        <VBox spacing="6">
+                            <Label text="Status" styleClass="form-field-label"/>
+                            <ToggleButton fx:id="toggleActive"
+                                          text="Active"
+                                          selected="true"
+                                          styleClass="status-toggle, status-toggle-active"
+                                          onAction="#handleToggleActive"
+                                          mnemonicParsing="false"/>
+                        </VBox>
+
+                    </HBox>
+
+                </VBox>
+            </ScrollPane>
+
+            <!-- Validation error (outside scroll so always visible) -->
+            <Label fx:id="lblValidationError"
+                   text=""
+                   styleClass="error-label"
+                   wrapText="true"
+                   visible="false"
+                   managed="false">
+                <VBox.margin><Insets top="8" right="24" left="24"/></VBox.margin>
+            </Label>
+
+            <!-- Footer -->
+            <HBox styleClass="modal-footer" alignment="CENTER_RIGHT" spacing="10">
+                <padding><Insets top="12" right="20" bottom="20" left="20"/></padding>
+                <Button styleClass="modal-cancel-btn"
+                        text="Cancel"
+                        onAction="#handleCloseModal"
+                        mnemonicParsing="false"/>
+                <Button fx:id="btnSave"
+                        styleClass="action-btn-primary"
+                        onAction="#handleSave"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <HBox alignment="CENTER" spacing="7">
+                            <FontIcon iconLiteral="fas-check" iconSize="12"
+                                      styleClass="action-btn-icon"/>
+                            <Label text="Save Question" styleClass="action-btn-label"
+                                   mouseTransparent="true"/>
+                        </HBox>
+                    </graphic>
+                </Button>
+            </HBox>
+
+        </VBox>
+
+
+        <!-- ─── Delete / Deactivate Modal ──────────────────────────────── -->
+        <VBox fx:id="deleteModal"
+              styleClass="modal-card"
+              maxWidth="480" minWidth="360"
+              spacing="0"
+              visible="false"
+              mouseTransparent="false">
+
+            <!-- Header -->
+            <HBox styleClass="modal-header" alignment="CENTER_LEFT" spacing="12">
+                <padding><Insets top="20" right="20" bottom="16" left="24"/></padding>
+                <FontIcon fx:id="deleteModalIcon"
+                          iconLiteral="fas-exclamation-triangle"
+                          iconSize="17"
+                          styleClass="modal-danger-icon"/>
+                <Label fx:id="lblDeleteModalTitle" text="Delete Question"
+                       styleClass="modal-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button styleClass="modal-close-btn"
+                        onAction="#handleCloseModal"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-times" iconSize="14"
+                                  styleClass="modal-close-icon"/>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <Separator styleClass="modal-separator"/>
+
+            <!-- Body -->
+            <VBox spacing="12" styleClass="modal-body">
+                <padding><Insets top="20" right="24" bottom="20" left="24"/></padding>
+
+                <!-- Question preview -->
+                <Label fx:id="lblDeleteTarget"
+                       styleClass="delete-confirm-text"
+                       wrapText="true"/>
+
+                <!-- State 1: threshold violation (both hard delete and deactivate blocked) -->
+                <VBox fx:id="thresholdBlockBox"
+                      styleClass="threshold-block-box"
+                      spacing="8"
+                      visible="false"
+                      managed="false">
+                    <padding><Insets top="12" right="14" bottom="12" left="14"/></padding>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <FontIcon iconLiteral="fas-shield-alt" iconSize="13"
+                                  styleClass="threshold-icon"/>
+                        <Label fx:id="lblThresholdInfo"
+                               styleClass="threshold-title"
+                               wrapText="true"
+                               HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <Label text="Add more questions to this skill before removing any."
+                           styleClass="threshold-hint"
+                           wrapText="true"/>
+                </VBox>
+
+                <!-- State 2: assessment history (hard delete blocked, offer deactivate) -->
+                <VBox fx:id="assessmentHistoryBox"
+                      styleClass="dependency-info-box"
+                      spacing="8"
+                      visible="false"
+                      managed="false">
+                    <padding><Insets top="12" right="14" bottom="12" left="14"/></padding>
+                    <HBox alignment="CENTER_LEFT" spacing="8">
+                        <FontIcon iconLiteral="fas-history" iconSize="13"
+                                  styleClass="dep-info-icon"/>
+                        <Label fx:id="lblAssessmentUsage"
+                               styleClass="dep-info-title"
+                               wrapText="true"
+                               HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <Label text="Hard delete is blocked to preserve assessment data. You can deactivate the question — it will be excluded from future assessments while all historical records remain intact."
+                           styleClass="dep-info-hint"
+                           wrapText="true"/>
+                </VBox>
+
+                <Label fx:id="lblDeleteSubtext"
+                       styleClass="delete-irreversible-text"
+                       wrapText="true"/>
+
+            </VBox>
+
+            <!-- Footer — buttons toggled by controller per state -->
+            <HBox styleClass="modal-footer" alignment="CENTER_RIGHT" spacing="10">
+                <padding><Insets top="4" right="20" bottom="20" left="20"/></padding>
+                <Button styleClass="modal-cancel-btn"
+                        text="Cancel"
+                        onAction="#handleCloseModal"
+                        mnemonicParsing="false"/>
+                <!-- State 3: clean hard delete -->
+                <Button fx:id="btnConfirmHardDelete"
+                        styleClass="danger-btn"
+                        onAction="#handleConfirmDelete"
+                        visible="false"
+                        managed="false"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <HBox alignment="CENTER" spacing="7">
+                            <FontIcon iconLiteral="fas-trash-alt" iconSize="12"
+                                      styleClass="danger-btn-icon"/>
+                            <Label text="Delete" styleClass="danger-btn-label"
+                                   mouseTransparent="true"/>
+                        </HBox>
+                    </graphic>
+                </Button>
+                <!-- State 2: soft deactivate -->
+                <Button fx:id="btnDeactivateQuestion"
+                        styleClass="deactivate-btn"
+                        onAction="#handleDeactivateQuestion"
+                        visible="false"
+                        managed="false"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <HBox alignment="CENTER" spacing="7">
+                            <FontIcon iconLiteral="fas-eye-slash" iconSize="12"
+                                      styleClass="deactivate-btn-icon"/>
+                            <Label text="Deactivate Question"
+                                   styleClass="deactivate-btn-label"
+                                   mouseTransparent="true"/>
+                        </HBox>
+                    </graphic>
+                </Button>
+            </HBox>
+
+        </VBox>
+
+    </StackPane>
+
+</StackPane>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+  ReadinessView — UC07: Assess Readiness
+
+  Layers (bottom → top):
+    0. VBox mainView   – page header, search bar, internship template card grid
+    1. StackPane dim   – semi-transparent dim layer
+    2. StackPane modal – glass card whose content is swapped programmatically:
+         • DETAIL state  – template info + skill requirements + "Run Readiness Check"
+         • RESULT state  – circular progress ring + weighted score + skill gap list
+-->
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.michiru.ReadinessViewController"
+           maxWidth="Infinity" maxHeight="Infinity"
+           styleClass="readiness-root">
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYER 0 — Main view
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <VBox maxWidth="Infinity" maxHeight="Infinity">
+        <padding><Insets top="28" right="28" bottom="16" left="28"/></padding>
+
+        <!-- Page header -->
+        <HBox alignment="CENTER_LEFT" spacing="14">
+            <padding><Insets bottom="16"/></padding>
+            <StackPane styleClass="page-title-icon-pill"
+                       minWidth="42" minHeight="42" maxWidth="42" maxHeight="42">
+                <FontIcon iconLiteral="fas-clipboard-check"
+                          iconSize="18"
+                          styleClass="page-title-icon"/>
+            </StackPane>
+            <VBox spacing="3">
+                <Label text="Assess Readiness"
+                       styleClass="assessment-page-title"/>
+                <Label text="Check how ready you are for each internship template"
+                       styleClass="assessment-page-subtitle"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER" spacing="1">
+                <Label fx:id="lblTemplateCount"
+                       text="—"
+                       styleClass="assessment-skill-count-num"/>
+                <Label text="templates"
+                       styleClass="assessment-skill-count-lbl"/>
+            </VBox>
+        </HBox>
+
+        <!-- Search bar -->
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <padding><Insets bottom="18"/></padding>
+            <StackPane styleClass="search-icon-wrap"
+                       minWidth="34" minHeight="34" maxWidth="34" maxHeight="34">
+                <FontIcon iconLiteral="fas-search" iconSize="13"
+                          styleClass="search-field-icon"/>
+            </StackPane>
+            <TextField fx:id="searchField"
+                       promptText="Search by template name..."
+                       styleClass="assessment-search-field"
+                       maxWidth="Infinity"
+                       HBox.hgrow="ALWAYS"/>
+        </HBox>
+
+        <!-- Template card grid -->
+        <ScrollPane fx:id="templateScrollPane"
+                    VBox.vgrow="ALWAYS"
+                    fitToWidth="true"
+                    hbarPolicy="NEVER"
+                    styleClass="assessment-scroll-pane">
+            <FlowPane fx:id="templateGrid"
+                      hgap="16" vgap="16"
+                      styleClass="skill-grid-flow">
+                <padding><Insets top="2" right="4" bottom="16" left="2"/></padding>
+            </FlowPane>
+        </ScrollPane>
+
+    </VBox>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYER 1 — Overlay dim
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="overlayDim"
+               maxWidth="Infinity" maxHeight="Infinity"
+               styleClass="assessment-overlay-dim"
+               visible="false"/>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYER 2 — Modal wrapper + glass card
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="modalWrapper"
+               maxWidth="Infinity" maxHeight="Infinity"
+               alignment="CENTER"
+               visible="false">
+
+        <VBox fx:id="modalCard"
+              styleClass="assessment-modal-card"
+              maxWidth="560"
+              alignment="TOP_LEFT"/>
+
+    </StackPane>
+
+</StackPane>

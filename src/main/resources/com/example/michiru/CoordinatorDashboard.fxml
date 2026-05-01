@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<StackPane xmlns="http://javafx.com/javafx/21"
+                 xmlns:fx="http://javafx.com/fxml/1"
+                 fx:controller="com.example.michiru.CoordinatorDashboardController"
+                 styleClass="dash-root"
+                 stylesheets="@michiru-styles.css">
+
+       <VBox alignment="TOP_CENTER" spacing="0" maxWidth="Infinity" maxHeight="Infinity"
+                StackPane.alignment="CENTER">
+
+              <HBox fx:id="navPane" styleClass="nav-pane"
+                       alignment="CENTER" spacing="10">
+                     <padding>
+                            <Insets top="14" right="20" bottom="14" left="20"/>
+                     </padding>
+
+                     <HBox styleClass="nav-logo-capsule" alignment="CENTER_LEFT" spacing="10"
+                              pickOnBounds="true">
+                            <padding>
+                                   <Insets top="8" right="16" bottom="8" left="12"/>
+                            </padding>
+                            <ImageView fx:id="navLogo"
+                                             fitWidth="30" fitHeight="30"
+                                             preserveRatio="true" pickOnBounds="true">
+                                   <image><Image url="@images/logo.png"/></image>
+                            </ImageView>
+                            <VBox alignment="CENTER_LEFT" spacing="1">
+                                   <Label text="MICHIRU" styleClass="nav-brand-name"/>
+                                   <Label text="満ちる" styleClass="nav-brand-kanji"/>
+                            </VBox>
+                     </HBox>
+
+                     <Region HBox.hgrow="ALWAYS"/>
+
+                     <HBox styleClass="nav-menu-capsule" alignment="CENTER" spacing="4">
+                            <padding>
+                                   <Insets top="6" right="6" bottom="6" left="6"/>
+                            </padding>
+
+                            <Button fx:id="btnDashboard"
+                                          styleClass="nav-item-btn, nav-item-active"
+                                          onAction="#handleNavDashboard"
+                                          mnemonicParsing="false">
+                                   <graphic>
+                                          <HBox alignment="CENTER" spacing="7">
+                                                 <FontIcon iconLiteral="fas-home" iconSize="14" styleClass="nav-icon"/>
+                                                 <Label text="Dashboard" styleClass="nav-label" mouseTransparent="true"/>
+                                          </HBox>
+                                   </graphic>
+                            </Button>
+
+                            <Button fx:id="btnSkillCatalogue"
+                                          styleClass="nav-item-btn"
+                                          onAction="#handleNavSkillCatalogue"
+                                          mnemonicParsing="false">
+                                   <graphic>
+                                          <HBox alignment="CENTER" spacing="7">
+                                                 <FontIcon iconLiteral="fas-list" iconSize="14" styleClass="nav-icon"/>
+                                                 <Label text="Skill Catalogue" styleClass="nav-label" mouseTransparent="true"/>
+                                          </HBox>
+                                   </graphic>
+                            </Button>
+
+                            <Button fx:id="btnQuestionBank"
+                                          styleClass="nav-item-btn"
+                                          onAction="#handleNavQuestionBank"
+                                          mnemonicParsing="false">
+                                   <graphic>
+                                          <HBox alignment="CENTER" spacing="7">
+                                                 <FontIcon iconLiteral="fas-database" iconSize="14" styleClass="nav-icon"/>
+                                                 <Label text="Question Bank" styleClass="nav-label" mouseTransparent="true"/>
+                                          </HBox>
+                                   </graphic>
+                            </Button>
+
+                            <Button fx:id="btnInternships"
+                                          styleClass="nav-item-btn"
+                                          onAction="#handleNavInternships"
+                                          mnemonicParsing="false">
+                                   <graphic>
+                                          <HBox alignment="CENTER" spacing="7">
+                                                 <FontIcon iconLiteral="fas-briefcase" iconSize="14" styleClass="nav-icon"/>
+                                                 <Label text="Internships" styleClass="nav-label" mouseTransparent="true"/>
+                                          </HBox>
+                                   </graphic>
+                            </Button>
+
+                     </HBox>
+
+                     <Region HBox.hgrow="ALWAYS"/>
+
+                     <Button fx:id="btnLogout"
+                                   styleClass="nav-logout-btn"
+                                   onAction="#handleLogout"
+                                   mnemonicParsing="false">
+                            <graphic>
+                                   <HBox alignment="CENTER" spacing="7">
+                                          <FontIcon iconLiteral="fas-sign-out-alt" iconSize="14" styleClass="nav-logout-icon"/>
+                                          <Label text="Logout" styleClass="nav-logout-label" mouseTransparent="true"/>
+                                   </HBox>
+                            </graphic>
+                     </Button>
+
+              </HBox>
+
+              <StackPane fx:id="masterContentCard"
+                               styleClass="dash-content-card"
+                               VBox.vgrow="ALWAYS">
+                     <padding>
+                            <Insets top="0" right="20" bottom="20" left="20"/>
+                     </padding>
+
+                     <StackPane fx:id="contentArea"
+                                      styleClass="dash-content-area"
+                                      alignment="CENTER"
+                                      maxWidth="Infinity" maxHeight="Infinity"/>
+
+              </StackPane>
+
+       </VBox>
+
+</StackPane>

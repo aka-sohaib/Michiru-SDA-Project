@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+  ValidationRequestView — UC04: Submit Validation Request
+
+  Layer structure (mirrors SkillAssessmentView):
+    StackPane (assessment-root)
+      └── VBox (assessment-main-view)
+            ├── Header HBox                      [fixed]
+            ├── CARD 1 — New Request Form        [glass-card, fixed]
+            └── CARD 2 — Submission History      [glass-card, grows]
+                  ├── Card header + search bar   [fixed inside card]
+                  └── ScrollPane                 [vgrow=ALWAYS, scrolls]
+                        └── VBox
+                              ├── empty state pane
+                              └── TableView
+-->
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.michiru.ValidationRequestViewController"
+           maxWidth="Infinity" maxHeight="Infinity"
+           styleClass="assessment-root">
+
+    <VBox maxWidth="Infinity" maxHeight="Infinity"
+          spacing="20"
+          styleClass="assessment-main-view">
+        <padding><Insets top="28" right="28" bottom="20" left="28"/></padding>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             PAGE HEADER  (identical pattern to SkillAssessmentView)
+             ══════════════════════════════════════════════════════════════ -->
+        <HBox alignment="CENTER_LEFT" spacing="14">
+            <padding><Insets bottom="4"/></padding>
+            <StackPane styleClass="page-title-icon-pill"
+                       minWidth="42" minHeight="42"
+                       maxWidth="42" maxHeight="42">
+                <FontIcon iconLiteral="fas-certificate"
+                          iconSize="18"
+                          styleClass="page-title-icon"/>
+            </StackPane>
+            <VBox spacing="3">
+                <Label text="Validation Request"
+                       styleClass="assessment-page-title"/>
+                <Label text="Submit real-world evidence to earn a Mentor Verified skill level"
+                       styleClass="assessment-page-subtitle"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER" spacing="1">
+                <Label fx:id="lblRequestCount"
+                       text="—"
+                       styleClass="assessment-skill-count-num"/>
+                <Label text="requests made"
+                       styleClass="assessment-skill-count-lbl"/>
+            </VBox>
+        </HBox>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             CARD 1 — NEW REQUEST FORM
+             ══════════════════════════════════════════════════════════════ -->
+        <VBox styleClass="glass-card" spacing="0">
+
+            <!-- Card header -->
+            <HBox alignment="CENTER_LEFT" spacing="10"
+                  styleClass="glass-card-header">
+                <padding><Insets top="16" right="20" bottom="14" left="20"/></padding>
+                <StackPane styleClass="page-title-icon-pill"
+                           minWidth="30" minHeight="30"
+                           maxWidth="30" maxHeight="30">
+                    <FontIcon iconLiteral="fas-paper-plane"
+                              iconSize="12"
+                              styleClass="page-title-icon"/>
+                </StackPane>
+                <VBox spacing="2">
+                    <Label text="New Validation Request"
+                           styleClass="glass-card-title"/>
+                    <Label text="Fill in the details below — your request will be reviewed by a mentor"
+                           styleClass="glass-card-subtitle"/>
+                </VBox>
+            </HBox>
+
+            <!-- Form body -->
+            <VBox spacing="16">
+                <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+
+                <!-- Row 1: Skill + Level (side by side) -->
+                <HBox spacing="14" maxWidth="Infinity">
+
+                    <VBox spacing="7" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="6">
+                            <FontIcon iconLiteral="fas-layer-group"
+                                      iconSize="10"
+                                      styleClass="vr-field-icon"/>
+                            <Label text="Select Skill" styleClass="vr-field-label"/>
+                            <Label text="*" styleClass="vr-field-required"/>
+                        </HBox>
+                        <ComboBox fx:id="cmbSkill"
+                                  promptText="Choose a skill…"
+                                  visibleRowCount="5"
+                                  maxWidth="Infinity"
+                                  styleClass="vr-combo"/>
+                    </VBox>
+
+                    <VBox spacing="7" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="6">
+                            <FontIcon iconLiteral="fas-signal"
+                                      iconSize="10"
+                                      styleClass="vr-field-icon"/>
+                            <Label text="Requested Level" styleClass="vr-field-label"/>
+                            <Label text="*" styleClass="vr-field-required"/>
+                        </HBox>
+                        <ComboBox fx:id="cmbLevel"
+                                  promptText="Choose target level…"
+                                  visibleRowCount="5"
+                                  maxWidth="Infinity"
+                                  styleClass="vr-combo"/>
+                    </VBox>
+
+                    <VBox spacing="7" HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="6">
+                            <FontIcon iconLiteral="fas-folder-open"
+                                      iconSize="10"
+                                      styleClass="vr-field-icon"/>
+                            <Label text="Evidence Type" styleClass="vr-field-label"/>
+                            <Label text="*" styleClass="vr-field-required"/>
+                        </HBox>
+                        <ComboBox fx:id="cmbEvidenceType"
+                                  promptText="Type of evidence…"
+                                  visibleRowCount="5"
+                                  maxWidth="Infinity"
+                                  styleClass="vr-combo"/>
+                    </VBox>
+
+                </HBox>
+
+                <!-- Row 2: Evidence URL -->
+                <VBox spacing="7">
+                    <HBox alignment="CENTER_LEFT" spacing="6">
+                        <FontIcon iconLiteral="fas-link"
+                                  iconSize="10"
+                                  styleClass="vr-field-icon"/>
+                        <Label text="Evidence URL" styleClass="vr-field-label"/>
+                        <Label text="*" styleClass="vr-field-required"/>
+                    </HBox>
+                    <TextField fx:id="txtEvidenceUrl"
+                               promptText="https://github.com/yourname/project  or  certificate link…"
+                               styleClass="vr-text-field"/>
+                </VBox>
+
+                <!-- Row 3: Project Description -->
+                <VBox spacing="7">
+                    <HBox alignment="CENTER_LEFT" spacing="6">
+                        <FontIcon iconLiteral="fas-align-left"
+                                  iconSize="10"
+                                  styleClass="vr-field-icon"/>
+                        <Label text="Project Description" styleClass="vr-field-label"/>
+                    </HBox>
+                    <TextArea fx:id="txtDescription"
+                              promptText="Briefly describe the project, what you built, and why it demonstrates this skill level…"
+                              prefRowCount="3"
+                              wrapText="true"
+                              styleClass="vr-text-area"/>
+                </VBox>
+
+                <!-- Error bar + Submit row -->
+                <HBox alignment="CENTER_LEFT" spacing="14">
+
+                    <HBox fx:id="hboxError"
+                          alignment="CENTER_LEFT" spacing="8"
+                          styleClass="vr-error-bar"
+                          HBox.hgrow="ALWAYS"
+                          managed="false" visible="false">
+                        <padding><Insets top="9" right="14" bottom="9" left="14"/></padding>
+                        <FontIcon iconLiteral="fas-exclamation-circle"
+                                  iconSize="12"
+                                  styleClass="vr-error-icon"/>
+                        <Label fx:id="lblError"
+                               text=""
+                               wrapText="true"
+                               styleClass="vr-error-text"/>
+                    </HBox>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <Button fx:id="btnSubmit"
+                            text="Submit for Mentor Review"
+                            styleClass="vr-submit-btn"
+                            onAction="#handleSubmit">
+                        <graphic>
+                            <FontIcon iconLiteral="fas-paper-plane"
+                                      iconSize="12"
+                                      styleClass="vr-submit-btn-icon"/>
+                        </graphic>
+                    </Button>
+
+                </HBox>
+
+            </VBox>
+        </VBox>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             CARD 2 — REQUEST HISTORY  (grows to fill remaining height)
+             ══════════════════════════════════════════════════════════════ -->
+        <VBox styleClass="glass-card" spacing="0"
+              VBox.vgrow="ALWAYS">
+
+            <!-- Card header: title on left, search bar on right -->
+            <HBox alignment="CENTER_LEFT" spacing="12"
+                  styleClass="glass-card-header">
+                <padding><Insets top="14" right="16" bottom="12" left="20"/></padding>
+
+                <StackPane styleClass="page-title-icon-pill"
+                           minWidth="28" minHeight="28"
+                           maxWidth="28" maxHeight="28">
+                    <FontIcon iconLiteral="fas-history"
+                              iconSize="11"
+                              styleClass="page-title-icon"/>
+                </StackPane>
+                <Label text="Submission History"
+                       styleClass="glass-card-title"/>
+                <Label fx:id="lblHistoryHint"
+                       text=""
+                       styleClass="glass-card-subtitle"/>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <!-- Search bar (mirrors assessment search bar pattern) -->
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <StackPane styleClass="search-icon-wrap"
+                               minWidth="32" minHeight="32"
+                               maxWidth="32" maxHeight="32">
+                        <FontIcon iconLiteral="fas-search"
+                                  iconSize="11"
+                                  styleClass="search-field-icon"/>
+                    </StackPane>
+                    <TextField fx:id="historySearchField"
+                               promptText="Search by skill or status…"
+                               prefWidth="230"
+                               styleClass="assessment-search-field"/>
+                </HBox>
+
+            </HBox>
+
+            <!-- Scrollable content area -->
+            <ScrollPane fitToWidth="true"
+                        hbarPolicy="NEVER"
+                        styleClass="assessment-scroll-pane"
+                        VBox.vgrow="ALWAYS">
+
+                <VBox spacing="0">
+                    <padding><Insets top="6" right="0" bottom="8" left="0"/></padding>
+
+                    <!-- Empty state -->
+                    <VBox fx:id="vboxEmpty"
+                          alignment="CENTER" spacing="12"
+                          prefHeight="160"
+                          managed="false" visible="false">
+                        <padding><Insets top="24" bottom="24"/></padding>
+                        <FontIcon iconLiteral="fas-inbox"
+                                  iconSize="34"
+                                  styleClass="empty-state-icon"/>
+                        <Label text="No requests yet"
+                               styleClass="empty-state-label"/>
+                        <Label text="Your submission history will appear here once you submit your first request"
+                               wrapText="true"
+                               maxWidth="360"
+                               styleClass="empty-state-hint"/>
+                    </VBox>
+
+                    <!-- History table -->
+                    <TableView fx:id="tblHistory"
+                               styleClass="vr-table"
+                               maxWidth="Infinity"
+                               prefHeight="9999">
+
+                        <columns>
+                            <TableColumn fx:id="colSkill"
+                                         text="Skill"
+                                         prefWidth="210"/>
+                            <TableColumn fx:id="colLevel"
+                                         text="Requested Level"
+                                         prefWidth="150"/>
+                            <TableColumn fx:id="colEvidenceType"
+                                         text="Evidence Type"
+                                         prefWidth="140"/>
+                            <TableColumn fx:id="colStatus"
+                                         text="Status"
+                                         prefWidth="140"/>
+                            <TableColumn fx:id="colDate"
+                                         text="Date Submitted"
+                                         prefWidth="130"/>
+                        </columns>
+
+                        <placeholder>
+                            <Label text="No matching requests found."
+                                   styleClass="assessment-empty-label"/>
+                        </placeholder>
+
+                    </TableView>
+
+                </VBox>
+            </ScrollPane>
+
+        </VBox>
+
+    </VBox>
+
+</StackPane>

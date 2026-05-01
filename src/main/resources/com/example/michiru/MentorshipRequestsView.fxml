@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+  MentorshipRequestsView — UC11: Review Mentorship Requests (Mentor Side)
+
+  Layer structure (mirrors MentorSearchView exactly):
+    StackPane (assessment-root)
+      ├── LAYER 0: VBox (assessment-main-view)
+      │     ├── Page Header HBox
+      │     ├── Filter Bar HBox
+      │     └── ScrollPane (assessment-scroll-pane, vgrow=ALWAYS)
+      │           └── FlowPane (requestGrid — student request cards built programmatically)
+      ├── LAYER 1: StackPane overlayDim
+      └── LAYER 2: StackPane modalWrapper
+                     └── VBox modalCard (review modal — built programmatically)
+-->
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.michiru.MentorshipRequestsViewController"
+           maxWidth="Infinity" maxHeight="Infinity"
+           styleClass="assessment-root">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LAYER 0 — Main content
+         ═══════════════════════════════════════════════════════════════════ -->
+    <VBox maxWidth="Infinity" maxHeight="Infinity"
+          spacing="0"
+          styleClass="assessment-main-view">
+        <padding><Insets top="28" right="28" bottom="0" left="28"/></padding>
+
+        <!-- Page header -->
+        <HBox alignment="CENTER_LEFT" spacing="14">
+            <padding><Insets bottom="18"/></padding>
+
+            <StackPane styleClass="page-title-icon-pill"
+                       minWidth="42" minHeight="42"
+                       maxWidth="42" maxHeight="42">
+                <FontIcon iconLiteral="fas-users"
+                          iconSize="18"
+                          styleClass="page-title-icon"/>
+            </StackPane>
+
+            <VBox spacing="3">
+                <Label text="Mentorship Requests"
+                       styleClass="assessment-page-title"/>
+                <Label text="Review incoming student requests, assess their skill proficiencies, then accept or decline"
+                       styleClass="assessment-page-subtitle"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Pending count badge -->
+            <VBox alignment="CENTER" spacing="1">
+                <Label fx:id="lblRequestCount"
+                       text="—"
+                       styleClass="assessment-skill-count-num"/>
+                <Label text="pending requests"
+                       styleClass="assessment-skill-count-lbl"/>
+            </VBox>
+        </HBox>
+
+        <!-- Filter bar -->
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <padding><Insets bottom="18"/></padding>
+
+            <StackPane styleClass="search-icon-wrap"
+                       minWidth="34" minHeight="34"
+                       maxWidth="34" maxHeight="34">
+                <FontIcon iconLiteral="fas-search"
+                          iconSize="13"
+                          styleClass="search-field-icon"/>
+            </StackPane>
+
+            <TextField fx:id="searchField"
+                       promptText="Search by student name…"
+                       styleClass="assessment-search-field"
+                       prefWidth="250"
+                       HBox.hgrow="NEVER"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button fx:id="btnClearSearch"
+                    text="Clear"
+                    styleClass="ms-clear-btn"
+                    onAction="#handleClearSearch">
+                <graphic>
+                    <FontIcon iconLiteral="fas-times"
+                              iconSize="11"
+                              styleClass="ms-clear-btn-icon"/>
+                </graphic>
+            </Button>
+        </HBox>
+
+        <!-- Student request card grid -->
+        <ScrollPane fx:id="requestScrollPane"
+                    VBox.vgrow="ALWAYS"
+                    fitToWidth="true"
+                    hbarPolicy="NEVER"
+                    styleClass="assessment-scroll-pane">
+            <FlowPane fx:id="requestGrid"
+                      hgap="18" vgap="18"
+                      styleClass="skill-grid-flow">
+                <padding><Insets top="2" right="4" bottom="20" left="2"/></padding>
+            </FlowPane>
+        </ScrollPane>
+
+    </VBox>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LAYER 1 — Overlay dim
+         ═══════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="overlayDim"
+               maxWidth="Infinity" maxHeight="Infinity"
+               styleClass="assessment-overlay-dim"
+               visible="false"/>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LAYER 2 — Review modal
+         ═══════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="modalWrapper"
+               maxWidth="Infinity" maxHeight="Infinity"
+               alignment="CENTER"
+               visible="false">
+
+        <VBox fx:id="modalCard"
+              styleClass="assessment-modal-card"
+              maxWidth="600"
+              alignment="TOP_LEFT"/>
+
+    </StackPane>
+
+</StackPane>

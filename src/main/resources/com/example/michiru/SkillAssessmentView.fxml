@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+  SkillAssessmentView — The "Belt System" skill assessment hub.
+
+  Layers (bottom → top):
+    0. VBox mainView          – page header, search bar, scrollable skill card grid
+    1. StackPane overlayDim   – semi-transparent dim layer (shared by all modals)
+    2. StackPane modalWrapper – centres the glass modal card
+         └── VBox modalCard  – content swapped programmatically by the controller
+-->
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.michiru.SkillAssessmentViewController"
+           maxWidth="Infinity" maxHeight="Infinity"
+           styleClass="assessment-root">
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYER 0 — Main view
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <VBox maxWidth="Infinity" maxHeight="Infinity" styleClass="assessment-main-view">
+        <padding><Insets top="28" right="28" bottom="16" left="28"/></padding>
+
+        <!-- Page header row: icon + title + skill count badge -->
+        <HBox alignment="CENTER_LEFT" spacing="14">
+            <padding><Insets bottom="16"/></padding>
+            <StackPane styleClass="page-title-icon-pill"
+                       minWidth="42" minHeight="42" maxWidth="42" maxHeight="42">
+                <FontIcon iconLiteral="fas-graduation-cap"
+                          iconSize="18"
+                          styleClass="page-title-icon"/>
+            </StackPane>
+            <VBox spacing="3">
+                <Label text="Skill Assessments"
+                       styleClass="assessment-page-title"/>
+                <Label text="Climb the ladder — earn belts by passing each tier's exam"
+                       styleClass="assessment-page-subtitle"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER" spacing="1">
+                <Label fx:id="lblSkillCount"
+                       text="—"
+                       styleClass="assessment-skill-count-num"/>
+                <Label text="skills available"
+                       styleClass="assessment-skill-count-lbl"/>
+            </VBox>
+        </HBox>
+
+        <!-- Search bar -->
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <padding><Insets bottom="18"/></padding>
+            <StackPane styleClass="search-icon-wrap"
+                       minWidth="34" minHeight="34" maxWidth="34" maxHeight="34">
+                <FontIcon iconLiteral="fas-search" iconSize="13"
+                          styleClass="search-field-icon"/>
+            </StackPane>
+            <TextField fx:id="searchField"
+                       promptText="Search by skill name..."
+                       styleClass="assessment-search-field"
+                       maxWidth="Infinity"
+                       HBox.hgrow="ALWAYS"/>
+        </HBox>
+
+        <!-- Skill card grid — FlowPane inside a styled ScrollPane -->
+        <ScrollPane fx:id="skillScrollPane"
+                    VBox.vgrow="ALWAYS"
+                    fitToWidth="true"
+                    hbarPolicy="NEVER"
+                    styleClass="assessment-scroll-pane">
+            <FlowPane fx:id="skillGrid"
+                      hgap="16" vgap="16"
+                      styleClass="skill-grid-flow">
+                <padding><Insets top="2" right="4" bottom="16" left="2"/></padding>
+            </FlowPane>
+        </ScrollPane>
+
+    </VBox>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYER 1 — Overlay dim
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="overlayDim"
+               maxWidth="Infinity" maxHeight="Infinity"
+               styleClass="assessment-overlay-dim"
+               visible="false"/>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LAYER 2 — Modal wrapper + glass card
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="modalWrapper"
+               maxWidth="Infinity" maxHeight="Infinity"
+               alignment="CENTER"
+               visible="false">
+
+        <VBox fx:id="modalCard"
+              styleClass="assessment-modal-card"
+              maxWidth="540"
+              alignment="TOP_LEFT"/>
+
+    </StackPane>
+
+</StackPane>

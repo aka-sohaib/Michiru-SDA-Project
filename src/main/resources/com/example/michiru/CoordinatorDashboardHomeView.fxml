@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+  CoordinatorDashboardHomeView — Landing view for the Coordinator dashboard.
+  Asymmetrical layout: narrow identity pane on the left, KPI ribbon + recent
+  activity on the right. Root is an HBox that fills the dash-content-area.
+-->
+<HBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.michiru.CoordinatorDashboardHomeViewController"
+      maxWidth="Infinity" maxHeight="Infinity"
+      spacing="18"
+      styleClass="dashboard-home-root">
+    <padding><Insets top="24" right="26" bottom="26" left="26"/></padding>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LEFT — Identity pane
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <VBox fx:id="identityPane"
+          prefWidth="204" minWidth="180"
+          styleClass="dashboard-identity-pane"
+          spacing="0">
+        <padding><Insets top="28" right="20" bottom="24" left="20"/></padding>
+
+        <!-- Avatar + name + role badge -->
+        <VBox alignment="CENTER" spacing="10">
+
+            <StackPane styleClass="identity-avatar-circle"
+                       minWidth="72" minHeight="72"
+                       maxWidth="72" maxHeight="72">
+                <FontIcon iconLiteral="fas-user-tie"
+                          iconSize="30"
+                          styleClass="identity-avatar-icon"/>
+            </StackPane>
+
+            <Label fx:id="lblCoordinatorName"
+                   text="—"
+                   styleClass="identity-name-label"
+                   wrapText="false"
+                   maxWidth="164"/>
+
+            <HBox alignment="CENTER">
+                <Label text="Coordinator"
+                       styleClass="identity-role-badge"/>
+            </HBox>
+
+        </VBox>
+
+        <!-- Separator -->
+        <Separator styleClass="identity-separator">
+            <VBox.margin><Insets top="22" bottom="20"/></VBox.margin>
+        </Separator>
+
+        <!-- Email detail row -->
+        <HBox alignment="CENTER_LEFT" spacing="9">
+            <FontIcon iconLiteral="fas-envelope"
+                      iconSize="12"
+                      styleClass="identity-detail-icon"/>
+            <Label fx:id="lblCoordinatorEmail"
+                   text="—"
+                   styleClass="identity-detail-label"
+                   wrapText="false"
+                   maxWidth="148"/>
+        </HBox>
+
+        <!-- Spacer pushes status pill to bottom -->
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <!-- System online status pill -->
+        <HBox styleClass="system-online-pill"
+              alignment="CENTER"
+              spacing="8"
+              maxWidth="Infinity">
+            <padding><Insets top="9" right="14" bottom="9" left="14"/></padding>
+            <StackPane styleClass="system-online-dot"
+                       minWidth="7" minHeight="7"
+                       maxWidth="7" maxHeight="7"/>
+            <Label text="System Online" styleClass="system-online-label"/>
+        </HBox>
+
+    </VBox>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         RIGHT — KPI ribbon + Recent activity
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <VBox HBox.hgrow="ALWAYS" spacing="16">
+
+        <!-- KPI Ribbon -->
+        <HBox fx:id="kpiRibbon" spacing="14">
+
+            <!-- KPI Card 1: Internships -->
+            <VBox fx:id="kpiCardInternships"
+                  styleClass="kpi-card"
+                  HBox.hgrow="ALWAYS">
+                <padding><Insets top="20" right="22" bottom="20" left="22"/></padding>
+                <HBox spacing="16" alignment="CENTER_LEFT">
+                    <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-green"
+                               minWidth="48" minHeight="48"
+                               maxWidth="48" maxHeight="48">
+                        <FontIcon iconLiteral="fas-briefcase"
+                                  iconSize="20"
+                                  styleClass="kpi-icon kpi-icon-green"/>
+                    </StackPane>
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblKpiInternships"
+                               text="—"
+                               styleClass="kpi-count-label"/>
+                        <Label text="Active Internships"
+                               styleClass="kpi-title-label"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <!-- KPI Card 2: Skills -->
+            <VBox fx:id="kpiCardSkills"
+                  styleClass="kpi-card"
+                  HBox.hgrow="ALWAYS">
+                <padding><Insets top="20" right="22" bottom="20" left="22"/></padding>
+                <HBox spacing="16" alignment="CENTER_LEFT">
+                    <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-blue"
+                               minWidth="48" minHeight="48"
+                               maxWidth="48" maxHeight="48">
+                        <FontIcon iconLiteral="fas-star"
+                                  iconSize="20"
+                                  styleClass="kpi-icon kpi-icon-blue"/>
+                    </StackPane>
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblKpiSkills"
+                               text="—"
+                               styleClass="kpi-count-label"/>
+                        <Label text="Active Skills"
+                               styleClass="kpi-title-label"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <!-- KPI Card 3: Questions -->
+            <VBox fx:id="kpiCardQuestions"
+                  styleClass="kpi-card"
+                  HBox.hgrow="ALWAYS">
+                <padding><Insets top="20" right="22" bottom="20" left="22"/></padding>
+                <HBox spacing="16" alignment="CENTER_LEFT">
+                    <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-amber"
+                               minWidth="48" minHeight="48"
+                               maxWidth="48" maxHeight="48">
+                        <FontIcon iconLiteral="fas-question-circle"
+                                  iconSize="20"
+                                  styleClass="kpi-icon kpi-icon-amber"/>
+                    </StackPane>
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblKpiQuestions"
+                               text="—"
+                               styleClass="kpi-count-label"/>
+                        <Label text="Active Questions"
+                               styleClass="kpi-title-label"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+        </HBox>
+
+
+        <!-- Recent Activity Panel -->
+        <VBox fx:id="recentPanel"
+              styleClass="recent-activity-panel"
+              VBox.vgrow="ALWAYS"
+              spacing="0">
+            <padding><Insets top="22" right="24" bottom="22" left="24"/></padding>
+
+            <!-- Panel header -->
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <FontIcon iconLiteral="fas-history"
+                          iconSize="15"
+                          styleClass="recent-section-icon"/>
+                <VBox spacing="2" HBox.hgrow="ALWAYS">
+                    <Label text="Recent Internship Templates"
+                           styleClass="recent-panel-title"/>
+                    <Label text="3 most recently created"
+                           styleClass="recent-panel-subtitle"/>
+                </VBox>
+            </HBox>
+
+            <Separator styleClass="recent-separator">
+                <VBox.margin><Insets top="16" bottom="16"/></VBox.margin>
+            </Separator>
+
+            <!-- Recent template rows injected by controller -->
+            <VBox fx:id="recentContainer" spacing="12" VBox.vgrow="ALWAYS"/>
+
+        </VBox>
+
+    </VBox>
+
+</HBox>

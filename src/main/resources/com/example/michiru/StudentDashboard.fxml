@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     StudentDashboard.fxml
+     Root: StackPane (dark canvas, same as root-canvas / Right Panel)
+     ├── VBox (full-size layout spine)
+     │   ├── HBox  ← TOP NAV PANE (~15%) — transparent wrapper
+     │   │   ├── HBox: logo capsule (floating glass)
+     │   │   ├── HBox: nav menu (6 items)  ← CENTER (hgrow=ALWAYS)
+     │   │   └── HBox: logout capsule
+     │   └── StackPane ← MASTER CONTENT CARD (85%) — frosted glass
+     │       └── StackPane fx:id="contentArea"  ← hot-swap zone
+═══════════════════════════════════════════════════════════════════ -->
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.michiru.StudentDashboardController"
+           styleClass="dash-root"
+           stylesheets="@michiru-styles.css">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         FULL-SCREEN LAYOUT SPINE (VBox)
+    ═══════════════════════════════════════════════════════════════ -->
+    <VBox alignment="TOP_CENTER" spacing="0" maxWidth="Infinity" maxHeight="Infinity"
+          StackPane.alignment="CENTER">
+
+        <!-- ─────────────────────────────────────────────────────
+             TOP NAVIGATION PANE (~15% vertical)
+             HBox wrapper: transparent, no background — acts as
+             air between the canvas and the "floating" nav pieces.
+        ──────────────────────────────────────────────────────── -->
+        <HBox fx:id="navPane" styleClass="nav-pane"
+              alignment="CENTER" spacing="10">
+            <padding>
+                <Insets top="14" right="20" bottom="14" left="20"/>
+            </padding>
+
+            <!-- ── Logo Capsule — left anchor ──────────────────── -->
+            <HBox styleClass="nav-logo-capsule" alignment="CENTER_LEFT" spacing="10"
+                  pickOnBounds="true">
+                <padding>
+                    <Insets top="8" right="16" bottom="8" left="12"/>
+                </padding>
+                <ImageView fx:id="navLogo"
+                           fitWidth="30" fitHeight="30"
+                           preserveRatio="true" pickOnBounds="true">
+                    <image><Image url="@images/logo.png"/></image>
+                </ImageView>
+                <VBox alignment="CENTER_LEFT" spacing="1">
+                    <Label text="MICHIRU" styleClass="nav-brand-name"/>
+                    <Label text="満ちる" styleClass="nav-brand-kanji"/>
+                </VBox>
+            </HBox>
+
+            <!-- ── Spacer — pushes nav menu to true center ─────── -->
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- ══ NAVIGATION MENU CAPSULE ══════════════════════ -->
+            <HBox styleClass="nav-menu-capsule" alignment="CENTER" spacing="4">
+                <padding>
+                    <Insets top="6" right="6" bottom="6" left="6"/>
+                </padding>
+
+                <!-- Dashboard -->
+                <Button fx:id="btnDashboard"
+                        styleClass="nav-item-btn, nav-item-active"
+                        onAction="#handleNavDashboard"
+                        maxWidth="Infinity"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <HBox alignment="CENTER" spacing="7">
+                            <FontIcon iconLiteral="fas-home" iconSize="14" styleClass="nav-icon"/>
+                            <Label text="Dashboard" styleClass="nav-label" mouseTransparent="true"/>
+                        </HBox>
+                    </graphic>
+                </Button>
+
+                <!-- Skill Assessment -->
+                <Button fx:id="btnSkillAssessment"
+                        styleClass="nav-item-btn"
+                        onAction="#handleNavSkillAssessment"
+                        maxWidth="Infinity"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <HBox alignment="CENTER" spacing="7">
+                            <FontIcon iconLiteral="fas-pencil-alt" iconSize="14" styleClass="nav-icon"/>
+                            <Label text="Skill Assessment" styleClass="nav-label" mouseTransparent="true"/>
+                        </HBox>
+                    </graphic>
+                </Button>
+
+                <!-- Readiness Check -->
+                <Button fx:id="btnReadinessCheck"
+                        styleClass="nav-item-btn"
+                        onAction="#handleNavReadinessCheck"
+                        maxWidth="Infinity"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <HBox alignment="CENTER" spacing="7">
+                            <FontIcon iconLiteral="fas-chart-bar" iconSize="14" styleClass="nav-icon"/>
+                            <Label text="Readiness Check" styleClass="nav-label" mouseTransparent="true"/>
+                        </HBox>
+                    </graphic>
+                </Button>
+
+                <!-- Validation Request -->
+                <Button fx:id="btnValidationRequest"
+                        styleClass="nav-item-btn"
+                        onAction="#handleNavValidationRequest"
+                        maxWidth="Infinity"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <HBox alignment="CENTER" spacing="7">
+                            <FontIcon iconLiteral="fas-check-circle" iconSize="14" styleClass="nav-icon"/>
+                            <Label text="Validation Request" styleClass="nav-label" mouseTransparent="true"/>
+                        </HBox>
+                    </graphic>
+                </Button>
+
+                <!-- Find Mentor -->
+                <Button fx:id="btnFindMentor"
+                        styleClass="nav-item-btn"
+                        onAction="#handleNavFindMentor"
+                        maxWidth="Infinity"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <HBox alignment="CENTER" spacing="7">
+                            <FontIcon iconLiteral="fas-users" iconSize="14" styleClass="nav-icon"/>
+                            <Label text="Find Mentor" styleClass="nav-label" mouseTransparent="true"/>
+                        </HBox>
+                    </graphic>
+                </Button>
+
+                <!-- My Progress -->
+                <Button fx:id="btnMyProgress"
+                        styleClass="nav-item-btn"
+                        onAction="#handleNavMyProgress"
+                        maxWidth="Infinity"
+                        mnemonicParsing="false">
+                    <graphic>
+                        <HBox alignment="CENTER" spacing="7">
+                            <FontIcon iconLiteral="fas-chart-line" iconSize="14" styleClass="nav-icon"/>
+                            <Label text="My Progress" styleClass="nav-label" mouseTransparent="true"/>
+                        </HBox>
+                    </graphic>
+                </Button>
+
+            </HBox>
+            <!-- ══ END NAV MENU CAPSULE ══════════════════════════ -->
+
+            <!-- ── Spacer — mirrors left-side spacer ───────────── -->
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- ── Logout Capsule — right anchor ───────────────── -->
+            <Button fx:id="btnLogout"
+                    styleClass="nav-logout-btn"
+                    onAction="#handleLogout"
+                    mnemonicParsing="false">
+                <graphic>
+                    <HBox alignment="CENTER" spacing="7">
+                        <FontIcon iconLiteral="fas-sign-out-alt" iconSize="14" styleClass="nav-logout-icon"/>
+                        <Label text="Logout" styleClass="nav-logout-label" mouseTransparent="true"/>
+                    </HBox>
+                </graphic>
+            </Button>
+
+        </HBox>
+        <!-- ─── END TOP NAV PANE ──────────────────────────────── -->
+
+
+        <!-- ═══════════════════════════════════════════════════════
+             MASTER CONTENT CARD (remaining ~85%)
+             Floats off the canvas via padding + the frosted-glass
+             gradient that mirrors the login screen's Left Panel.
+             VBox.vgrow="ALWAYS" ensures it fills all remaining
+             vertical space regardless of window height.
+        ═══════════════════════════════════════════════════════════ -->
+        <StackPane fx:id="masterContentCard"
+                   styleClass="dash-content-card"
+                   VBox.vgrow="ALWAYS">
+            <padding>
+                <!-- Breathing room all around so card "floats" -->
+                <Insets top="0" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <!-- ── Inner hot-swap zone ── -->
+            <!-- This is the ONLY node you swap when navigating.
+                 Its alignment is CENTER so child views self-center.
+                 maxWidth/Height=Infinity + vgrow/hgrow=ALWAYS
+                 means any child card — no matter its preferred
+                 size — will remain perfectly centered and expandable. -->
+            <StackPane fx:id="contentArea"
+                       styleClass="dash-content-area"
+                       alignment="CENTER"
+                       maxWidth="Infinity" maxHeight="Infinity">
+
+                <!-- ── DEFAULT PLACEHOLDER VIEW ──────────────────
+                     Replace this with the real StudentHomeView
+                     FXML load once it's built.
+                ─────────────────────────────────────────────────── -->
+                <VBox fx:id="placeholderView"
+                      alignment="CENTER" spacing="18"
+                      maxWidth="520">
+
+                    <!-- Decorative glyph -->
+                    <FontIcon iconLiteral="fas-compass"
+                              iconSize="64"
+                              styleClass="placeholder-icon"
+                              StackPane.alignment="CENTER"/>
+
+                    <Label text="Student Dashboard"
+                           styleClass="placeholder-title"/>
+
+                    <Label text="Your personalised overview is loading soon. Use the navigation above to explore your assessments, readiness score, and mentor connections."
+                           styleClass="placeholder-body"
+                           wrapText="true"
+                           textAlignment="CENTER"/>
+
+                    <!-- Subtle divider -->
+                    <Region prefHeight="1" prefWidth="80" maxWidth="80"
+                            styleClass="placeholder-divider"/>
+
+                    <Label fx:id="welcomeLabel"
+                           styleClass="placeholder-welcome"
+                           wrapText="true"
+                           textAlignment="CENTER"/>
+
+                </VBox>
+
+            </StackPane>
+
+        </StackPane>
+        <!-- ─── END MASTER CONTENT CARD ──────────────────────── -->
+
+    </VBox>
+    <!-- ─── END LAYOUT SPINE ────────────────────────────────── -->
+
+</StackPane>
