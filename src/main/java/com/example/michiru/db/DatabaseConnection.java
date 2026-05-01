@@ -89,6 +89,21 @@ public class DatabaseConnection {
     }
 
     /**
+     * Returns a <b>brand-new, isolated</b> {@link Connection} for operations
+     * that require their own transaction scope (e.g. {@code setAutoCommit(false)}).
+     *
+     * <p>The caller <b>must</b> close this connection (use try-with-resources)
+     * to prevent connection leaks.  This connection is completely independent
+     * of the shared singleton returned by {@link #getConnection()}.</p>
+     *
+     * @return a new, independent {@link Connection} to {@code michiru_db}
+     * @throws SQLException if a connection cannot be established
+     */
+    public Connection getNewConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
+    }
+
+    /**
      * Gracefully closes the underlying connection.
      * Call this when the JavaFX application shuts down
      * (e.g. from {@code Application.stop()}).

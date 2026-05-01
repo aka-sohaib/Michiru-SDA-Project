@@ -1,5 +1,6 @@
 package com.example.michiru;
 
+import com.example.michiru.db.DatabaseCatalog;
 import com.example.michiru.db.MySQLHandler;
 import com.example.michiru.model.Question;
 import com.example.michiru.model.Skill;
@@ -94,7 +95,7 @@ public class QuestionBankViewController implements Initializable {
 
     // ── State ─────────────────────────────────────────────────────────────────
 
-    private final MySQLHandler db = new MySQLHandler();
+    private final DatabaseCatalog db = new MySQLHandler();
 
     /** The skill whose questions are currently displayed; null if none selected. */
     private Skill selectedSkill;

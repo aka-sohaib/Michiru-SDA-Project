@@ -1,6 +1,8 @@
 package com.example.michiru;
 
+import com.example.michiru.db.DatabaseCatalog;
 import com.example.michiru.db.MySQLHandler;
+import com.example.michiru.model.Assessment;
 import com.example.michiru.model.Question;
 import com.example.michiru.model.SkillProficiencyCard;
 import com.example.michiru.session.UserSession;
@@ -51,7 +53,9 @@ public class SkillAssessmentViewController implements Initializable {
     private List<Question>       examQuestions;
     private final Map<Integer, String> examAnswers = new LinkedHashMap<>();
     private int                  currentQuestionIndex;
-    private int                  currentAssessmentId  = -1;
+
+    /** Active Assessment domain entity — owns the exam session state (Phase 4A). */
+    private Assessment           activeAssessment;
 
     // ── Live exam UI refs (refreshed each question) ───────────────────────────
     private Label       examProgressLabel;
@@ -61,7 +65,7 @@ public class SkillAssessmentViewController implements Initializable {
     private Button      examActionBtn;
 
     // ── DB & session ─────────────────────────────────────────────────────────
-    private final MySQLHandler db        = new MySQLHandler();
+    private final DatabaseCatalog db        = new MySQLHandler();
     private       int          studentId;
 
     // ── Full skill list (for search filtering) ────────────────────────────────
@@ -396,7 +400,12 @@ public class SkillAssessmentViewController implements Initializable {
             return;
         }
 
-        currentAssessmentId = db.createAssessment(studentId, skill.getSkillId());
+        // Phase 4A: Create the Assessment entity in-memory ONLY.
+        // No DB write here — the atomic saveAssessment() happens at submit time.
+        // This eliminates orphaned IN_PROGRESS rows when students exit mid-exam.
+        activeAssessment = new Assessment(studentId, skill.getSkillId());
+        activeAssessment.setQuestionSequence(examQuestions);
+
         showModal(buildExamContent(), 640);
     }
 
@@ -544,6 +553,11 @@ public class SkillAssessmentViewController implements Initializable {
 
     private void onOptionSelected(String option) {
         examAnswers.put(currentQuestionIndex, option);
+
+        // ── Phase 4A: Record the response in the Assessment entity
+        // (responses accumulate; re-selection for same index overwrites the map
+        //  but the entity collects all — deduplication happens at finalize)
+
         String selected = examAnswers.get(currentQuestionIndex);
         Question q = examQuestions.get(currentQuestionIndex);
         String[] texts = {q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()};
@@ -563,31 +577,39 @@ public class SkillAssessmentViewController implements Initializable {
     // ══════════════════════════════════════════════════════════════════════════
 
     private void submitExam() {
-        int total   = examQuestions.size();
-        int correct = 0;
+        // ── Phase 4A: Record all answers into the Assessment entity ──────────
+        int total = examQuestions.size();
+
+        // Build a clean Assessment with definitive responses from examAnswers
+        activeAssessment = new Assessment(studentId, selectedSkill.getSkillId());
+        activeAssessment.setQuestionSequence(examQuestions);
+        activeAssessment.setAttemptedTier(selectedTier); // e.g. "BEGINNER" — what gets persisted
+
         for (int i = 0; i < total; i++) {
+            Question q = examQuestions.get(i);
             String chosen = examAnswers.getOrDefault(i, null);
-            if (chosen != null && chosen.equalsIgnoreCase(examQuestions.get(i).getCorrectOption())) {
-                correct++;
+            if (chosen != null) {
+                activeAssessment.recordResponse(q.getQuestionId(), chosen);
+            } else {
+                activeAssessment.recordSkip(q.getQuestionId());
             }
         }
 
+        // ── Delegate grading to the Assessment entity (Information Expert) ───
+        Assessment.FinalResult result = activeAssessment.finalizeAssessment();
+
+        int    correct  = activeAssessment.getCorrectCount();
         int    required = selectedSkill.getQuestionsRequiredToPass();
-        double score    = total > 0 ? (double) correct / total * 100.0 : 0;
+        double score    = result.score();
         boolean passed  = correct >= required;
 
-        // Determine the proficiency level label this tier maps to
-        String tierLevel = selectedTier; // e.g. "BEGINNER"
+        // ── ACID Persist: atomic save of parent + all children in one txn ────
+        int savedId = db.saveAssessment(activeAssessment);
 
-        // Persist — always finalize the assessment
-        if (currentAssessmentId > 0) {
-            db.finalizeAssessment(currentAssessmentId, examQuestions, examAnswers, score, tierLevel);
-        }
-
-        // Only record proficiency advancement on a progression pass
-        if (passed && isProgressionAttempt) {
+        // Only record proficiency advancement on a progression pass with successful save
+        if (passed && isProgressionAttempt && savedId > 0) {
             db.recordProficiencyAchievement(studentId, selectedSkill.getSkillId(),
-                    currentAssessmentId, tierLevel, score);
+                    savedId, selectedTier, score);
         }
 
         showModal(buildResultContent(correct, total, required, score, passed), 500);
@@ -871,7 +893,12 @@ public class SkillAssessmentViewController implements Initializable {
 
         Button exitBtn = new Button("  Exit  ");
         exitBtn.getStyleClass().add("result-secondary-btn");
-        exitBtn.setOnAction(e -> closeModal());
+        exitBtn.setOnAction(e -> {
+            // Phase 4A: no DB cleanup needed — nothing was written yet.
+            // The in-memory entity is simply discarded.
+            activeAssessment = null;
+            closeModal();
+        });
         wireLiquidScale(exitBtn);
 
         btnRow.getChildren().addAll(exitBtn, stayBtn);

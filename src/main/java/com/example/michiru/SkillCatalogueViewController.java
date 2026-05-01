@@ -1,5 +1,6 @@
 package com.example.michiru;
 
+import com.example.michiru.db.DatabaseCatalog;
 import com.example.michiru.db.MySQLHandler;
 import com.example.michiru.model.Skill;
 import com.example.michiru.session.UserSession;
@@ -84,7 +85,7 @@ public class SkillCatalogueViewController implements Initializable {
 
     // ── State ─────────────────────────────────────────────────────────────────
 
-    private final MySQLHandler db = new MySQLHandler();
+    private final DatabaseCatalog db = new MySQLHandler();
 
     /** Non-null when editing; null when adding. */
     private Skill editingSkill;

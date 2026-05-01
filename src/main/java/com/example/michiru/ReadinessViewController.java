@@ -1,7 +1,9 @@
 package com.example.michiru;
 
+import com.example.michiru.db.DatabaseCatalog;
 import com.example.michiru.db.MySQLHandler;
 import com.example.michiru.model.InternshipTemplate;
+import com.example.michiru.model.ReadinessReport;
 import com.example.michiru.model.ReadinessSkillResult;
 import com.example.michiru.model.SkillAssignment;
 import com.example.michiru.session.UserSession;
@@ -18,13 +20,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.ArcType;
 import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.text.TextAlignment;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URL;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Controller for ReadinessView.fxml — UC07: Assess Readiness.
@@ -56,7 +56,7 @@ public class ReadinessViewController implements Initializable {
     private List<InternshipTemplate>        allTemplates = new ArrayList<>();
 
     // ── DB & session ─────────────────────────────────────────────────────────
-    private final MySQLHandler db        = new MySQLHandler();
+    private final DatabaseCatalog db        = new MySQLHandler();
     private       int          studentId;
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ public class ReadinessViewController implements Initializable {
                 .filter(t -> t.getName().toLowerCase(Locale.ROOT).contains(lc)
                           || (t.getDescription() != null
                               && t.getDescription().toLowerCase(Locale.ROOT).contains(lc)))
-                .collect(Collectors.toList());
+                .toList();
         renderTemplateCards(filtered, false);
     }
 
@@ -316,63 +316,21 @@ public class ReadinessViewController implements Initializable {
         List<SkillAssignment>    reqs         = db.getSkillRequirements(selectedTemplate.getTemplateId());
         Map<Integer, String>     proficiencies = db.getStudentHighestProficiencies(studentId);
 
-        List<ReadinessSkillResult> results = new ArrayList<>();
-        double weightedSum = 0.0;
-        int    totalWeight = 0;
+        // Phase 4B: Delegate scoring to ReadinessReport entity (Information Expert)
+        ReadinessReport report = new ReadinessReport(studentId, selectedTemplate.getTemplateId());
+        report.evaluate(reqs, proficiencies);
 
-        for (SkillAssignment req : reqs) {
-            if (!"ACTIVE".equals(req.getStatus())) continue;
-
-            String studentLevel  = proficiencies.getOrDefault(req.getSkillId(), "NOVICE");
-            String requiredLevel = req.getMinimumProficiencyLevel();
-
-            int studentPts  = levelToPoints(studentLevel);
-            int requiredPts = levelToPoints(requiredLevel);
-
-            // Cap at 1.0; handle requiredPts == 0 (NOVICE requirement → always met)
-            double skillScore = (requiredPts == 0)
-                    ? 1.0
-                    : Math.min((double) studentPts / requiredPts, 1.0);
-
-            int diff = requiredPts - studentPts;
-            String gapStatus = diff <= 0 ? "NO_GAP"
-                             : diff == 1 ? "MINOR_GAP"
-                                         : "MAJOR_GAP";
-
-            weightedSum += skillScore * req.getWeight();
-            totalWeight += req.getWeight();
-
-            results.add(new ReadinessSkillResult(
-                    req.getSkillId(), req.getSkillName(), req.getSkillCategory(),
-                    studentLevel, requiredLevel,
-                    req.getWeight(), skillScore, gapStatus));
-        }
-
-        double overallScore = totalWeight > 0 ? (weightedSum / totalWeight) * 100.0 : 0.0;
+        double overallScore                    = report.getOverallScore();
+        List<ReadinessSkillResult> results     = report.getResults();
 
         // ── Persist
         int reportId = db.saveReadinessReport(studentId, selectedTemplate.getTemplateId(), overallScore);
         if (reportId > 0) {
-            List<ReadinessSkillResult> gaps = results.stream()
-                    .filter(r -> !"NO_GAP".equals(r.getGapStatus()))
-                    .collect(Collectors.toList());
-            db.saveSkillGaps(reportId, gaps);
+            report.setReportId(reportId);
+            db.saveSkillGaps(reportId, report.getGaps());
         }
 
         showModal(buildResultContent(overallScore, results), 680);
-    }
-
-    // ── Enum → int mapping ────────────────────────────────────────────────────
-
-    private int levelToPoints(String level) {
-        return switch (level) {
-            case "NOVICE"        -> 0;
-            case "BEGINNER"      -> 1;
-            case "INTERMEDIATE"  -> 2;
-            case "ADVANCED"      -> 3;
-            case "EXPERT"        -> 4;
-            default              -> 0;
-        };
     }
 
     // ══════════════════════════════════════════════════════════════════════════

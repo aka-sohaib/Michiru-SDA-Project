@@ -98,6 +98,32 @@ public class ValidationRequest {
     public void setMentorFeedback(String feedback)  { this.mentorFeedback = feedback; }
     public void setResolvedDate(String date)        { this.resolvedDate   = date; }
 
+    // ── SD-Mandated Methods (UC04, UC11) ─────────────────────────────────────
+
+    /**
+     * UC11 step 3.1.1 — delegates proficiency update to the associated
+     * {@link SkillProficiency} entity.
+     */
+    public void updateProficiency(String level) {
+        // TODO: delegate to SkillProficiency.updateProficiencyLevel(level)
+    }
+
+    /**
+     * UC11 step 4.1.1 — marks the request as rejected with mentor feedback.
+     */
+    public void markRejected(String feedback) {
+        this.status         = "REJECTED";
+        this.mentorFeedback = feedback;
+    }
+
+    /**
+     * UC11 (implied) — returns student profile for mentor review.
+     */
+    public Object getStudentProfile() {
+        // TODO: delegate to Student.getProfile() when wired
+        return null;
+    }
+
     // ── Convenience ───────────────────────────────────────────────────────────
 
     /**

@@ -1,5 +1,6 @@
 package com.example.michiru.db;
 
+import com.example.michiru.model.Assessment;
 import com.example.michiru.model.InternshipTemplate;
 import com.example.michiru.model.Question;
 import com.example.michiru.model.Skill;
@@ -43,7 +44,7 @@ import java.util.Map;
  * same logical unit of work.  Both inserts are wrapped in a manual
  * transaction so an interrupted registration never leaves an orphan row.
  */
-public class MySQLHandler implements PersistenceHandler {
+public class MySQLHandler implements DatabaseCatalog {
 
     // ─── SQL statements — exact column / table names from schema ───────────
 
@@ -1646,6 +1647,103 @@ public class MySQLHandler implements PersistenceHandler {
         } catch (SQLException e) {
             System.err.println("[MySQLHandler] recordProficiencyAchievement error: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Atomically persists a completed {@link Assessment} and all of its
+     * {@link com.example.michiru.model.AssessmentResponse} children in a
+     * single ACID transaction.
+     *
+     * <h3>Transaction steps</h3>
+     * <ol>
+     *   <li>INSERT parent row into {@code assessments} → capture generated key</li>
+     *   <li>Batch-INSERT all {@code assessment_responses} using the generated key</li>
+     *   <li>UPDATE the parent row with score, proficiency_level, status = COMPLETED</li>
+     *   <li>COMMIT — or full ROLLBACK on any failure</li>
+     * </ol>
+     *
+     * @param assessment a finalized Assessment entity (status = COMPLETED)
+     * @return the generated assessment_id, or -1 on failure
+     */
+    @Override
+    public int saveAssessment(Assessment assessment) {
+        final String insertParent =
+            "INSERT INTO assessments (student_id, skill_id, status) VALUES (?, ?, 'IN_PROGRESS')";
+        final String insertResponse =
+            "INSERT INTO assessment_responses " +
+            "  (assessment_id, question_id, selected_option, is_correct) " +
+            "VALUES (?, ?, ?, ?)";
+        final String updateParent =
+            "UPDATE assessments " +
+            "SET score = ?, proficiency_level = ?, status = 'COMPLETED' " +
+            "WHERE assessment_id = ?";
+
+        if (assessment.getResponses().isEmpty()) {
+            System.err.println("[MySQLHandler] saveAssessment: no responses to save.");
+            return -1;
+        }
+
+        try (Connection conn = DatabaseConnection.getInstance().getNewConnection()) {
+            conn.setAutoCommit(false);
+
+            // Step 1: Insert parent row, capture generated key
+            int generatedId;
+            try (PreparedStatement psParent =
+                         conn.prepareStatement(insertParent, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                psParent.setInt(1, assessment.getStudentId());
+                psParent.setInt(2, assessment.getSkillId());
+                psParent.executeUpdate();
+                try (ResultSet keys = psParent.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        generatedId = keys.getInt(1);
+                    } else {
+                        throw new SQLException("No generated key returned for assessment INSERT");
+                    }
+                }
+            }
+
+            // Step 2: Insert each response row individually
+            int rowsInserted = 0;
+            try (PreparedStatement psResp = conn.prepareStatement(insertResponse)) {
+                for (var resp : assessment.getResponses()) {
+                    psResp.setInt(1, generatedId);
+                    psResp.setInt(2, resp.getQuestionId());
+                    if (resp.isSkipped()) {
+                        psResp.setNull(3, java.sql.Types.VARCHAR);
+                        psResp.setNull(4, java.sql.Types.TINYINT);
+                    } else {
+                        psResp.setString(3, resp.getSelectedOption());
+                        psResp.setBoolean(4, resp.isCorrect());
+                    }
+                    rowsInserted += psResp.executeUpdate();
+                    psResp.clearParameters();
+                }
+            }
+
+            if (rowsInserted != assessment.getResponses().size()) {
+                throw new SQLException("Row count mismatch: expected "
+                        + assessment.getResponses().size() + " got " + rowsInserted);
+            }
+
+            // Step 3: Update parent with score + attempted tier
+            String tierForDb = assessment.getAttemptedTier();
+            try (PreparedStatement psUpdate = conn.prepareStatement(updateParent)) {
+                psUpdate.setDouble(1, assessment.getScore());
+                psUpdate.setString(2, tierForDb);
+                psUpdate.setInt(3, generatedId);
+                psUpdate.executeUpdate();
+            }
+
+            // Step 4: Commit
+            conn.commit();
+            assessment.setAssessmentId(generatedId);
+            return generatedId;
+
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] saveAssessment error: " + e.getMessage());
+            e.printStackTrace();
+            return -1;
         }
     }
 

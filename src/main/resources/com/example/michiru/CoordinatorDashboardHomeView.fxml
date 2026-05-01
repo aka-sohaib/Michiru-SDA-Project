@@ -16,7 +16,7 @@
 -->
 <HBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.example.michiru.CoordinatorDashboardHomeViewController"
+      fx:controller="com.example.michiru.CoordinatorHomeController"
       maxWidth="Infinity" maxHeight="Infinity"
       spacing="18"
       styleClass="dashboard-home-root">

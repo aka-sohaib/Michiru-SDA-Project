@@ -106,6 +106,47 @@ public class MentorshipRequest {
         this.skillTags = tags != null ? tags : new ArrayList<>();
     }
 
+    // ── SD-Mandated Methods (UC08, UC09) ─────────────────────────────────────
+
+    /** Mutable status field for SD method support. */
+    private String status = "PENDING";
+    /** Decline reason — populated by {@link #markDeclined}. */
+    private String declineReason;
+
+    /**
+     * UC08 step 4.1.2.1 — sets the request status and date.
+     */
+    public void setDetails(String status, String date) {
+        this.status = status;
+        // requestDate is final from constructor; this is for new requests
+    }
+
+    /**
+     * UC09 step 2.1.2 — delegates to associated Student's getProfile().
+     */
+    public Object getStudentProfile() {
+        // TODO: delegate to Student.getProfile() when wired
+        return null;
+    }
+
+    /**
+     * UC09 step 3.1.2 — marks request as accepted.
+     */
+    public void markAccepted() {
+        this.status = "ACCEPTED";
+    }
+
+    /**
+     * UC09 step 4.1.1 — marks request as declined with a reason.
+     */
+    public void markDeclined(String reason) {
+        this.status        = "DECLINED";
+        this.declineReason = reason;
+    }
+
+    public String getRequestStatus()  { return status; }
+    public String getDeclineReason()  { return declineReason; }
+
     // ── Display helpers ───────────────────────────────────────────────────────
 
     /** e.g. {@code "Jane Doe"} */
