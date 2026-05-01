@@ -12,6 +12,7 @@ import com.example.michiru.model.SkillOption;
 import com.example.michiru.model.ReadinessSkillResult;
 import com.example.michiru.model.SkillProficiencyCard;
 import com.example.michiru.model.User;
+import com.example.michiru.model.ValidationRequest;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -20,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -2038,6 +2040,161 @@ public class MySQLHandler implements DatabaseCatalog {
             }
         } catch (SQLException e) {
             System.err.println("[MySQLHandler] getStudentMentorshipActivity error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Validation — UC04, UC11  (Cluster D)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    @Override
+    public List<Skill> getActiveSkillsForValidation() {
+        final String sql =
+            "SELECT skill_id, name, category, description, difficulty_tier, " +
+            "is_active, questions_required_to_pass, created_by " +
+            "FROM skills WHERE is_active = 1 ORDER BY name";
+
+        List<Skill> list = new ArrayList<>();
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Skill(
+                            rs.getInt("skill_id"),
+                            rs.getString("name"),
+                            rs.getString("category"),
+                            rs.getString("description"),
+                            rs.getString("difficulty_tier"),
+                            rs.getBoolean("is_active"),
+                            rs.getInt("questions_required_to_pass"),
+                            rs.getInt("created_by"),
+                            null
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] getActiveSkillsForValidation error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    @Override
+    public Integer findActiveMentorForStudent(int studentId) {
+        final String sql =
+            "SELECT mentor_id FROM mentorships " +
+            "WHERE student_id = ? AND status = 'ACTIVE' " +
+            "ORDER BY start_date DESC LIMIT 1";
+
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        int id = rs.getInt("mentor_id");
+                        return rs.wasNull() ? null : id;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] findActiveMentorForStudent error: " + e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public boolean hasPendingValidationRequest(int studentId, int skillId, String level) {
+        final String sql =
+            "SELECT COUNT(*) FROM validation_requests " +
+            "WHERE student_id = ? AND skill_id = ? AND requested_level = ? " +
+            "AND status IN ('PENDING', 'UNDER_REVIEW')";
+
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                ps.setInt(2, skillId);
+                ps.setString(3, level);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() && rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] hasPendingValidationRequest error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public boolean saveValidationRequest(int studentId, Integer mentorId, int skillId,
+                                          String level, String evidenceType, String note) {
+        final String sql =
+            "INSERT INTO validation_requests " +
+            "(student_id, mentor_id, skill_id, requested_level, evidence_type, note) " +
+            "VALUES (?, ?, ?, ?, ?, ?)";
+
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                if (mentorId != null) ps.setInt(2, mentorId);
+                else                  ps.setNull(2, Types.INTEGER);
+                ps.setInt(3, skillId);
+                ps.setString(4, level);
+                ps.setString(5, evidenceType);
+                ps.setString(6, note);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] saveValidationRequest error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public List<ValidationRequest> getValidationHistory(int studentId) {
+        final String sql =
+            "SELECT vr.validation_id, vr.student_id, vr.mentor_id, " +
+            "       vr.skill_id, s.name AS skill_name, " +
+            "       vr.requested_level, vr.evidence_type, vr.note, " +
+            "       DATE_FORMAT(vr.request_date, '%Y-%m-%d %H:%i') AS request_date, " +
+            "       vr.status, vr.mentor_feedback, " +
+            "       DATE_FORMAT(vr.resolved_date, '%Y-%m-%d') AS resolved_date " +
+            "FROM validation_requests vr " +
+            "JOIN skills s ON vr.skill_id = s.skill_id " +
+            "WHERE vr.student_id = ? " +
+            "ORDER BY vr.request_date DESC";
+
+        List<ValidationRequest> list = new ArrayList<>();
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        int     mRaw     = rs.getInt("mentor_id");
+                        Integer mid      = rs.wasNull() ? null : mRaw;
+                        list.add(new ValidationRequest(
+                                rs.getInt("validation_id"),
+                                rs.getInt("student_id"),
+                                mid,
+                                rs.getInt("skill_id"),
+                                rs.getString("skill_name"),
+                                rs.getString("requested_level"),
+                                rs.getString("evidence_type"),
+                                rs.getString("note"),
+                                rs.getString("request_date"),
+                                rs.getString("status"),
+                                rs.getString("mentor_feedback"),
+                                rs.getString("resolved_date")
+                        ));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] getValidationHistory error: " + e.getMessage());
         }
         return list;
     }

@@ -1,6 +1,7 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseConnection;
+import com.example.michiru.db.DatabaseCatalog;
+import com.example.michiru.db.MySQLHandler;
 import com.example.michiru.model.Skill;
 import com.example.michiru.model.ValidationRequest;
 import com.example.michiru.session.UserSession;
@@ -23,7 +24,6 @@ import javafx.util.StringConverter;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URL;
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -79,7 +79,8 @@ public class ValidationRequestViewController implements Initializable {
     /** Filtered view wired to the search field. */
     private FilteredList<ValidationRequest>   filteredHistory;
 
-    // ── Session ───────────────────────────────────────────────────────────────
+    // ── Session & DB ──────────────────────────────────────────────────────────
+    private final DatabaseCatalog db = new MySQLHandler();
     private int studentId;
 
     // ── Static ComboBox data ──────────────────────────────────────────────────
@@ -90,39 +91,6 @@ public class ValidationRequestViewController implements Initializable {
         "PORTFOLIO", "CERTIFICATE", "PROJECT", "OTHER"
     };
 
-    // ── SQL (UNTOUCHED — backend logic unchanged) ─────────────────────────────
-
-    private static final String SQL_LOAD_SKILLS =
-            "SELECT skill_id, name, category, description, difficulty_tier, " +
-            "is_active, questions_required_to_pass, created_by " +
-            "FROM skills WHERE is_active = 1 ORDER BY name";
-
-    private static final String SQL_FIND_ACTIVE_MENTOR =
-            "SELECT mentor_id FROM mentorships " +
-            "WHERE student_id = ? AND status = 'ACTIVE' " +
-            "ORDER BY start_date DESC LIMIT 1";
-
-    private static final String SQL_CHECK_DUPLICATE =
-            "SELECT COUNT(*) FROM validation_requests " +
-            "WHERE student_id = ? AND skill_id = ? AND requested_level = ? " +
-            "AND status IN ('PENDING', 'UNDER_REVIEW')";
-
-    private static final String SQL_INSERT_REQUEST =
-            "INSERT INTO validation_requests " +
-            "(student_id, mentor_id, skill_id, requested_level, evidence_type, note) " +
-            "VALUES (?, ?, ?, ?, ?, ?)";
-
-    private static final String SQL_LOAD_HISTORY =
-            "SELECT vr.validation_id, vr.student_id, vr.mentor_id, " +
-            "       vr.skill_id, s.name AS skill_name, " +
-            "       vr.requested_level, vr.evidence_type, vr.note, " +
-            "       DATE_FORMAT(vr.request_date, '%Y-%m-%d %H:%i') AS request_date, " +
-            "       vr.status, vr.mentor_feedback, " +
-            "       DATE_FORMAT(vr.resolved_date, '%Y-%m-%d') AS resolved_date " +
-            "FROM validation_requests vr " +
-            "JOIN skills s ON vr.skill_id = s.skill_id " +
-            "WHERE vr.student_id = ? " +
-            "ORDER BY vr.request_date DESC";
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -230,65 +198,14 @@ public class ValidationRequestViewController implements Initializable {
 
     /** Fetches skills from DB — safe to call off the FX thread. */
     private List<Skill> fetchSkills() {
-        List<Skill> skills = new ArrayList<>();
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_LOAD_SKILLS);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    skills.add(new Skill(
-                            rs.getInt("skill_id"),
-                            rs.getString("name"),
-                            rs.getString("category"),
-                            rs.getString("description"),
-                            rs.getString("difficulty_tier"),
-                            rs.getBoolean("is_active"),
-                            rs.getInt("questions_required_to_pass"),
-                            rs.getInt("created_by"),
-                            null
-                    ));
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[ValidationRequestVC] fetchSkills error: " + e.getMessage());
-        }
-        return skills;
+        return db.getActiveSkillsForValidation();
     }
 
     // ── DB: load history + wire search ───────────────────────────────────────
 
     /** Fetches validation history from DB — safe to call off the FX thread. */
     private List<ValidationRequest> fetchHistory() {
-        List<ValidationRequest> history = new ArrayList<>();
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_LOAD_HISTORY)) {
-                ps.setInt(1, studentId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        int     mRaw     = rs.getInt("mentor_id");
-                        Integer mentorId = rs.wasNull() ? null : mRaw;
-                        history.add(new ValidationRequest(
-                                rs.getInt("validation_id"),
-                                rs.getInt("student_id"),
-                                mentorId,
-                                rs.getInt("skill_id"),
-                                rs.getString("skill_name"),
-                                rs.getString("requested_level"),
-                                rs.getString("evidence_type"),
-                                rs.getString("note"),
-                                rs.getString("request_date"),
-                                rs.getString("status"),
-                                rs.getString("mentor_feedback"),
-                                rs.getString("resolved_date")
-                        ));
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[ValidationRequestVC] fetchHistory error: " + e.getMessage());
-        }
-        return history;
+        return db.getValidationHistory(studentId);
     }
 
     /**
@@ -349,43 +266,16 @@ public class ValidationRequestViewController implements Initializable {
         tblHistory.setVisible(!empty);
     }
 
-    // ── DB: resolve active mentor (unchanged) ─────────────────────────────────
+    // ── DB: resolve active mentor ─────────────────────────────────────────────
 
     private Integer resolveActiveMentor() {
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_FIND_ACTIVE_MENTOR)) {
-                ps.setInt(1, studentId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        int id = rs.getInt("mentor_id");
-                        return rs.wasNull() ? null : id;
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[ValidationRequestVC] resolveActiveMentor: " + e.getMessage());
-        }
-        return null;
+        return db.findActiveMentorForStudent(studentId);
     }
 
-    // ── DB: duplicate guard (unchanged) ──────────────────────────────────────
+    // ── DB: duplicate guard ──────────────────────────────────────────────────
 
     private boolean hasPendingRequest(int skillId, String level) {
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_CHECK_DUPLICATE)) {
-                ps.setInt(1, studentId);
-                ps.setInt(2, skillId);
-                ps.setString(3, level);
-                try (ResultSet rs = ps.executeQuery()) {
-                    return rs.next() && rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[ValidationRequestVC] hasPendingRequest: " + e.getMessage());
-        }
-        return false;
+        return db.hasPendingValidationRequest(studentId, skillId, level);
     }
 
     // ── Submit handler (unchanged) ────────────────────────────────────────────
@@ -425,23 +315,12 @@ public class ValidationRequestViewController implements Initializable {
         String combinedNote = description.isEmpty() ? url : url + "\n---\n" + description;
         Integer mentorId    = resolveActiveMentor();
 
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT_REQUEST)) {
-                ps.setInt(1, studentId);
-                if (mentorId != null) ps.setInt(2, mentorId);
-                else                  ps.setNull(2, Types.INTEGER);
-                ps.setInt(3, skill.getSkillId());
-                ps.setString(4, level);
-                ps.setString(5, evidenceType);
-                ps.setString(6, combinedNote);
-                if (ps.executeUpdate() == 0) {
-                    showError("Database error: request could not be saved."); return;
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[ValidationRequestVC] INSERT error: " + e.getMessage());
-            showError("Database error: " + e.getMessage()); return;
+        boolean saved = db.saveValidationRequest(
+                studentId, mentorId, skill.getSkillId(),
+                level, evidenceType, combinedNote);
+        if (!saved) {
+            showError("Database error: request could not be saved.");
+            return;
         }
 
         clearForm();
