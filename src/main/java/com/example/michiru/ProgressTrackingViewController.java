@@ -1,6 +1,7 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseConnection;
+import com.example.michiru.db.DatabaseCatalog;
+import com.example.michiru.db.MySQLHandler;
 import com.example.michiru.model.MentorshipActivity;
 import com.example.michiru.session.UserSession;
 
@@ -18,7 +19,6 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URL;
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -55,28 +55,9 @@ public class ProgressTrackingViewController implements Initializable {
     @FXML private Label     lblTotalCount;
     @FXML private VBox      cardContainer;
 
-    // ── Session ───────────────────────────────────────────────────────────────
+    // ── Session & DB ──────────────────────────────────────────────────────────
+    private final DatabaseCatalog db = new MySQLHandler();
     private int studentId;
-
-    // ── SQL ───────────────────────────────────────────────────────────────────
-
-    private static final String SQL_LOAD_ACTIVITY =
-            "SELECT mr.request_id, " +
-            "       u.first_name, u.last_name, " +
-            "       mr.message, " +
-            "       DATE_FORMAT(mr.request_date, '%b %d, %Y') AS request_date, " +
-            "       mr.status         AS request_status, " +
-            "       mr.credit_cost, " +
-            "       mr.decline_reason, " +
-            "       ms.mentorship_id, " +
-            "       ms.status         AS mentorship_status, " +
-            "       DATE_FORMAT(ms.start_date, '%b %d, %Y') AS start_date, " +
-            "       DATE_FORMAT(ms.end_date,   '%b %d, %Y') AS end_date " +
-            "FROM mentorship_requests mr " +
-            "JOIN users u ON mr.mentor_id = u.user_id " +
-            "LEFT JOIN mentorships ms ON ms.request_id = mr.request_id " +
-            "WHERE mr.student_id = ? " +
-            "ORDER BY mr.request_date DESC";
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -102,37 +83,7 @@ public class ProgressTrackingViewController implements Initializable {
     // ── DB fetch ──────────────────────────────────────────────────────────────
 
     private List<MentorshipActivity> fetchActivities() {
-        List<MentorshipActivity> list = new ArrayList<>();
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_LOAD_ACTIVITY)) {
-                ps.setInt(1, studentId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        int msId = rs.getInt("mentorship_id");
-                        Integer mentorshipId = rs.wasNull() ? null : msId;
-
-                        list.add(new MentorshipActivity(
-                                rs.getInt("request_id"),
-                                rs.getString("first_name"),
-                                rs.getString("last_name"),
-                                rs.getString("message"),
-                                rs.getString("request_date"),
-                                rs.getString("request_status"),
-                                rs.getInt("credit_cost"),
-                                rs.getString("decline_reason"),
-                                mentorshipId,
-                                rs.getString("mentorship_status"),
-                                rs.getString("start_date"),
-                                rs.getString("end_date")
-                        ));
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[ProgressTrackingVC] fetchActivities error: " + e.getMessage());
-        }
-        return list;
+        return db.getStudentMentorshipActivity(studentId);
     }
 
     // ── Card rendering ────────────────────────────────────────────────────────

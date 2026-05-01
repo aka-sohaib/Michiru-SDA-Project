@@ -1,6 +1,7 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseConnection;
+import com.example.michiru.db.DatabaseCatalog;
+import com.example.michiru.db.MySQLHandler;
 import com.example.michiru.model.MentorshipRequest;
 import com.example.michiru.model.MentorshipRequest.SkillTag;
 import com.example.michiru.session.UserSession;
@@ -19,7 +20,6 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URL;
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -66,44 +66,10 @@ public class MentorshipRequestsViewController implements Initializable {
     private List<MentorshipRequest> allRequests = new ArrayList<>();
     private MentorshipRequest       selected;
 
-    // ── Session ───────────────────────────────────────────────────────────────
+    // ── Session & DB ──────────────────────────────────────────────────────────
+    private final DatabaseCatalog db = new MySQLHandler();
     private int mentorId;
 
-    // ── SQL ───────────────────────────────────────────────────────────────────
-
-    private static final String SQL_LOAD_REQUESTS =
-            "SELECT mr.request_id, mr.student_id, " +
-            "       u.first_name, u.last_name, " +
-            "       mr.message, " +
-            "       DATE_FORMAT(mr.request_date, '%b %d, %Y') AS request_date, " +
-            "       mr.credit_cost " +
-            "FROM mentorship_requests mr " +
-            "JOIN users u ON mr.student_id = u.user_id " +
-            "WHERE mr.mentor_id = ? AND mr.status = 'PENDING' " +
-            "ORDER BY mr.request_date ASC";
-
-    private static final String SQL_LOAD_SKILL_PROFICIENCIES =
-            "SELECT s.name AS skill_name, " +
-            "       ELT(MAX(FIELD(sp.proficiency_level, " +
-            "           'NOVICE','BEGINNER','INTERMEDIATE','ADVANCED','EXPERT')), " +
-            "           'NOVICE','BEGINNER','INTERMEDIATE','ADVANCED','EXPERT') AS max_level " +
-            "FROM skill_proficiencies sp " +
-            "JOIN skills s ON sp.skill_id = s.skill_id " +
-            "WHERE sp.student_id = ? " +
-            "GROUP BY sp.skill_id, s.name " +
-            "ORDER BY s.name";
-
-    private static final String SQL_ACCEPT_REQUEST =
-            "UPDATE mentorship_requests SET status = 'ACCEPTED' WHERE request_id = ?";
-
-    private static final String SQL_INSERT_MENTORSHIP =
-            "INSERT INTO mentorships (request_id, student_id, mentor_id, status) " +
-            "VALUES (?, ?, ?, 'ACTIVE')";
-
-    private static final String SQL_DECLINE_REQUEST =
-            "UPDATE mentorship_requests " +
-            "SET status = 'DECLINED', decline_reason = ? " +
-            "WHERE request_id = ?";
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -140,52 +106,7 @@ public class MentorshipRequestsViewController implements Initializable {
     }
 
     private List<MentorshipRequest> fetchRequests() {
-        List<MentorshipRequest> list = new ArrayList<>();
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_LOAD_REQUESTS)) {
-                ps.setInt(1, mentorId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        MentorshipRequest req = new MentorshipRequest(
-                                rs.getInt("request_id"),
-                                rs.getInt("student_id"),
-                                rs.getString("first_name"),
-                                rs.getString("last_name"),
-                                rs.getString("message"),
-                                rs.getString("request_date"),
-                                rs.getInt("credit_cost")
-                        );
-                        req.setSkillTags(fetchSkillTags(rs.getInt("student_id")));
-                        list.add(req);
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[MentorshipRequestsVC] fetchRequests error: " + e.getMessage());
-        }
-        return list;
-    }
-
-    private List<SkillTag> fetchSkillTags(int studentId) {
-        List<SkillTag> tags = new ArrayList<>();
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_LOAD_SKILL_PROFICIENCIES)) {
-                ps.setInt(1, studentId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        tags.add(new SkillTag(
-                                rs.getString("skill_name"),
-                                rs.getString("max_level")
-                        ));
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[MentorshipRequestsVC] fetchSkillTags error: " + e.getMessage());
-        }
-        return tags;
+        return db.getPendingRequestsForMentor(mentorId);
     }
 
     // ── Filter ────────────────────────────────────────────────────────────────
@@ -723,35 +644,7 @@ public class MentorshipRequestsViewController implements Initializable {
     }
 
     private boolean acceptInDb(MentorshipRequest req) {
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            conn.setAutoCommit(false);
-            try {
-                try (PreparedStatement ps1 = conn.prepareStatement(SQL_ACCEPT_REQUEST)) {
-                    ps1.setInt(1, req.getRequestId());
-                    if (ps1.executeUpdate() == 0) {
-                        conn.rollback();
-                        return false;
-                    }
-                }
-                try (PreparedStatement ps2 = conn.prepareStatement(SQL_INSERT_MENTORSHIP)) {
-                    ps2.setInt(1, req.getRequestId());
-                    ps2.setInt(2, req.getStudentId());
-                    ps2.setInt(3, mentorId);
-                    ps2.executeUpdate();
-                }
-                conn.commit();
-                return true;
-            } catch (SQLException ex) {
-                conn.rollback();
-                throw ex;
-            } finally {
-                conn.setAutoCommit(true);
-            }
-        } catch (SQLException e) {
-            System.err.println("[MentorshipRequestsVC] acceptInDb error: " + e.getMessage());
-            return false;
-        }
+        return db.acceptMentorshipRequest(req, mentorId);
     }
 
     private void handleDecline(MentorshipRequest req, String reason,
@@ -782,17 +675,8 @@ public class MentorshipRequestsViewController implements Initializable {
     }
 
     private boolean declineInDb(MentorshipRequest req, String reason) {
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_DECLINE_REQUEST)) {
-                ps.setString(1, reason.isEmpty() ? null : reason);
-                ps.setInt(2, req.getRequestId());
-                return ps.executeUpdate() > 0;
-            }
-        } catch (SQLException e) {
-            System.err.println("[MentorshipRequestsVC] declineInDb error: " + e.getMessage());
-            return false;
-        }
+        return db.declineMentorshipRequest(req.getRequestId(),
+                reason.isEmpty() ? null : reason);
     }
 
     /** Removes a resolved request from the live list and refreshes the grid. */

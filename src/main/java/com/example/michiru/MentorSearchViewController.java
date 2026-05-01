@@ -1,6 +1,7 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseConnection;
+import com.example.michiru.db.DatabaseCatalog;
+import com.example.michiru.db.MySQLHandler;
 import com.example.michiru.model.MentorProfile;
 import com.example.michiru.session.UserSession;
 
@@ -18,7 +19,6 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URL;
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -67,39 +67,10 @@ public class MentorSearchViewController implements Initializable {
     private MentorProfile       selectedMentor;
     private TextArea            modalMessageArea;
 
-    // ── Session ───────────────────────────────────────────────────────────────
+    // ── DB & session ──────────────────────────────────────────────────────────
+    private final DatabaseCatalog db = new MySQLHandler();
     private int studentId;
 
-    // ── SQL ───────────────────────────────────────────────────────────────────
-
-    private static final String SQL_LOAD_MENTORS =
-            "SELECT u.user_id, u.first_name, u.last_name, " +
-            "       m.bio, m.years_of_experience, m.rating, m.is_available, m.credit_cost, " +
-            "       GROUP_CONCAT(s.name ORDER BY s.name SEPARATOR '||') AS skill_names " +
-            "FROM users u " +
-            "JOIN mentors m ON u.user_id = m.user_id " +
-            "LEFT JOIN mentor_expertise_skills mes ON m.user_id = mes.mentor_id " +
-            "LEFT JOIN skills s ON mes.skill_id = s.skill_id " +
-            "WHERE u.role = 'MENTOR' " +
-            "GROUP BY u.user_id, u.first_name, u.last_name, " +
-            "         m.bio, m.years_of_experience, m.rating, m.is_available, m.credit_cost " +
-            "ORDER BY m.is_available DESC, m.rating DESC";
-
-    private static final String SQL_LOAD_SKILL_FILTERS =
-            "SELECT DISTINCT s.name " +
-            "FROM skills s " +
-            "JOIN mentor_expertise_skills mes ON s.skill_id = mes.skill_id " +
-            "ORDER BY s.name";
-
-    private static final String SQL_CHECK_DUPLICATE =
-            "SELECT COUNT(*) FROM mentorship_requests " +
-            "WHERE student_id = ? AND mentor_id = ? " +
-            "AND status IN ('PENDING', 'ACCEPTED')";
-
-    private static final String SQL_INSERT_REQUEST =
-            "INSERT INTO mentorship_requests " +
-            "(student_id, mentor_id, message, status, credit_cost) " +
-            "VALUES (?, ?, ?, 'PENDING', ?)";
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -118,8 +89,8 @@ public class MentorSearchViewController implements Initializable {
         Task<Void> initTask = new Task<>() {
             @Override
             protected Void call() {
-                List<MentorProfile> mentors = fetchMentors();
-                LinkedHashSet<String> skills = fetchSkillFilters();
+                List<MentorProfile> mentors = db.getAvailableMentors();
+                List<String> skills = db.getMentorSkillFilters();
 
                 Platform.runLater(() -> {
                     allMentors = mentors;
@@ -137,47 +108,7 @@ public class MentorSearchViewController implements Initializable {
         t.start();
     }
 
-    // ── DB: fetch helpers ─────────────────────────────────────────────────────
 
-    private List<MentorProfile> fetchMentors() {
-        List<MentorProfile> list = new ArrayList<>();
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_LOAD_MENTORS);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(new MentorProfile(
-                            rs.getInt("user_id"),
-                            rs.getString("first_name"),
-                            rs.getString("last_name"),
-                            rs.getString("bio"),
-                            rs.getInt("years_of_experience"),
-                            rs.getDouble("rating"),
-                            rs.getBoolean("is_available"),
-                            rs.getInt("credit_cost"),
-                            rs.getString("skill_names")
-                    ));
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[MentorSearchVC] fetchMentors error: " + e.getMessage());
-        }
-        return list;
-    }
-
-    private LinkedHashSet<String> fetchSkillFilters() {
-        LinkedHashSet<String> skills = new LinkedHashSet<>();
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_LOAD_SKILL_FILTERS);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) skills.add(rs.getString("name"));
-            }
-        } catch (SQLException e) {
-            System.err.println("[MentorSearchVC] fetchSkillFilters error: " + e.getMessage());
-        }
-        return skills;
-    }
 
     // ── Filtering ─────────────────────────────────────────────────────────────
 
@@ -690,22 +621,13 @@ public class MentorSearchViewController implements Initializable {
 
         String message = msgArea.getText().trim();
 
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_INSERT_REQUEST)) {
-                ps.setInt(1, studentId);
-                ps.setInt(2, mentor.getMentorId());
-                ps.setString(3, message.isEmpty() ? null : message);
-                ps.setInt(4, mentor.getCreditCost());
-                if (ps.executeUpdate() == 0) {
-                    showModalError(errorBar, errLbl,
-                            "Database error: request could not be saved.");
-                    return;
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[MentorSearchVC] INSERT error: " + e.getMessage());
-            showModalError(errorBar, errLbl, "Database error: " + e.getMessage());
+        boolean saved = db.saveMentorshipRequest(
+                studentId, mentor.getMentorId(),
+                message.isEmpty() ? null : message,
+                mentor.getCreditCost());
+        if (!saved) {
+            showModalError(errorBar, errLbl,
+                    "Database error: request could not be saved.");
             return;
         }
 
@@ -714,19 +636,7 @@ public class MentorSearchViewController implements Initializable {
     }
 
     private boolean hasExistingRequest(int mentorId) {
-        try {
-            Connection conn = DatabaseConnection.getInstance().getConnection();
-            try (PreparedStatement ps = conn.prepareStatement(SQL_CHECK_DUPLICATE)) {
-                ps.setInt(1, studentId);
-                ps.setInt(2, mentorId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    return rs.next() && rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("[MentorSearchVC] hasExistingRequest error: " + e.getMessage());
-        }
-        return false;
+        return db.hasExistingMentorshipRequest(studentId, mentorId);
     }
 
     // ── Modal show / hide animations ──────────────────────────────────────────

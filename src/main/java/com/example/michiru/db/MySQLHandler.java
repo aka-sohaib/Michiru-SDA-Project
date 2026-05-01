@@ -2,6 +2,9 @@ package com.example.michiru.db;
 
 import com.example.michiru.model.Assessment;
 import com.example.michiru.model.InternshipTemplate;
+import com.example.michiru.model.MentorProfile;
+import com.example.michiru.model.MentorshipActivity;
+import com.example.michiru.model.MentorshipRequest;
 import com.example.michiru.model.Question;
 import com.example.michiru.model.Skill;
 import com.example.michiru.model.SkillAssignment;
@@ -19,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -1745,6 +1749,297 @@ public class MySQLHandler implements DatabaseCatalog {
             e.printStackTrace();
             return -1;
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Mentorship — UC08, UC09, UC12  (Cluster C)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    @Override
+    public List<MentorProfile> getAvailableMentors() {
+        final String sql =
+            "SELECT u.user_id, u.first_name, u.last_name, " +
+            "       m.bio, m.years_of_experience, m.rating, m.is_available, m.credit_cost, " +
+            "       GROUP_CONCAT(s.name ORDER BY s.name SEPARATOR '||') AS skill_names " +
+            "FROM users u " +
+            "JOIN mentors m ON u.user_id = m.user_id " +
+            "LEFT JOIN mentor_expertise_skills mes ON m.user_id = mes.mentor_id " +
+            "LEFT JOIN skills s ON mes.skill_id = s.skill_id " +
+            "WHERE u.role = 'MENTOR' " +
+            "GROUP BY u.user_id, u.first_name, u.last_name, " +
+            "         m.bio, m.years_of_experience, m.rating, m.is_available, m.credit_cost " +
+            "ORDER BY m.is_available DESC, m.rating DESC";
+
+        List<MentorProfile> list = new ArrayList<>();
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new MentorProfile(
+                            rs.getInt("user_id"),
+                            rs.getString("first_name"),
+                            rs.getString("last_name"),
+                            rs.getString("bio"),
+                            rs.getInt("years_of_experience"),
+                            rs.getDouble("rating"),
+                            rs.getBoolean("is_available"),
+                            rs.getInt("credit_cost"),
+                            rs.getString("skill_names")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] getAvailableMentors error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    @Override
+    public List<String> getMentorSkillFilters() {
+        final String sql =
+            "SELECT DISTINCT s.name " +
+            "FROM skills s " +
+            "JOIN mentor_expertise_skills mes ON s.skill_id = mes.skill_id " +
+            "ORDER BY s.name";
+
+        List<String> list = new ArrayList<>();
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(rs.getString("name"));
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] getMentorSkillFilters error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    @Override
+    public boolean hasExistingMentorshipRequest(int studentId, int mentorId) {
+        final String sql =
+            "SELECT COUNT(*) FROM mentorship_requests " +
+            "WHERE student_id = ? AND mentor_id = ? " +
+            "AND status IN ('PENDING', 'ACCEPTED')";
+
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                ps.setInt(2, mentorId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() && rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] hasExistingMentorshipRequest error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public boolean saveMentorshipRequest(int studentId, int mentorId,
+                                          String message, int creditCost) {
+        final String sql =
+            "INSERT INTO mentorship_requests " +
+            "(student_id, mentor_id, message, status, credit_cost) " +
+            "VALUES (?, ?, ?, 'PENDING', ?)";
+
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                ps.setInt(2, mentorId);
+                ps.setString(3, message);
+                ps.setInt(4, creditCost);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] saveMentorshipRequest error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public List<MentorshipRequest> getPendingRequestsForMentor(int mentorId) {
+        final String sql =
+            "SELECT mr.request_id, mr.student_id, " +
+            "       u.first_name, u.last_name, " +
+            "       mr.message, " +
+            "       DATE_FORMAT(mr.request_date, '%b %d, %Y') AS request_date, " +
+            "       mr.credit_cost " +
+            "FROM mentorship_requests mr " +
+            "JOIN users u ON mr.student_id = u.user_id " +
+            "WHERE mr.mentor_id = ? AND mr.status = 'PENDING' " +
+            "ORDER BY mr.request_date ASC";
+
+        List<MentorshipRequest> list = new ArrayList<>();
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, mentorId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        MentorshipRequest req = new MentorshipRequest(
+                                rs.getInt("request_id"),
+                                rs.getInt("student_id"),
+                                rs.getString("first_name"),
+                                rs.getString("last_name"),
+                                rs.getString("message"),
+                                rs.getString("request_date"),
+                                rs.getInt("credit_cost")
+                        );
+                        req.setSkillTags(getStudentSkillTags(rs.getInt("student_id")));
+                        list.add(req);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] getPendingRequestsForMentor error: " + e.getMessage());
+        }
+        return list;
+    }
+
+    @Override
+    public List<MentorshipRequest.SkillTag> getStudentSkillTags(int studentId) {
+        final String sql =
+            "SELECT s.name AS skill_name, " +
+            "       ELT(MAX(FIELD(sp.proficiency_level, " +
+            "           'NOVICE','BEGINNER','INTERMEDIATE','ADVANCED','EXPERT')), " +
+            "           'NOVICE','BEGINNER','INTERMEDIATE','ADVANCED','EXPERT') AS max_level " +
+            "FROM skill_proficiencies sp " +
+            "JOIN skills s ON sp.skill_id = s.skill_id " +
+            "WHERE sp.student_id = ? " +
+            "GROUP BY sp.skill_id, s.name " +
+            "ORDER BY s.name";
+
+        List<MentorshipRequest.SkillTag> tags = new ArrayList<>();
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        tags.add(new MentorshipRequest.SkillTag(
+                                rs.getString("skill_name"),
+                                rs.getString("max_level")
+                        ));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] getStudentSkillTags error: " + e.getMessage());
+        }
+        return tags;
+    }
+
+    @Override
+    public boolean acceptMentorshipRequest(MentorshipRequest request, int mentorId) {
+        final String sqlAccept =
+            "UPDATE mentorship_requests SET status = 'ACCEPTED' WHERE request_id = ?";
+        final String sqlInsertMentorship =
+            "INSERT INTO mentorships (request_id, student_id, mentor_id, status) " +
+            "VALUES (?, ?, ?, 'ACTIVE')";
+
+        // ACID transaction on isolated connection (Cluster A pattern)
+        try (Connection conn = DatabaseConnection.getInstance().getNewConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement ps1 = conn.prepareStatement(sqlAccept)) {
+                ps1.setInt(1, request.getRequestId());
+                if (ps1.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            try (PreparedStatement ps2 = conn.prepareStatement(sqlInsertMentorship)) {
+                ps2.setInt(1, request.getRequestId());
+                ps2.setInt(2, request.getStudentId());
+                ps2.setInt(3, mentorId);
+                ps2.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] acceptMentorshipRequest error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean declineMentorshipRequest(int requestId, String reason) {
+        final String sql =
+            "UPDATE mentorship_requests " +
+            "SET status = 'DECLINED', decline_reason = ? " +
+            "WHERE request_id = ?";
+
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, reason == null || reason.isEmpty() ? null : reason);
+                ps.setInt(2, requestId);
+                return ps.executeUpdate() > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] declineMentorshipRequest error: " + e.getMessage());
+        }
+        return false;
+    }
+
+    @Override
+    public List<MentorshipActivity> getStudentMentorshipActivity(int studentId) {
+        final String sql =
+            "SELECT mr.request_id, " +
+            "       u.first_name, u.last_name, " +
+            "       mr.message, " +
+            "       DATE_FORMAT(mr.request_date, '%b %d, %Y') AS request_date, " +
+            "       mr.status         AS request_status, " +
+            "       mr.credit_cost, " +
+            "       mr.decline_reason, " +
+            "       ms.mentorship_id, " +
+            "       ms.status         AS mentorship_status, " +
+            "       DATE_FORMAT(ms.start_date, '%b %d, %Y') AS start_date, " +
+            "       DATE_FORMAT(ms.end_date,   '%b %d, %Y') AS end_date " +
+            "FROM mentorship_requests mr " +
+            "JOIN users u ON mr.mentor_id = u.user_id " +
+            "LEFT JOIN mentorships ms ON ms.request_id = mr.request_id " +
+            "WHERE mr.student_id = ? " +
+            "ORDER BY mr.request_date DESC";
+
+        List<MentorshipActivity> list = new ArrayList<>();
+        try {
+            Connection conn = DatabaseConnection.getInstance().getConnection();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setInt(1, studentId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        int msId = rs.getInt("mentorship_id");
+                        Integer mentorshipId = rs.wasNull() ? null : msId;
+
+                        list.add(new MentorshipActivity(
+                                rs.getInt("request_id"),
+                                rs.getString("first_name"),
+                                rs.getString("last_name"),
+                                rs.getString("message"),
+                                rs.getString("request_date"),
+                                rs.getString("request_status"),
+                                rs.getInt("credit_cost"),
+                                rs.getString("decline_reason"),
+                                mentorshipId,
+                                rs.getString("mentorship_status"),
+                                rs.getString("start_date"),
+                                rs.getString("end_date")
+                        ));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[MySQLHandler] getStudentMentorshipActivity error: " + e.getMessage());
+        }
+        return list;
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────
