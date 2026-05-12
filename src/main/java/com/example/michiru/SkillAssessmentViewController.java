@@ -1,8 +1,6 @@
 package com.example.michiru;
 
-/**
- * Class definition for SkillAssessmentViewController.
- */
+// UC06: skill grid, tier ladder, exam modal; delegates grading/persistence to EvaluationFacade.
 
 import com.example.michiru.facade.EvaluationFacade;
 import com.example.michiru.model.ProficiencyLadder;
@@ -54,15 +52,7 @@ public class SkillAssessmentViewController implements Initializable {
 
     private List<SkillProficiencyCard> allSkills = new ArrayList<>();
 
-    // Tier policy constants are now in ProficiencyLadder (model) — single source of truth.
-
-    /**
-     * Wires FXML controls and listeners after the scene graph is loaded.
-     */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         studentId = UserSession.getInstance().getCurrentUser().getUserId();
         loadSkillGrid();
@@ -80,7 +70,6 @@ public class SkillAssessmentViewController implements Initializable {
         renderSkillCards(allSkills, true);
     }
 
-    /** Re-renders the skill grid with only the matching skills. No entrance animation for live filtering. */
     private void filterSkills(String query) {
         if (query == null || query.isBlank()) {
             renderSkillCards(allSkills, false);
@@ -94,7 +83,6 @@ public class SkillAssessmentViewController implements Initializable {
         renderSkillCards(filtered, false);
     }
 
-    /** Clears and rebuilds the skill card grid from the given list. */
     private void renderSkillCards(List<SkillProficiencyCard> skills, boolean animate) {
         skillGrid.getChildren().clear();
 
@@ -341,7 +329,6 @@ public class SkillAssessmentViewController implements Initializable {
         showModal(buildExamContent(), 640);
     }
 
-    /** Builds the full exam modal shell (header + progress + question + options + nav). */
     private VBox buildExamContent() {
         VBox root = new VBox(0);
         root.getStyleClass().add("modal-content-root");
@@ -410,7 +397,6 @@ public class SkillAssessmentViewController implements Initializable {
         return row;
     }
 
-    /** Updates question text, option labels, progress, and button text for current index. */
     private void refreshExamQuestion() {
         Question q    = facade.getActiveExamCurrentQuestion();
         int total     = facade.getActiveExamQuestionCount();

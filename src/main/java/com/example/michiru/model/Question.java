@@ -1,8 +1,6 @@
 package com.example.michiru.model;
 
-/**
- * Class definition for Question.
- */
+// Bank question entity: text, four options, correct letter, difficulty, active flag.
 
 public class Question {
 
@@ -17,8 +15,6 @@ public class Question {
     private String difficultyLevel;
     private boolean isActive;
     private int    createdBy;
-
-    // ── Constructors ──────────────────────────────────────────────────────────
 
     public Question() {}
 
@@ -39,8 +35,6 @@ public class Question {
         this.createdBy      = createdBy;
     }
 
-    // ── Getters ───────────────────────────────────────────────────────────────
-
     public int     getQuestionId()    { return questionId; }
     public int     getSkillId()       { return skillId; }
     public String  getQuestionText()  { return questionText; }
@@ -52,8 +46,6 @@ public class Question {
     public String  getDifficultyLevel() { return difficultyLevel; }
     public boolean isActive()         { return isActive; }
     public int     getCreatedBy()     { return createdBy; }
-
-    // ── Setters ───────────────────────────────────────────────────────────────
 
     public void setQuestionId(int id)            { this.questionId     = id; }
     public void setSkillId(int skillId)          { this.skillId        = skillId; }
@@ -68,12 +60,8 @@ public class Question {
     public void setCreatedBy(int id)             { this.createdBy      = id; }
 
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "Question{id=" + questionId + ", skill=" + skillId +
                ", difficulty='" + difficultyLevel + "', active=" + isActive + "}";
     }
 }
-

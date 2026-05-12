@@ -1483,14 +1483,9 @@ public class MySQLHandler implements DatabaseCatalog {
         return 0;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // STUDENT SKILL ASSESSMENT
-    // ═══════════════════════════════════════════════════════════════════════════
+    // UC06: skill hub + exam draws.
 
-    /**
-     * Returns all active skills enriched with the student's current (highest-achieved)
-     * proficiency level for each skill.  Defaults to "NOVICE" if no record exists.
-     */
+    // Active skills with student's highest proficiency (default NOVICE).
     public List<SkillProficiencyCard> getSkillsWithStudentProficiency(int studentId) {
         final String sql =
             "SELECT s.skill_id, s.name, s.category, s.difficulty_tier, " +
@@ -1533,13 +1528,7 @@ public class MySQLHandler implements DatabaseCatalog {
         return list;
     }
 
-    /**
-     * Fetches up to {@code limit} random active questions for a skill.
-     *
-     * @param skillId    target skill
-     * @param difficulty "EASY" | "MEDIUM" | "HARD" for specific tiers; "MIX" for Expert gauntlet
-     * @param limit      max questions to return (typically 10)
-     */
+    // Random active questions for skill; difficulty EASY/MEDIUM/HARD or MIX (Expert).
     public List<Question> fetchExamQuestions(int skillId, String difficulty, int limit) {
         final boolean isMix = "MIX".equalsIgnoreCase(difficulty);
         final String sql = isMix
@@ -1593,13 +1582,7 @@ public class MySQLHandler implements DatabaseCatalog {
         return list;
     }
 
-    /**
-     * Opens a new IN_PROGRESS assessment record and returns its generated ID.
-     *
-     * @param studentId  the authenticated student's user_id
-     * @param skillId    skill being assessed
-     * @return generated {@code assessment_id}; {@code -1} on error
-     */
+    // Legacy path: open IN_PROGRESS row; UC06 flow uses saveAssessment instead.
     public int createAssessment(int studentId, int skillId) {
         final String sql =
             "INSERT INTO assessments (student_id, skill_id, status) VALUES (?, ?, 'IN_PROGRESS')";
@@ -1621,16 +1604,7 @@ public class MySQLHandler implements DatabaseCatalog {
         return -1;
     }
 
-    /**
-     * Finalises an assessment: inserts per-question response rows, then marks
-     * the assessment as COMPLETED with its final score and attempted tier level.
-     *
-     * @param assessmentId   the open assessment created by {@link #createAssessment}
-     * @param questions      the ordered list of questions served
-     * @param answers        map of question-list-index → selected option ("A"/"B"/"C"/"D"), null = skipped
-     * @param score          percentage score (0–100)
-     * @param tierLevel      proficiency level the student attempted (e.g. "BEGINNER")
-     */
+    // Legacy: write responses + complete row for an existing assessment id.
     public void finalizeAssessment(int assessmentId,
                                    List<Question> questions,
                                    Map<Integer, String> answers,
@@ -1686,18 +1660,7 @@ public class MySQLHandler implements DatabaseCatalog {
         }
     }
 
-    /**
-     * Inserts a new {@code skill_proficiencies} record, recording that the student
-     * has achieved {@code level} for this skill via the given assessment.
-     *
-     * Only call this after a confirmed <em>progression</em> pass (not a practice retake).
-     *
-     * @param studentId    the authenticated student's user_id
-     * @param skillId      skill that was assessed
-     * @param assessmentId the assessment that produced this achievement (may be -1 for legacy)
-     * @param level        the tier just passed (e.g. "BEGINNER")
-     * @param score        the percentage score achieved
-     */
+    // Insert skill_proficiencies after a progression pass (not practice-only).
     public void recordProficiencyAchievement(int studentId, int skillId,
                                              int assessmentId, String level, double score) {
         final String sql =
@@ -1721,26 +1684,8 @@ public class MySQLHandler implements DatabaseCatalog {
         }
     }
 
-    /**
-     * Atomically persists a completed {@link Assessment} and all of its
-     * {@link com.example.michiru.model.AssessmentResponse} children in a
-     * single ACID transaction.
-     *
-     * <h3>Transaction steps</h3>
-     * <ol>
-     *   <li>INSERT parent row into {@code assessments} → capture generated key</li>
-     *   <li>Batch-INSERT all {@code assessment_responses} using the generated key</li>
-     *   <li>UPDATE the parent row with score, proficiency_level, status = COMPLETED</li>
-     *   <li>COMMIT — or full ROLLBACK on any failure</li>
-     * </ol>
-     *
-     * @param assessment a finalized Assessment entity (status = COMPLETED)
-     * @return the generated assessment_id, or -1 on failure
-     */
+    // Transaction: assessments + assessment_responses + update parent; returns id or -1.
     @Override
-    /**
-     * Executes saveAssessment.
-     */
     public int saveAssessment(Assessment assessment) {
         final String insertParent =
             "INSERT INTO assessments (student_id, skill_id, status) VALUES (?, ?, 'IN_PROGRESS')";

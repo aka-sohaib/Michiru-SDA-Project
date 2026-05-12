@@ -1,17 +1,15 @@
 package com.example.michiru.model;
 
-/**
- * Class definition for SkillProficiencyCard.
- */
+// Skill hub card: metadata + pass threshold + student's current belt for UC06 UI.
 
 public class SkillProficiencyCard {
 
     private final int    skillId;
     private final String name;
     private final String category;
-    private final String difficultyTier;       // EASY | MEDIUM | HARD (skill's base level)
+    private final String difficultyTier;
     private final int    questionsRequiredToPass;
-    private final String currentLevel;         // student's highest achieved level for this skill
+    private final String currentLevel;
 
     public SkillProficiencyCard(int skillId,
                                 String name,
@@ -27,7 +25,6 @@ public class SkillProficiencyCard {
         this.currentLevel           = currentLevel;
     }
 
-    // ── Getters ──────────────────────────────────────────────────────────────
     public int    getSkillId()                 { return skillId; }
     public String getName()                    { return name; }
     public String getCategory()                { return category; }
@@ -35,10 +32,7 @@ public class SkillProficiencyCard {
     public int    getQuestionsRequiredToPass() { return questionsRequiredToPass; }
     public String getCurrentLevel()            { return currentLevel; }
 
-    /**
-     * Returns the ordinal position of {@code currentLevel} in the 5-tier belt system
-     * (0 = NOVICE, 4 = EXPERT).
-     */
+    // 0 = NOVICE … 4 = EXPERT for progress UI.
     public int getLevelOrdinal() {
         return switch (currentLevel) {
             case "NOVICE"        -> 0;
@@ -51,9 +45,6 @@ public class SkillProficiencyCard {
     }
 
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "SkillProficiencyCard{skillId=" + skillId
                 + ", name='" + name + '\''
@@ -61,4 +52,3 @@ public class SkillProficiencyCard {
                 + '}';
     }
 }
-
