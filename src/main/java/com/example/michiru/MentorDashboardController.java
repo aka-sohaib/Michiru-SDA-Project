@@ -1,11 +1,16 @@
 package com.example.michiru;
 
+/**
+ * Class definition for MentorDashboardController.
+ */
+
 import com.example.michiru.session.UserSession;
 
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -15,7 +20,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
 import java.io.IOException;
@@ -23,10 +30,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
-/**
- * Controller for MentorDashboard.fxml.
- * Mirrors the Student dashboard shell and swaps only the center content area.
- */
 public class MentorDashboardController implements Initializable {
 
     private static final String STYLE_ACTIVE = "nav-item-active";
@@ -47,7 +50,13 @@ public class MentorDashboardController implements Initializable {
     private Button activeNavButton;
     private List<Button> allNavButtons;
 
+    /**
+     * Registers navigation handlers and opens the default mentor home view.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         allNavButtons = List.of(
                 btnDashboard,
@@ -62,12 +71,23 @@ public class MentorDashboardController implements Initializable {
             wireLiquidScale(btn);
         }
         wireLiquidScale(btnLogout);
+
+        contentArea.sceneProperty().addListener((obs, prev, scene) -> registerShellController(scene));
+
+        navigateTo("MentorHomeView.fxml");
+        Platform.runLater(() -> registerShellController(contentArea.getScene()));
+    }
+
+    private void registerShellController(Scene scene) {
+        if (scene != null) {
+            scene.getProperties().put("MentorDashboardController", this);
+        }
     }
 
     @FXML
     private void handleNavDashboard() {
         setActiveNav(btnDashboard);
-        contentArea.getChildren().clear();
+        navigateTo("MentorHomeView.fxml");
     }
 
     @FXML
@@ -101,8 +121,15 @@ public class MentorDashboardController implements Initializable {
 
             Parent loginRoot = FXMLLoader.load(loginUrl);
             Stage stage = (Stage) btnLogout.getScene().getWindow();
+
+            // Restore non-maximised login window size before scene swap
+            stage.setMaximized(false);
+            stage.setWidth(1200);
+            stage.setHeight(760);
+
             stage.setScene(new Scene(loginRoot));
-            stage.setTitle("MICHIRU - Sign In");
+            stage.setTitle("MICHIRU — Sign In");
+            stage.centerOnScreen();
             stage.show();
 
         } catch (IOException e) {
@@ -110,7 +137,15 @@ public class MentorDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Executes navigateTo.
+     */
     public void navigateTo(String fxmlFileName) {
+        if ("MentorProfileEditView.fxml".equals(fxmlFileName)) {
+            openProfileEditModal();
+            return;
+        }
+
         try {
             URL viewUrl = getClass().getResource(fxmlFileName);
             if (viewUrl == null) {
@@ -125,6 +160,40 @@ public class MentorDashboardController implements Initializable {
             System.err.println("[MentorDashboardController] navigateTo(" +
                     fxmlFileName + ") error: " + e.getMessage());
             showComingSoon(fxmlFileName);
+        }
+    }
+
+    /** Opens the mentor profile/skills edit form as a centered application-modal window. */
+    /**
+     * Executes openProfileEditModal.
+     */
+    public void openProfileEditModal() {
+        try {
+            URL fxmlUrl = getClass().getResource("MentorProfileEditView.fxml");
+            if (fxmlUrl == null) {
+                System.err.println("[MentorDashboardController] MentorProfileEditView.fxml not found.");
+                return;
+            }
+
+            Parent root = FXMLLoader.load(fxmlUrl);
+            Stage modal = new Stage();
+            modal.initModality(Modality.APPLICATION_MODAL);
+            modal.initOwner(contentArea.getScene().getWindow());
+            modal.initStyle(StageStyle.UNDECORATED);
+            modal.setResizable(false);
+            modal.setScene(new Scene(root));
+
+            // Centre over the owner window
+            Stage owner = (Stage) contentArea.getScene().getWindow();
+            modal.setOnShown(e -> {
+                modal.setX(owner.getX() + (owner.getWidth()  - modal.getWidth())  / 2.0);
+                modal.setY(owner.getY() + (owner.getHeight() - modal.getHeight()) / 2.0);
+            });
+
+            modal.showAndWait();
+
+        } catch (IOException e) {
+            System.err.println("[MentorDashboardController] openProfileEditModal error: " + e.getMessage());
         }
     }
 
@@ -188,3 +257,4 @@ public class MentorDashboardController implements Initializable {
         ).play();
     }
 }
+

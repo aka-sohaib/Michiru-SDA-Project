@@ -1,5 +1,9 @@
 package com.example.michiru;
 
+/**
+ * Class definition for CoordinatorDashboardController.
+ */
+
 import com.example.michiru.session.UserSession;
 
 import javafx.animation.Interpolator;
@@ -9,6 +13,7 @@ import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -23,10 +28,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
-/**
- * Controller for CoordinatorDashboard.fxml.
- * Mirrors the Student and Mentor dashboard shell and swaps only the center content area.
- */
 public class CoordinatorDashboardController implements Initializable {
 
     private static final String STYLE_ACTIVE = "nav-item-active";
@@ -47,7 +48,13 @@ public class CoordinatorDashboardController implements Initializable {
     private Button activeNavButton;
     private List<Button> allNavButtons;
 
+    /**
+     * Binds navigation buttons and loads the default coordinator home module.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         allNavButtons = List.of(
                 btnDashboard,
@@ -63,32 +70,70 @@ public class CoordinatorDashboardController implements Initializable {
         }
         wireLiquidScale(btnLogout);
 
+        contentArea.sceneProperty().addListener((obs, prev, scene) -> registerShellController(scene));
+
         // Load the landing view immediately after the shell is ready
         navigateTo("CoordinatorDashboardHomeView.fxml");
+        Platform.runLater(() -> registerShellController(contentArea.getScene()));
     }
 
-    @FXML
-    private void handleNavDashboard() {
+    private void registerShellController(Scene scene) {
+        if (scene != null) {
+            scene.getProperties().put("CoordinatorDashboardController", this);
+        }
+    }
+
+    /** Invoked from Coordinator home quick-action buttons. */
+    /**
+     * Executes openSkillCatalogueView.
+     */
+    public void openSkillCatalogueView() {
+        setActiveNav(btnSkillCatalogue);
+        navigateTo("SkillCatalogueView.fxml");
+    }
+
+    /**
+     * Executes openQuestionBankView.
+     */
+    public void openQuestionBankView() {
+        setActiveNav(btnQuestionBank);
+        navigateTo("QuestionBankView.fxml");
+    }
+
+    /**
+     * Executes openInternshipsView.
+     */
+    public void openInternshipsView() {
+        setActiveNav(btnInternships);
+        navigateTo("InternshipsView.fxml");
+    }
+
+    /**
+     * Executes openDashboardHomeView.
+     */
+    public void openDashboardHomeView() {
         setActiveNav(btnDashboard);
         navigateTo("CoordinatorDashboardHomeView.fxml");
     }
 
     @FXML
+    private void handleNavDashboard() {
+        openDashboardHomeView();
+    }
+
+    @FXML
     private void handleNavSkillCatalogue() {
-        setActiveNav(btnSkillCatalogue);
-        navigateTo("SkillCatalogueView.fxml");
+        openSkillCatalogueView();
     }
 
     @FXML
     private void handleNavQuestionBank() {
-        setActiveNav(btnQuestionBank);
-        navigateTo("QuestionBankView.fxml");
+        openQuestionBankView();
     }
 
     @FXML
     private void handleNavInternships() {
-        setActiveNav(btnInternships);
-        navigateTo("InternshipsView.fxml");
+        openInternshipsView();
     }
 
     @FXML
@@ -104,8 +149,15 @@ public class CoordinatorDashboardController implements Initializable {
 
             Parent loginRoot = FXMLLoader.load(loginUrl);
             Stage stage = (Stage) btnLogout.getScene().getWindow();
+
+            // Restore non-maximised login window size before scene swap
+            stage.setMaximized(false);
+            stage.setWidth(1200);
+            stage.setHeight(760);
+
             stage.setScene(new Scene(loginRoot));
-            stage.setTitle("MICHIRU - Sign In");
+            stage.setTitle("MICHIRU — Sign In");
+            stage.centerOnScreen();
             stage.show();
 
         } catch (IOException e) {
@@ -113,6 +165,9 @@ public class CoordinatorDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Executes navigateTo.
+     */
     public void navigateTo(String fxmlFileName) {
         try {
             URL viewUrl = getClass().getResource(fxmlFileName);
@@ -191,3 +246,4 @@ public class CoordinatorDashboardController implements Initializable {
         ).play();
     }
 }
+

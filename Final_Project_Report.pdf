@@ -1,0 +1,248 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [ 4 0 R 5 0 R 6 0 R 7 0 R ] /Count 4 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R >> >> /Contents 9 0 R >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R >> >> /Contents 11 0 R >>
+endobj
+8 0 obj
+<< /Length 2540 >>
+stream
+BT
+/F1 11 Tf
+0.15 0.24 0.20 rg
+1 0 0 1 54 790 Tm (MICHIRU Software Requirements and Architecture Report) Tj
+1 0 0 1 54 776 Tm () Tj
+1 0 0 1 54 762 Tm (Product: MICHIRU - Intelligent Readiness and Mentorship Framework) Tj
+1 0 0 1 54 748 Tm (Stack: Java 17, JavaFX, MySQL \(InnoDB\), JDBC) Tj
+1 0 0 1 54 734 Tm () Tj
+1 0 0 1 54 720 Tm (Table of Contents) Tj
+1 0 0 1 54 706 Tm () Tj
+1 0 0 1 54 692 Tm (Table of Contents ii) Tj
+1 0 0 1 54 678 Tm (1. Introduction 1) Tj
+1 0 0 1 54 664 Tm (1.1 Purpose 1) Tj
+1 0 0 1 54 650 Tm (1.2 Product Scope 1) Tj
+1 0 0 1 54 636 Tm (1.3 Title 1) Tj
+1 0 0 1 54 622 Tm (1.4 Objectives 1) Tj
+1 0 0 1 54 608 Tm (1.5 Problem Statement 1) Tj
+1 0 0 1 54 594 Tm (2. Overall Description 1) Tj
+1 0 0 1 54 580 Tm (2.1 Product Perspective 1) Tj
+1 0 0 1 54 566 Tm (2.2 Product Functions 2) Tj
+1 0 0 1 54 552 Tm (2.3 List of Use Cases 2) Tj
+1 0 0 1 54 538 Tm (2.4 Extended Use Cases 2) Tj
+1 0 0 1 54 524 Tm (2.5 Use Case Diagram 2) Tj
+1 0 0 1 54 510 Tm (3. Other Nonfunctional Requirements 2) Tj
+1 0 0 1 54 496 Tm (3.1 Performance Requirements 2) Tj
+1 0 0 1 54 482 Tm (3.2 Safety Requirements 2) Tj
+1 0 0 1 54 468 Tm (3.3 Security Requirements 2) Tj
+1 0 0 1 54 454 Tm (3.4 Software Quality Attributes 2) Tj
+1 0 0 1 54 440 Tm (3.5 Business Rules 3) Tj
+1 0 0 1 54 426 Tm (3.6 Operating Environment 3) Tj
+1 0 0 1 54 412 Tm (3.7 User Interfaces 3) Tj
+1 0 0 1 54 398 Tm (4. Domain Model 3) Tj
+1 0 0 1 54 384 Tm (5. System Sequence Diagram 3) Tj
+1 0 0 1 54 370 Tm (6. Sequence Diagram 3) Tj
+1 0 0 1 54 356 Tm (7. Class Diagram 4) Tj
+1 0 0 1 54 342 Tm (8. Package Diagram 4) Tj
+1 0 0 1 54 328 Tm (9. Deployment Diagram 4) Tj
+1 0 0 1 54 314 Tm () Tj
+1 0 0 1 54 300 Tm () Tj
+1 0 0 1 54 286 Tm () Tj
+1 0 0 1 54 272 Tm (1. Introduction) Tj
+1 0 0 1 54 258 Tm () Tj
+1 0 0 1 54 244 Tm (1.1 Purpose) Tj
+1 0 0 1 54 230 Tm (This report defines the core requirements and architectural direction of MICHIRU and documents) Tj
+1 0 0 1 54 216 Tm (the final refactored structure for implementation and evaluation.) Tj
+1 0 0 1 54 202 Tm () Tj
+1 0 0 1 54 188 Tm (1.2 Product Scope) Tj
+1 0 0 1 54 174 Tm (MICHIRU provides skill assessment, readiness evaluation, mentorship lifecycle management,) Tj
+1 0 0 1 54 160 Tm (validation workflows, and coordinator-managed knowledge assets in a single academic readiness) Tj
+1 0 0 1 54 146 Tm (platform.) Tj
+1 0 0 1 54 132 Tm () Tj
+1 0 0 1 54 118 Tm (1.3 Title) Tj
+1 0 0 1 54 104 Tm (MICHIRU - Intelligent Readiness and Mentorship Framework.) Tj
+1 0 0 1 54 90 Tm () Tj
+1 0 0 1 54 76 Tm (1.4 Objectives) Tj
+ET
+endstream
+endobj
+9 0 obj
+<< /Length 3465 >>
+stream
+BT
+/F1 11 Tf
+0.15 0.24 0.20 rg
+1 0 0 1 54 790 Tm (" Provide a structured and fair mechanism to assess student skills.) Tj
+1 0 0 1 54 776 Tm (" Compute readiness against internship templates using configured skill requirements.) Tj
+1 0 0 1 54 762 Tm (" Support mentorship request, review, roadmap, and validation workflows.) Tj
+1 0 0 1 54 748 Tm (" Enforce clean separation of concerns through a 3-tier facade-driven architecture.) Tj
+1 0 0 1 54 734 Tm () Tj
+1 0 0 1 54 720 Tm (1.5 Problem Statement) Tj
+1 0 0 1 54 706 Tm (Students require an integrated system that can quantify current skill proficiency, identify) Tj
+1 0 0 1 54 692 Tm (readiness gaps for target internship domains, and connect mentorship actions to measurable) Tj
+1 0 0 1 54 678 Tm (progression. MICHIRU addresses this by combining assessment, readiness analytics, and) Tj
+1 0 0 1 54 664 Tm (mentorship operations in one coherent platform.) Tj
+1 0 0 1 54 650 Tm () Tj
+1 0 0 1 54 636 Tm () Tj
+1 0 0 1 54 622 Tm () Tj
+1 0 0 1 54 608 Tm (2. Overall Description) Tj
+1 0 0 1 54 594 Tm () Tj
+1 0 0 1 54 580 Tm (2.1 Product Perspective) Tj
+1 0 0 1 54 566 Tm (MICHIRU is a JavaFX desktop application backed by MySQL. The implementation follows a strict) Tj
+1 0 0 1 54 552 Tm (3-tier structure:) Tj
+1 0 0 1 54 538 Tm (" View layer \(*ViewController classes\) for interaction and rendering.) Tj
+1 0 0 1 54 524 Tm (" Facade layer \(AccessAndOverviewFacade, CatalogAndInternshipFacade, EvaluationFacade,) Tj
+1 0 0 1 54 510 Tm (MentorshipLifecycleFacade\) for use-case orchestration.) Tj
+1 0 0 1 54 496 Tm (" Database handler layer \(MySQLHandler\) for persistence through JDBC.) Tj
+1 0 0 1 54 482 Tm () Tj
+1 0 0 1 54 468 Tm (2.2 Product Functions) Tj
+1 0 0 1 54 454 Tm (" User registration and login with role-based dashboard routing.) Tj
+1 0 0 1 54 440 Tm (" Skill catalog, question bank, and internship template management.) Tj
+1 0 0 1 54 426 Tm (" Skill assessment attempt flow with scoring and proficiency updates.) Tj
+1 0 0 1 54 412 Tm (" Readiness computation against internship templates.) Tj
+1 0 0 1 54 398 Tm (" Mentorship request, approval/decline, roadmap and progress workflows.) Tj
+1 0 0 1 54 384 Tm (" Validation request submission and review cycle.) Tj
+1 0 0 1 54 370 Tm () Tj
+1 0 0 1 54 356 Tm (2.3 List of Use Cases) Tj
+1 0 0 1 54 342 Tm (" UC01 Register) Tj
+1 0 0 1 54 328 Tm (" UC02 Submit Skill Validation Request) Tj
+1 0 0 1 54 314 Tm (" UC03 Manage Skill Catalog) Tj
+1 0 0 1 54 300 Tm (" UC04 Manage Internships) Tj
+1 0 0 1 54 286 Tm (" UC05 Configure Question Bank) Tj
+1 0 0 1 54 272 Tm (" UC06 Take Skill Assessment) Tj
+1 0 0 1 54 258 Tm (" UC07 Assess Readiness) Tj
+1 0 0 1 54 244 Tm (" UC08 Request Mentorship) Tj
+1 0 0 1 54 230 Tm (" UC09 Review Mentorship Requests) Tj
+1 0 0 1 54 216 Tm (" UC10 Generate Roadmap) Tj
+1 0 0 1 54 202 Tm (" UC11 Validate Skill Proficiency) Tj
+1 0 0 1 54 188 Tm (" UC12 Track Mentorship Progress) Tj
+1 0 0 1 54 174 Tm () Tj
+1 0 0 1 54 160 Tm (2.4 Extended Use Cases) Tj
+1 0 0 1 54 146 Tm (Extended behavior is defined in the fully dressed use case set through alternative and) Tj
+1 0 0 1 54 132 Tm (exception scenarios, including insufficient data conditions, cancellation flows, and) Tj
+1 0 0 1 54 118 Tm (validation constraints.) Tj
+1 0 0 1 54 104 Tm () Tj
+1 0 0 1 54 90 Tm (2.5 Use Case Diagram) Tj
+1 0 0 1 54 76 Tm (The overall use case diagram is included in the final report image section.) Tj
+ET
+endstream
+endobj
+10 0 obj
+<< /Length 3789 >>
+stream
+BT
+/F1 11 Tf
+0.15 0.24 0.20 rg
+1 0 0 1 54 790 Tm () Tj
+1 0 0 1 54 776 Tm () Tj
+1 0 0 1 54 762 Tm () Tj
+1 0 0 1 54 748 Tm (3. Other Nonfunctional Requirements) Tj
+1 0 0 1 54 734 Tm () Tj
+1 0 0 1 54 720 Tm (3.1 Performance Requirements) Tj
+1 0 0 1 54 706 Tm (" UI interactions should remain responsive with practical target response under one second for) Tj
+1 0 0 1 54 692 Tm (standard local operations.) Tj
+1 0 0 1 54 678 Tm (" Business processing is centralized in facades to reduce repeated UI-side computation.) Tj
+1 0 0 1 54 664 Tm (" Data retrieval uses bounded queries and operation-specific access methods for predictable) Tj
+1 0 0 1 54 650 Tm (runtime behavior.) Tj
+1 0 0 1 54 636 Tm () Tj
+1 0 0 1 54 622 Tm (3.2 Safety Requirements) Tj
+1 0 0 1 54 608 Tm (" Assessment and mentorship operations maintain controlled state transitions to avoid invalid) Tj
+1 0 0 1 54 594 Tm (updates.) Tj
+1 0 0 1 54 580 Tm (" Submission and review paths are guarded by role context and active relationship checks.) Tj
+1 0 0 1 54 566 Tm (" Error handling paths return users to stable states without corrupting persisted domain) Tj
+1 0 0 1 54 552 Tm (records.) Tj
+1 0 0 1 54 538 Tm () Tj
+1 0 0 1 54 524 Tm (3.3 Security Requirements) Tj
+1 0 0 1 54 510 Tm (" JDBC operations rely on parameterized execution patterns consistent with PreparedStatement) Tj
+1 0 0 1 54 496 Tm (usage to reduce SQL injection exposure.) Tj
+1 0 0 1 54 482 Tm (" Authentication context is enforced before role-scoped actions are executed.) Tj
+1 0 0 1 54 468 Tm (" Sensitive operations \(proficiency updates, readiness records, mentorship transitions\) are) Tj
+1 0 0 1 54 454 Tm (performed through controlled facade entry points rather than UI-level direct access.) Tj
+1 0 0 1 54 440 Tm () Tj
+1 0 0 1 54 426 Tm (3.4 Software Quality Attributes) Tj
+1 0 0 1 54 412 Tm (" Maintainability: clear 3-tier decomposition with facade boundaries.) Tj
+1 0 0 1 54 398 Tm (" Modifiability: business rules isolated from UI controllers and persistence details.) Tj
+1 0 0 1 54 384 Tm (" Testability: facade-level use-case methods provide stable orchestration units.) Tj
+1 0 0 1 54 370 Tm (" Consistency: common flow control and validation standards across controllers.) Tj
+1 0 0 1 54 356 Tm () Tj
+1 0 0 1 54 342 Tm (3.5 Business Rules) Tj
+1 0 0 1 54 328 Tm (" Role-driven capabilities are enforced for Student, Mentor, and Internship Coordinator.) Tj
+1 0 0 1 54 314 Tm (" Assessment outcomes determine proficiency progression according to configured thresholds.) Tj
+1 0 0 1 54 300 Tm (" Readiness is evaluated against internship template skill requirements and weights.) Tj
+1 0 0 1 54 286 Tm (" Mentorship and validation workflows require active contextual constraints before state) Tj
+1 0 0 1 54 272 Tm (updates.) Tj
+1 0 0 1 54 258 Tm () Tj
+1 0 0 1 54 244 Tm (3.6 Operating Environment) Tj
+1 0 0 1 54 230 Tm (" Java Runtime: Java 17.) Tj
+1 0 0 1 54 216 Tm (" Application Framework: JavaFX.) Tj
+1 0 0 1 54 202 Tm (" Database: MySQL \(InnoDB\).) Tj
+1 0 0 1 54 188 Tm (" Data Access: JDBC.) Tj
+1 0 0 1 54 174 Tm (" Desktop execution environment for end users.) Tj
+1 0 0 1 54 160 Tm () Tj
+1 0 0 1 54 146 Tm (3.7 User Interfaces) Tj
+1 0 0 1 54 132 Tm (The system uses JavaFX scene-based interfaces with dedicated controller classes for each) Tj
+1 0 0 1 54 118 Tm (functional module. UI behavior includes role dashboards, form-based CRUD operations, guided) Tj
+1 0 0 1 54 104 Tm (assessment modal flows, and progress-oriented panels for mentorship and readiness review. The) Tj
+1 0 0 1 54 90 Tm (user interface layer is intentionally restricted to interaction handling, presentation state,) Tj
+1 0 0 1 54 76 Tm (and navigation, while business orchestration and persistence remain outside the UI tier.) Tj
+ET
+endstream
+endobj
+11 0 obj
+<< /Length 508 >>
+stream
+BT
+/F1 11 Tf
+0.15 0.24 0.20 rg
+1 0 0 1 54 790 Tm () Tj
+1 0 0 1 54 776 Tm () Tj
+1 0 0 1 54 762 Tm () Tj
+1 0 0 1 54 748 Tm (4. Domain Model) Tj
+1 0 0 1 54 734 Tm () Tj
+1 0 0 1 54 720 Tm (5. System Sequence Diagram) Tj
+1 0 0 1 54 706 Tm () Tj
+1 0 0 1 54 692 Tm (6. Sequence Diagram) Tj
+1 0 0 1 54 678 Tm () Tj
+1 0 0 1 54 664 Tm (7. Class Diagram) Tj
+1 0 0 1 54 650 Tm () Tj
+1 0 0 1 54 636 Tm (8. Package Diagram) Tj
+1 0 0 1 54 622 Tm () Tj
+1 0 0 1 54 608 Tm (9. Deployment Diagram) Tj
+1 0 0 1 54 594 Tm () Tj
+ET
+endstream
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000135 00000 n 
+0000000205 00000 n 
+0000000337 00000 n 
+0000000469 00000 n 
+0000000602 00000 n 
+0000000735 00000 n 
+0000003327 00000 n 
+0000006844 00000 n 
+0000010686 00000 n 
+trailer
+<< /Size 12 /Root 1 0 R >>
+startxref
+11246
+%%EOF

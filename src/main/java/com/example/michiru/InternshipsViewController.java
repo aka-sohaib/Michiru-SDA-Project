@@ -1,8 +1,15 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseCatalog;
-import com.example.michiru.db.MySQLHandler;
+/**
+ * Class definition for InternshipsViewController.
+ */
+
+import com.example.michiru.facade.CatalogAndInternshipFacade;
+import com.example.michiru.facade.CatalogAndInternshipFacade.OperationResult;
+import com.example.michiru.facade.CatalogAndInternshipFacade.TemplateDeletionPlan;
+import com.example.michiru.facade.CatalogAndInternshipFacade.TemplateSaveResult;
 import com.example.michiru.model.InternshipTemplate;
+import com.example.michiru.model.ProficiencyLadder;
 import com.example.michiru.model.SkillAssignment;
 import com.example.michiru.model.SkillOption;
 import com.example.michiru.session.UserSession;
@@ -27,44 +34,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-/**
- * JavaFX controller for {@code InternshipsView.fxml}.
- *
- * <p>Handles the full CRUD lifecycle for {@code internship_templates} on a
- * single screen: the main list, the Add/Edit glassmorphism modal (with inline
- * dynamic skill assignment rows), and the Delete confirmation modal.</p>
- *
- * <p>All database calls go through {@link MySQLHandler}. The blur/dim overlay
- * effect mirrors the technique used in {@link LoginViewController}.</p>
- */
+
 public class InternshipsViewController implements Initializable {
 
-    // ── Animation interpolators (same as CoordinatorDashboardController) ──────
     private static final Interpolator SILK  = Interpolator.SPLINE(0.16, 1.0, 0.30, 1.0);
     private static final Interpolator LIQUID = Interpolator.SPLINE(0.22, 0.68, 0.0, 1.0);
 
-    private static final List<String> PROFICIENCY_LEVELS = List.of(
-            "NOVICE", "BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"
-    );
-
-    // ── FXML Injections ───────────────────────────────────────────────────────
+    private static final List<String> PROFICIENCY_LEVELS =
+            ProficiencyLadder.allLevelNames();
 
     @FXML private StackPane root;
     @FXML private VBox      mainContentLayer;
 
-    // Header
     @FXML private Label  lblSubtitle;
     @FXML private Button btnAdd;
 
-    // Card list
     @FXML private ScrollPane listScrollPane;
     @FXML private VBox        cardContainer;
 
-    // Overlay & modal host
     @FXML private Pane       overlayDim;
     @FXML private StackPane  modalHost;
 
-    // Add / Edit modal
     @FXML private VBox         formModal;
     @FXML private Label        lblModalTitle;
     @FXML private Button       btnModalClose;
@@ -77,16 +67,13 @@ public class InternshipsViewController implements Initializable {
     @FXML private Button       btnSave;
     @FXML private Button       btnAddSkillRow;
 
-    // Delete modal
     @FXML private VBox   deleteModal;
     @FXML private Label  lblDeleteTarget;
     @FXML private HBox   enrollmentWarningBox;
     @FXML private Label  lblEnrollmentWarning;
     @FXML private Button btnConfirmDelete;
 
-    // ── State ─────────────────────────────────────────────────────────────────
-
-    private final DatabaseCatalog db = new MySQLHandler();
+    private final CatalogAndInternshipFacade facade = new CatalogAndInternshipFacade();
 
     /** All active skills fetched once at init and reused for every modal open. */
     private List<SkillOption> allSkills = new ArrayList<>();
@@ -97,11 +84,13 @@ public class InternshipsViewController implements Initializable {
     /** Held during the delete-confirm flow. */
     private InternshipTemplate pendingDelete;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Initialization
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Wires FXML controls and listeners after the scene graph is loaded.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         hideOverlayAndModals();
         loadAllSkills();
@@ -109,19 +98,15 @@ public class InternshipsViewController implements Initializable {
         wireLiquidScale(btnAdd);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Data loading
-    // ─────────────────────────────────────────────────────────────────────────
-
     private void loadAllSkills() {
-        allSkills = db.getAllActiveSkills();
+        allSkills = facade.getAllActiveSkills();
     }
 
     /**
      * Re-queries the database and rebuilds the card list with a fade-in.
      */
     private void refreshList() {
-        List<InternshipTemplate> templates = db.getAllInternshipTemplates();
+        List<InternshipTemplate> templates = facade.getAllInternshipTemplates();
 
         int count = templates.size();
         lblSubtitle.setText(count == 0
@@ -141,7 +126,6 @@ public class InternshipsViewController implements Initializable {
             cardContainer.getChildren().add(card);
         }
 
-        // Stagger-fade each card in
         for (int i = 0; i < cardContainer.getChildren().size(); i++) {
             Node card = cardContainer.getChildren().get(i);
             double delayMs = i * 35.0;
@@ -155,17 +139,12 @@ public class InternshipsViewController implements Initializable {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Card builder
-    // ─────────────────────────────────────────────────────────────────────────
-
     private HBox buildCard(InternshipTemplate t) {
         HBox card = new HBox(16);
         card.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
         card.getStyleClass().add("internship-card");
         card.setPadding(new Insets(16, 20, 16, 20));
 
-        // Icon pill
         StackPane iconPill = new StackPane();
         iconPill.getStyleClass().add("card-icon-pill");
         iconPill.setMinSize(44, 44);
@@ -175,7 +154,6 @@ public class InternshipsViewController implements Initializable {
         briefcase.getStyleClass().add("card-icon");
         iconPill.getChildren().add(briefcase);
 
-        // Name + description
         VBox textBlock = new VBox(4);
         HBox.setHgrow(textBlock, Priority.ALWAYS);
         textBlock.setMinWidth(0);
@@ -191,12 +169,10 @@ public class InternshipsViewController implements Initializable {
         lblDesc.getStyleClass().add("card-desc-label");
         lblDesc.setMaxWidth(Double.MAX_VALUE);
         lblDesc.setEllipsisString("…");
-        // Clip to one line via CSS max height; tooltip shows the full text
         Tooltip.install(lblDesc, styledTooltip(descText));
 
         textBlock.getChildren().addAll(lblName, lblDesc);
 
-        // Meta: skill count + created date
         VBox metaBlock = new VBox(5);
         metaBlock.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
         metaBlock.setMinWidth(120);
@@ -215,12 +191,10 @@ public class InternshipsViewController implements Initializable {
 
         metaBlock.getChildren().addAll(skillBadge, lblCreated);
 
-        // Active / Inactive badge
         Label statusBadge = new Label(t.isActive() ? "● Active" : "○ Inactive");
         statusBadge.getStyleClass().add(t.isActive() ? "active-badge" : "inactive-badge");
         statusBadge.setMinWidth(Region.USE_PREF_SIZE);
 
-        // Edit button
         Button btnEdit = new Button();
         btnEdit.getStyleClass().add("card-action-btn");
         FontIcon editIcon = new FontIcon("fas-edit");
@@ -231,7 +205,6 @@ public class InternshipsViewController implements Initializable {
         btnEdit.setOnAction(e -> openEditModal(t));
         wireLiquidScale(btnEdit);
 
-        // Delete button
         Button btnDelete = new Button();
         btnDelete.getStyleClass().add("card-action-delete-btn");
         FontIcon trashIcon = new FontIcon("fas-trash-alt");
@@ -244,9 +217,6 @@ public class InternshipsViewController implements Initializable {
 
         card.getChildren().addAll(iconPill, textBlock, metaBlock, statusBadge, btnEdit, btnDelete);
 
-        // Hover highlight animation:
-        // avoid X-axis scaling because ScrollPane viewport clips overflow.
-        // We only animate Y scale for a subtle lift without side clipping.
         card.setOnMouseEntered(e -> animateCardHover(card, true));
         card.setOnMouseExited(e -> animateCardHover(card, false));
 
@@ -272,10 +242,6 @@ public class InternshipsViewController implements Initializable {
         return box;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Modal — open / close
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleOpenAddModal() {
         editingTemplate = null;
@@ -291,10 +257,9 @@ public class InternshipsViewController implements Initializable {
         }
 
         skillRowsContainer.getChildren().clear();
-        // Pre-populate 3 empty rows (minimum)
-        addSkillRow(null);
-        addSkillRow(null);
-        addSkillRow(null);
+        for (int i = 0; i < CatalogAndInternshipFacade.MIN_TEMPLATE_SKILL_REQUIREMENTS; i++) {
+            addSkillRow(null);
+        }
 
         clearValidationError();
         showModal(formModal);
@@ -314,12 +279,11 @@ public class InternshipsViewController implements Initializable {
         toggleActive.getStyleClass().add(active ? "status-toggle-active" : "status-toggle-inactive");
 
         skillRowsContainer.getChildren().clear();
-        List<SkillAssignment> existing = db.getSkillRequirements(t.getTemplateId());
+        List<SkillAssignment> existing = facade.getSkillRequirements(t.getTemplateId());
         for (SkillAssignment sa : existing) {
             addSkillRow(sa);
         }
-        // Ensure at least 3 rows are present
-        while (skillRowsContainer.getChildren().size() < 3) {
+        while (skillRowsContainer.getChildren().size() < CatalogAndInternshipFacade.MIN_TEMPLATE_SKILL_REQUIREMENTS) {
             addSkillRow(null);
         }
 
@@ -332,12 +296,14 @@ public class InternshipsViewController implements Initializable {
 
         lblDeleteTarget.setText("You are about to permanently delete:\n\"" + t.getName() + "\"");
 
-        int active = db.checkActiveEnrollments(t.getTemplateId());
-        if (active > 0) {
+        TemplateDeletionPlan plan = facade.planTemplateDeletion(t.getTemplateId());
+        int active = plan.activeEnrollmentCount();
+        int reports = plan.readinessReportCount();
+        btnConfirmDelete.setDisable(!plan.canHardDelete());
+
+        if (active > 0 || reports > 0) {
             lblEnrollmentWarning.setText(
-                    active + " student" + (active == 1 ? " is" : "s are") +
-                    " currently enrolled with IN_PROGRESS status. " +
-                    "Deleting this template will remove all their enrollment records.");
+                    buildDeleteBlockMessage(active, reports));
             enrollmentWarningBox.setVisible(true);
             enrollmentWarningBox.setManaged(true);
         } else {
@@ -346,6 +312,19 @@ public class InternshipsViewController implements Initializable {
         }
 
         showModal(deleteModal);
+    }
+
+    private String buildDeleteBlockMessage(int activeEnrollments, int readinessReports) {
+        List<String> reasons = new ArrayList<>();
+        if (activeEnrollments > 0) {
+            reasons.add(activeEnrollments + " active enrollment" + (activeEnrollments == 1 ? "" : "s"));
+        }
+        if (readinessReports > 0) {
+            reasons.add(readinessReports + " readiness report" + (readinessReports == 1 ? "" : "s"));
+        }
+        return "This template cannot be permanently deleted because it is referenced by "
+                + String.join(" and ", reasons)
+                + ". Deactivate it instead to preserve student history.";
     }
 
     @FXML
@@ -359,12 +338,10 @@ public class InternshipsViewController implements Initializable {
     }
 
     private void showModal(VBox targetModal) {
-        // Hide both modals first, then show the target
         formModal.setVisible(false);
         deleteModal.setVisible(false);
         targetModal.setVisible(true);
 
-        // Apply blur to the card list beneath the overlay
         mainContentLayer.setEffect(new GaussianBlur(8));
 
         overlayDim.setVisible(true);
@@ -432,10 +409,6 @@ public class InternshipsViewController implements Initializable {
         mainContentLayer.setEffect(null);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Form — skill rows
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleAddSkillRow() {
         addSkillRow(null);
@@ -451,7 +424,6 @@ public class InternshipsViewController implements Initializable {
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("skill-row-hbox");
 
-        // Skill ComboBox
         ComboBox<SkillOption> skillCombo = new ComboBox<>();
         skillCombo.getItems().addAll(allSkills);
         skillCombo.setPromptText("Select skill…");
@@ -459,7 +431,6 @@ public class InternshipsViewController implements Initializable {
         skillCombo.setPrefWidth(220);
         skillCombo.setMaxWidth(220);
 
-        // Weight Spinner
         SpinnerValueFactory<Integer> factory =
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10, 1);
         Spinner<Integer> weightSpinner = new Spinner<>(factory);
@@ -467,7 +438,6 @@ public class InternshipsViewController implements Initializable {
         weightSpinner.setPrefWidth(72);
         weightSpinner.setEditable(true);
 
-        // Proficiency ComboBox
         ComboBox<String> levelCombo = new ComboBox<>();
         levelCombo.getItems().addAll(PROFICIENCY_LEVELS);
         levelCombo.setPromptText("Min. level…");
@@ -475,7 +445,6 @@ public class InternshipsViewController implements Initializable {
         levelCombo.setPrefWidth(155);
         levelCombo.setMaxWidth(155);
 
-        // Remove button
         Button removeBtn = new Button();
         removeBtn.getStyleClass().add("skill-row-remove-btn");
         FontIcon removeIcon = new FontIcon("fas-times");
@@ -485,7 +454,6 @@ public class InternshipsViewController implements Initializable {
         removeBtn.setOnAction(e -> removeSkillRow(row));
         Tooltip.install(removeBtn, styledTooltip("Remove this skill"));
 
-        // Pre-fill if editing
         if (prefill != null) {
             allSkills.stream()
                      .filter(s -> s.getSkillId() == prefill.getSkillId())
@@ -497,7 +465,6 @@ public class InternshipsViewController implements Initializable {
 
         row.getChildren().addAll(skillCombo, weightSpinner, levelCombo, removeBtn);
 
-        // Slide-in animation
         row.setOpacity(0);
         row.setTranslateY(-6);
         skillRowsContainer.getChildren().add(row);
@@ -514,7 +481,6 @@ public class InternshipsViewController implements Initializable {
     }
 
     private void removeSkillRow(HBox row) {
-        // Prevent removing below 1 row (UI safety; final validation enforces ≥3)
         if (skillRowsContainer.getChildren().size() <= 1) return;
 
         Timeline tl = new Timeline(
@@ -527,10 +493,6 @@ public class InternshipsViewController implements Initializable {
         tl.play();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Form — status toggle
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleToggleActive() {
         boolean active = toggleActive.isSelected();
@@ -539,77 +501,29 @@ public class InternshipsViewController implements Initializable {
         toggleActive.getStyleClass().add(active ? "status-toggle-active" : "status-toggle-inactive");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Save handler
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleSave() {
         clearValidationError();
 
-        // ── 1. Validate name ─────────────────────────────────────────────────
         String name = fieldName.getText().trim();
         if (name.isBlank()) {
             showValidationError("Template name is required.");
             return;
         }
 
-        // ── 2. Duplicate name check ──────────────────────────────────────────
-        int excludeId = (editingTemplate != null) ? editingTemplate.getTemplateId() : 0;
-        if (db.checkTemplateNameExists(name, excludeId)) {
-            showValidationError("A template named \"" + name + "\" already exists.");
-            return;
-        }
-
-        // ── 3. Collect and validate skill rows ───────────────────────────────
         List<SkillAssignment> assignments = collectSkillRows();
-        if (assignments == null) return; // validation error already shown
+        if (assignments == null) return;
 
-        if (assignments.size() < 3) {
-            showValidationError("At least 3 complete skill requirements are needed. "
-                    + "Currently: " + assignments.size() + ".");
-            return;
-        }
-
-        // ── 4. Check for duplicate skills within the form ────────────────────
-        long distinctSkills = assignments.stream()
-                                         .map(SkillAssignment::getSkillId)
-                                         .distinct()
-                                         .count();
-        if (distinctSkills < assignments.size()) {
-            showValidationError("Each skill may only appear once per template.");
-            return;
-        }
-
-        // ── 5. Persist ───────────────────────────────────────────────────────
         String description = fieldDesc.getText().trim();
         boolean isActive   = toggleActive.isSelected();
 
-        if (editingTemplate == null) {
-            // Add mode
-            int coordinatorId = UserSession.getInstance().getCurrentUser().getUserId();
-            int newId = db.createTemplate(name, description, isActive, coordinatorId);
-            if (newId < 0) {
-                showValidationError("Database error: could not create template. Please try again.");
-                return;
-            }
-            for (SkillAssignment a : assignments) {
-                db.addSkillRequirement(newId, a.getSkillId(), a.getWeight(), a.getMinimumProficiencyLevel());
-            }
-        } else {
-            // Edit mode
-            boolean updated = db.updateTemplate(
-                    editingTemplate.getTemplateId(), name, description, isActive);
-            if (!updated) {
-                showValidationError("Database error: could not update template. Please try again.");
-                return;
-            }
-            boolean replaced = db.replaceSkillRequirements(
-                    editingTemplate.getTemplateId(), assignments);
-            if (!replaced) {
-                showValidationError("Database error: template saved but skill requirements could not be updated.");
-                return;
-            }
+        Integer templateId = editingTemplate != null ? editingTemplate.getTemplateId() : null;
+        int coordinatorId = UserSession.getInstance().getCurrentUser().getUserId();
+        TemplateSaveResult result = facade.createInternshipTemplate(templateId, name, description,
+                isActive, coordinatorId, assignments);
+        if (!result.success()) {
+            showValidationError(result.message());
+            return;
         }
 
         closeModal();
@@ -648,18 +562,13 @@ public class InternshipsViewController implements Initializable {
         return list;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Delete handler
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleConfirmDelete() {
         if (pendingDelete == null) return;
 
-        boolean deleted = db.deleteTemplate(pendingDelete.getTemplateId());
-        if (!deleted) {
-            // Swap to a brief error state inside the delete modal before closing
-            lblDeleteTarget.setText("Database error: could not delete the template. Please try again.");
+        OperationResult result = facade.deleteTemplateWithEnrollmentGuard(pendingDelete.getTemplateId());
+        if (!result.success()) {
+            lblDeleteTarget.setText(result.message());
             enrollmentWarningBox.setVisible(false);
             enrollmentWarningBox.setManaged(false);
             return;
@@ -669,16 +578,11 @@ public class InternshipsViewController implements Initializable {
         refreshList();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Validation helpers
-    // ─────────────────────────────────────────────────────────────────────────
-
     private void showValidationError(String message) {
         lblValidationError.setText(message);
         lblValidationError.setVisible(true);
         lblValidationError.setManaged(true);
 
-        // Brief shake animation on the error label
         Timeline shake = new Timeline(
                 new KeyFrame(Duration.ZERO,       new KeyValue(lblValidationError.translateXProperty(), 0)),
                 new KeyFrame(Duration.millis(50),  new KeyValue(lblValidationError.translateXProperty(), -6)),
@@ -694,10 +598,6 @@ public class InternshipsViewController implements Initializable {
         lblValidationError.setVisible(false);
         lblValidationError.setManaged(false);
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Animation helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void wireLiquidScale(ButtonBase btn) {
         btn.setOnMouseEntered(e -> animateScale(btn, 1.04, 1.04, 180, LIQUID));
@@ -729,10 +629,6 @@ public class InternshipsViewController implements Initializable {
         ).play();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Tooltip helper
-    // ─────────────────────────────────────────────────────────────────────────
-
     private Tooltip styledTooltip(String text) {
         Tooltip tip = new Tooltip(text);
         tip.setStyle(
@@ -749,3 +645,5 @@ public class InternshipsViewController implements Initializable {
         return tip;
     }
 }
+
+

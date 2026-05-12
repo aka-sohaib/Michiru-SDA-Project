@@ -1,7 +1,11 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseCatalog;
-import com.example.michiru.db.MySQLHandler;
+/**
+ * Class definition for ValidationRequestViewController.
+ */
+
+import com.example.michiru.facade.MentorshipLifecycleFacade;
+import com.example.michiru.model.ProficiencyLadder;
 import com.example.michiru.model.Skill;
 import com.example.michiru.model.ValidationRequest;
 import com.example.michiru.session.UserSession;
@@ -28,30 +32,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-/**
- * Controller for ValidationRequestView.fxml — UC04: Submit Validation Request.
- *
- * <h3>Responsibilities</h3>
- * <ol>
- *   <li>Populate the Skill ComboBox from {@code skills} (active only).</li>
- *   <li>Populate static ComboBoxes for Level and Evidence Type.</li>
- *   <li>On submit: validate inputs → auto-assign mentor if active mentorship
- *       exists → INSERT into {@code validation_requests} → refresh history.</li>
- *   <li>Render the history TableView with status badges via cell factories.</li>
- *   <li>Real-time search filtering on the history table by skill name or status.</li>
- * </ol>
- *
- * <h3>note field convention</h3>
- * The DB has a single {@code note TEXT} column. Evidence URL and Project
- * Description are stored combined as:
- * <pre>  &lt;evidence_url&gt;\n---\n&lt;description&gt;</pre>
- */
+
 public class ValidationRequestViewController implements Initializable {
 
-    // ── Animation constants ───────────────────────────────────────────────────
     private static final Interpolator SILK = Interpolator.SPLINE(0.16, 1.0, 0.30, 1.0);
 
-    // ── FXML injections — form ────────────────────────────────────────────────
     @FXML private ComboBox<Skill>  cmbSkill;
     @FXML private ComboBox<String> cmbLevel;
     @FXML private ComboBox<String> cmbEvidenceType;
@@ -61,7 +46,6 @@ public class ValidationRequestViewController implements Initializable {
     @FXML private HBox             hboxError;
     @FXML private Label            lblError;
 
-    // ── FXML injections — history card ────────────────────────────────────────
     @FXML private Label                              lblRequestCount;
     @FXML private Label                              lblHistoryHint;
     @FXML private TextField                          historySearchField;
@@ -73,39 +57,36 @@ public class ValidationRequestViewController implements Initializable {
     @FXML private TableColumn<ValidationRequest, String> colStatus;
     @FXML private TableColumn<ValidationRequest, String> colDate;
 
-    // ── Live data backing ─────────────────────────────────────────────────────
     /** Full unfiltered list — always holds the complete DB result set. */
     private ObservableList<ValidationRequest> allHistory;
     /** Filtered view wired to the search field. */
     private FilteredList<ValidationRequest>   filteredHistory;
 
-    // ── Session & DB ──────────────────────────────────────────────────────────
-    private final DatabaseCatalog db = new MySQLHandler();
+    private final MentorshipLifecycleFacade facade = new MentorshipLifecycleFacade();
     private int studentId;
 
-    // ── Static ComboBox data ──────────────────────────────────────────────────
-    private static final String[] LEVELS = {
-        "NOVICE", "BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"
-    };
+    private static final java.util.List<String> LEVELS =
+            ProficiencyLadder.allLevelNames();
     private static final String[] EVIDENCE_TYPES = {
         "PORTFOLIO", "CERTIFICATE", "PROJECT", "OTHER"
     };
 
-
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Wires FXML controls and listeners after the scene graph is loaded.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         studentId = UserSession.getInstance().getCurrentUser().getUserId();
 
         configureComboBoxes();
         configureTableColumns();
 
-        // Wire the search listener exactly once — loadHistory() reuses allHistory/filteredHistory
         historySearchField.textProperty().addListener(
                 (obs, oldVal, newVal) -> applySearchFilter(newVal));
 
-        // Run DB-bound initialisation on a background thread to keep the UI responsive
         Task<Void> initTask = new Task<>() {
             @Override
             protected Void call() {
@@ -122,8 +103,6 @@ public class ValidationRequestViewController implements Initializable {
         t.setDaemon(true);
         t.start();
     }
-
-    // ── Setup ─────────────────────────────────────────────────────────────────
 
     private void configureComboBoxes() {
         cmbLevel.setItems(FXCollections.observableArrayList(LEVELS));
@@ -194,18 +173,14 @@ public class ValidationRequestViewController implements Initializable {
                 row -> new SimpleStringProperty(row.getValue().getDisplayDate()));
     }
 
-    // ── DB: load skills (unchanged) ───────────────────────────────────────────
-
     /** Fetches skills from DB — safe to call off the FX thread. */
     private List<Skill> fetchSkills() {
-        return db.getActiveSkillsForValidation();
+        return facade.getActiveSkillsForValidation();
     }
-
-    // ── DB: load history + wire search ───────────────────────────────────────
 
     /** Fetches validation history from DB — safe to call off the FX thread. */
     private List<ValidationRequest> fetchHistory() {
-        return db.getValidationHistory(studentId);
+        return facade.getValidationHistory(studentId);
     }
 
     /**
@@ -216,7 +191,7 @@ public class ValidationRequestViewController implements Initializable {
         allHistory      = FXCollections.observableArrayList(history);
         filteredHistory = new FilteredList<>(allHistory, r -> true);
         tblHistory.setItems(filteredHistory);
-        applySearchFilter(historySearchField.getText());   // re-apply current query
+        applySearchFilter(historySearchField.getText());
         updateCounters(allHistory.size());
         refreshEmptyState();
     }
@@ -266,20 +241,6 @@ public class ValidationRequestViewController implements Initializable {
         tblHistory.setVisible(!empty);
     }
 
-    // ── DB: resolve active mentor ─────────────────────────────────────────────
-
-    private Integer resolveActiveMentor() {
-        return db.findActiveMentorForStudent(studentId);
-    }
-
-    // ── DB: duplicate guard ──────────────────────────────────────────────────
-
-    private boolean hasPendingRequest(int skillId, String level) {
-        return db.hasPendingValidationRequest(studentId, skillId, level);
-    }
-
-    // ── Submit handler (unchanged) ────────────────────────────────────────────
-
     @FXML
     private void handleSubmit() {
         hideError();
@@ -290,47 +251,17 @@ public class ValidationRequestViewController implements Initializable {
         String url          = txtEvidenceUrl.getText().trim();
         String description  = txtDescription.getText().trim();
 
-        if (skill == null) {
-            showError("Please select a skill to validate."); return;
-        }
-        if (level == null) {
-            showError("Please choose the proficiency level you are claiming."); return;
-        }
-        if (evidenceType == null) {
-            showError("Please select the type of evidence you are submitting."); return;
-        }
-        if (url.isEmpty()) {
-            showError("Please provide an evidence URL (GitHub link, certificate, etc.)."); return;
-        }
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            showError("Evidence URL must start with http:// or https://"); return;
-        }
-
-        if (hasPendingRequest(skill.getSkillId(), level)) {
-            showError("You already have a pending request for \""
-                      + skill.getName() + "\" at " + level + " level.");
-            return;
-        }
-
-        String combinedNote = description.isEmpty() ? url : url + "\n---\n" + description;
-        Integer mentorId    = resolveActiveMentor();
-
-        boolean saved = db.saveValidationRequest(
-                studentId, mentorId, skill.getSkillId(),
-                level, evidenceType, combinedNote);
-        if (!saved) {
-            showError("Database error: request could not be saved.");
+        MentorshipLifecycleFacade.ValidationSubmissionResult result =
+                facade.submitValidationRequest(studentId, skill, level, evidenceType, url, description);
+        if (!result.success()) {
+            showError(result.message());
             return;
         }
 
         clearForm();
         loadHistory();
-        showSuccessToast(mentorId != null
-                ? "Request submitted! Assigned to your active mentor."
-                : "Request submitted! It will be reviewed by an available mentor.");
+        showSuccessToast(result.message());
     }
-
-    // ── UI helpers ────────────────────────────────────────────────────────────
 
     private void clearForm() {
         cmbSkill.setValue(null);
@@ -392,8 +323,6 @@ public class ValidationRequestViewController implements Initializable {
         new SequentialTransition(fadeIn, hold, fadeOut).play();
     }
 
-    // ── Badge factories ───────────────────────────────────────────────────────
-
     private HBox buildLevelBadge(String level) {
         Label badge = new Label(capitalize(level));
         badge.getStyleClass().addAll("exam-tier-badge",
@@ -426,8 +355,6 @@ public class ValidationRequestViewController implements Initializable {
         return wrap;
     }
 
-    // ── String utilities ──────────────────────────────────────────────────────
-
     private static String capitalize(String s) {
         if (s == null || s.isEmpty()) return s;
         return s.charAt(0) + s.substring(1).toLowerCase();
@@ -453,3 +380,5 @@ public class ValidationRequestViewController implements Initializable {
         };
     }
 }
+
+

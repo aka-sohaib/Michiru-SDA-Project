@@ -1,7 +1,13 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseCatalog;
-import com.example.michiru.db.MySQLHandler;
+/**
+ * Class definition for QuestionBankViewController.
+ */
+
+import com.example.michiru.facade.CatalogAndInternshipFacade;
+import com.example.michiru.facade.CatalogAndInternshipFacade.OperationResult;
+import com.example.michiru.facade.CatalogAndInternshipFacade.QuestionDeletionPlan;
+import com.example.michiru.facade.CatalogAndInternshipFacade.QuestionSaveResult;
 import com.example.michiru.model.Question;
 import com.example.michiru.model.Skill;
 import com.example.michiru.session.UserSession;
@@ -26,33 +32,14 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
-/**
- * JavaFX controller for {@code QuestionBankView.fxml} (UC05).
- *
- * <p>Master-detail CRUD: the coordinator selects a skill from the top-bar
- * ComboBox, which loads all questions for that skill into the card list.</p>
- *
- * <h3>Three-state delete modal (Q1 + Q2)</h3>
- * <ol>
- *   <li><b>Threshold violation</b> — active question count ≤ skill's
- *       {@code questions_required_to_pass}: both delete and deactivate are
- *       fully blocked. Only Cancel is offered.</li>
- *   <li><b>Assessment history</b> — question has been used in at least one
- *       student assessment response: hard delete is blocked; "Deactivate
- *       Question" ({@code is_active = 0}) is offered.</li>
- *   <li><b>Clean</b> — no history, above threshold: standard hard delete.</li>
- * </ol>
- */
+
 public class QuestionBankViewController implements Initializable {
 
-    // ── Animation interpolators ───────────────────────────────────────────────
     private static final Interpolator SILK   = Interpolator.SPLINE(0.16, 1.0, 0.30, 1.0);
     private static final Interpolator LIQUID = Interpolator.SPLINE(0.22, 0.68, 0.0, 1.0);
 
     private static final List<String> CORRECT_OPTIONS  = List.of("A", "B", "C", "D");
     private static final List<String> DIFFICULTY_LEVELS = List.of("EASY", "MEDIUM", "HARD");
-
-    // ── FXML injections ───────────────────────────────────────────────────────
 
     @FXML private StackPane root;
     @FXML private VBox      mainContentLayer;
@@ -60,6 +47,7 @@ public class QuestionBankViewController implements Initializable {
     @FXML private Label             lblSubtitle;
     @FXML private ComboBox<Skill>   skillSelector;
     @FXML private Button            btnAdd;
+    @FXML private TextField         searchField;
 
     @FXML private ScrollPane listScrollPane;
     @FXML private VBox        cardContainer;
@@ -67,7 +55,6 @@ public class QuestionBankViewController implements Initializable {
     @FXML private Pane      overlayDim;
     @FXML private StackPane modalHost;
 
-    // Add / Edit modal
     @FXML private VBox             formModal;
     @FXML private Label            lblModalTitle;
     @FXML private TextArea         fieldQuestionText;
@@ -81,7 +68,6 @@ public class QuestionBankViewController implements Initializable {
     @FXML private Label            lblValidationError;
     @FXML private Button           btnSave;
 
-    // Delete / deactivate modal
     @FXML private VBox   deleteModal;
     @FXML private Label  lblDeleteModalTitle;
     @FXML private Label  lblDeleteTarget;
@@ -93,12 +79,13 @@ public class QuestionBankViewController implements Initializable {
     @FXML private Button btnConfirmHardDelete;
     @FXML private Button btnDeactivateQuestion;
 
-    // ── State ─────────────────────────────────────────────────────────────────
-
-    private final DatabaseCatalog db = new MySQLHandler();
+    private final CatalogAndInternshipFacade facade = new CatalogAndInternshipFacade();
 
     /** The skill whose questions are currently displayed; null if none selected. */
     private Skill selectedSkill;
+
+    /** Full question list from DB — kept for search re-filtering. */
+    private List<Question> allQuestions = List.of();
 
     /** Non-null in edit mode; null in add mode. */
     private Question editingQuestion;
@@ -106,17 +93,21 @@ public class QuestionBankViewController implements Initializable {
     /** Held during the delete/deactivate confirmation flow. */
     private Question pendingDelete;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Initialization
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Wires FXML controls and listeners after the scene graph is loaded.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         hideOverlayAndModals();
         setupFormControls();
         setupSkillSelector();
         showNoSkillPlaceholder();
         wireLiquidScale(btnAdd);
+
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> applySearchFilter(newVal));
     }
 
     private void setupFormControls() {
@@ -125,19 +116,28 @@ public class QuestionBankViewController implements Initializable {
     }
 
     private void setupSkillSelector() {
-        List<Skill> skills = db.getAllSkills();
+        List<Skill> skills = facade.getAllSkills();
         skillSelector.getItems().addAll(skills);
 
         skillSelector.setConverter(new StringConverter<>() {
+            /**
+             * Renders a skill row as name plus category for the combo display.
+             */
             @Override
+            /**
+             * Executes toString.
+             */
             public String toString(Skill s) {
                 return s == null ? "" : s.getName() + "  (" + s.getCategory() + ")";
             }
+
+            /**
+             * Combo selection is object-based; free-typed strings are not resolved here.
+             */
             @Override
             public Skill fromString(String s) { return null; }
         });
 
-        // Ensure button cell also uses the converter for the selected display
         skillSelector.setButtonCell(new ListCell<>() {
             @Override
             protected void updateItem(Skill s, boolean empty) {
@@ -152,10 +152,6 @@ public class QuestionBankViewController implements Initializable {
         });
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Skill selection
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleSkillSelected() {
         selectedSkill = skillSelector.getValue();
@@ -168,21 +164,23 @@ public class QuestionBankViewController implements Initializable {
         refreshList();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Data loading
-    // ─────────────────────────────────────────────────────────────────────────
-
     private void refreshList() {
         if (selectedSkill == null) { showNoSkillPlaceholder(); return; }
 
-        List<Question> questions = db.getQuestionsForSkill(selectedSkill.getSkillId());
+        allQuestions = facade.getQuestionsForSkill(selectedSkill.getSkillId());
+        searchField.clear();
+        renderQuestions(allQuestions);
+    }
 
+    /** Renders the given question list into cards with stagger-fade. */
+    private void renderQuestions(List<Question> questions) {
         int count = questions.size();
+        String skillLabel = (selectedSkill != null) ? selectedSkill.getName() : "";
         lblSubtitle.setText(
-                selectedSkill.getName() + " — " +
+                skillLabel + " — " +
                 (count == 0 ? "No questions yet" :
                  count + " question" + (count == 1 ? "" : "s")) +
-                "  ·  Pass threshold: " + selectedSkill.getQuestionsRequiredToPass()
+                (selectedSkill != null ? "  ·  Pass threshold: " + selectedSkill.getQuestionsRequiredToPass() : "")
         );
 
         cardContainer.getChildren().clear();
@@ -210,6 +208,20 @@ public class QuestionBankViewController implements Initializable {
         }
     }
 
+    /** Filters questions by text or difficulty matching the search query. */
+    private void applySearchFilter(String query) {
+        if (query == null || query.isBlank()) {
+            renderQuestions(allQuestions);
+            return;
+        }
+        String lowerQuery = query.trim().toLowerCase();
+        List<Question> filtered = allQuestions.stream()
+                .filter(q -> q.getQuestionText().toLowerCase().contains(lowerQuery)
+                          || (q.getDifficultyLevel() != null && q.getDifficultyLevel().toLowerCase().contains(lowerQuery)))
+                .toList();
+        renderQuestions(filtered);
+    }
+
     private void showNoSkillPlaceholder() {
         lblSubtitle.setText("Select a skill to view its questions");
         cardContainer.getChildren().clear();
@@ -232,17 +244,12 @@ public class QuestionBankViewController implements Initializable {
         cardContainer.getChildren().add(placeholder);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Card builder
-    // ─────────────────────────────────────────────────────────────────────────
-
     private HBox buildCard(Question q) {
         HBox card = new HBox(14);
         card.setAlignment(Pos.CENTER_LEFT);
         card.getStyleClass().add("internship-card");
         card.setPadding(new Insets(15, 20, 15, 20));
 
-        // Icon pill
         StackPane iconPill = new StackPane();
         iconPill.getStyleClass().add("card-icon-pill");
         iconPill.setMinSize(42, 42);
@@ -252,7 +259,6 @@ public class QuestionBankViewController implements Initializable {
         icon.getStyleClass().add("card-icon");
         iconPill.getChildren().add(icon);
 
-        // Question text (truncated with tooltip)
         String fullText = q.getQuestionText();
         String displayText = fullText.length() > 120
                 ? fullText.substring(0, 120) + "…"
@@ -263,22 +269,18 @@ public class QuestionBankViewController implements Initializable {
         HBox.setHgrow(lblText, Priority.ALWAYS);
         Tooltip.install(lblText, styledTooltip(fullText));
 
-        // Correct answer badge ("Ans: B")
         Label correctBadge = new Label("Ans: " + q.getCorrectOption());
         correctBadge.getStyleClass().add("correct-answer-badge");
         correctBadge.setMinWidth(Region.USE_PREF_SIZE);
 
-        // Difficulty badge
         Label diffBadge = new Label(q.getDifficultyLevel());
         diffBadge.getStyleClass().add(difficultyStyleClass(q.getDifficultyLevel()));
         diffBadge.setMinWidth(Region.USE_PREF_SIZE);
 
-        // Active/Inactive badge
         Label statusBadge = new Label(q.isActive() ? "● Active" : "○ Inactive");
         statusBadge.getStyleClass().add(q.isActive() ? "active-badge" : "inactive-badge");
         statusBadge.setMinWidth(Region.USE_PREF_SIZE);
 
-        // Edit button
         Button btnEdit = new Button();
         btnEdit.getStyleClass().add("card-action-btn");
         FontIcon editIcon = new FontIcon("fas-edit");
@@ -289,7 +291,6 @@ public class QuestionBankViewController implements Initializable {
         btnEdit.setOnAction(e -> openEditModal(q));
         wireLiquidScale(btnEdit);
 
-        // Delete button
         Button btnDelete = new Button();
         btnDelete.getStyleClass().add("card-action-delete-btn");
         FontIcon trashIcon = new FontIcon("fas-trash-alt");
@@ -336,10 +337,6 @@ public class QuestionBankViewController implements Initializable {
             default       -> "difficulty-badge-easy";
         };
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Modal — open / close
-    // ─────────────────────────────────────────────────────────────────────────
 
     @FXML
     private void handleOpenAddModal() {
@@ -388,35 +385,25 @@ public class QuestionBankViewController implements Initializable {
     private void openDeleteModal(Question q) {
         pendingDelete = q;
 
-        // Truncate question text for modal display
         String preview = q.getQuestionText().length() > 90
                 ? q.getQuestionText().substring(0, 90) + "…"
                 : q.getQuestionText();
         lblDeleteTarget.setText("\"" + preview + "\"");
 
-        // ── Guard 1: Threshold check (only for active questions) ──────────────
-        boolean thresholdBlocked = false;
-        if (q.isActive() && selectedSkill != null) {
-            int activeCount = db.getActiveQuestionCountForSkill(selectedSkill.getSkillId());
-            int threshold   = selectedSkill.getQuestionsRequiredToPass();
-            thresholdBlocked = (activeCount <= threshold);
-            if (thresholdBlocked) {
-                lblThresholdInfo.setText(
-                        "This skill has only " + activeCount + " active question" +
-                        (activeCount == 1 ? "" : "s") +
-                        " and requires at least " + threshold + " to run assessments.");
-            }
-        }
-
-        // ── Guard 2: Assessment usage check ──────────────────────────────────
-        int usageCount = 0;
-        if (!thresholdBlocked) {
-            usageCount = db.checkQuestionAssessmentUsage(q.getQuestionId());
-        }
-
-        // ── Determine modal state ─────────────────────────────────────────────
+        QuestionDeletionPlan plan = facade.planQuestionRemoval(q, selectedSkill);
+        boolean thresholdBlocked = plan.thresholdBlocked();
         if (thresholdBlocked) {
-            // State 1: fully blocked
+            int activeCount = plan.activeQuestionCount();
+            int threshold = plan.questionsRequiredToPass();
+            lblThresholdInfo.setText(
+                    "This skill has only " + activeCount + " active question" +
+                    (activeCount == 1 ? "" : "s") +
+                    " and requires at least " + threshold + " to run assessments.");
+        }
+
+        int usageCount = plan.assessmentUsageCount();
+
+        if (thresholdBlocked) {
             lblDeleteModalTitle.setText("Cannot Remove Question");
             thresholdBlockBox.setVisible(true);
             thresholdBlockBox.setManaged(true);
@@ -429,7 +416,6 @@ public class QuestionBankViewController implements Initializable {
             btnDeactivateQuestion.setManaged(false);
 
         } else if (usageCount > 0) {
-            // State 2: assessment history — offer deactivate only
             lblDeleteModalTitle.setText("Question In Use");
             thresholdBlockBox.setVisible(false);
             thresholdBlockBox.setManaged(false);
@@ -445,7 +431,6 @@ public class QuestionBankViewController implements Initializable {
             btnDeactivateQuestion.setManaged(true);
 
         } else {
-            // State 3: clean delete
             lblDeleteModalTitle.setText("Delete Question");
             thresholdBlockBox.setVisible(false);
             thresholdBlockBox.setManaged(false);
@@ -529,10 +514,6 @@ public class QuestionBankViewController implements Initializable {
         mainContentLayer.setEffect(null);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Status toggle
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleToggleActive() {
         boolean active = toggleActive.isSelected();
@@ -541,22 +522,16 @@ public class QuestionBankViewController implements Initializable {
         toggleActive.getStyleClass().add(active ? "status-toggle-active" : "status-toggle-inactive");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Save handler
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleSave() {
         clearValidationError();
 
-        // ── 1. Question text ──────────────────────────────────────────────────
         String text = fieldQuestionText.getText().trim();
         if (text.isBlank()) {
             showValidationError("Question text is required.");
             return;
         }
 
-        // ── 2. All four options ───────────────────────────────────────────────
         String optA = fieldOptionA.getText().trim();
         String optB = fieldOptionB.getText().trim();
         String optC = fieldOptionC.getText().trim();
@@ -566,69 +541,41 @@ public class QuestionBankViewController implements Initializable {
             return;
         }
 
-        // ── 3. Correct option ─────────────────────────────────────────────────
         String correctOption = fieldCorrectOption.getValue();
         if (correctOption == null) {
             showValidationError("Please select the correct answer (A, B, C, or D).");
             return;
         }
 
-        // ── 4. Difficulty ─────────────────────────────────────────────────────
         String difficulty = fieldDifficulty.getValue();
         if (difficulty == null) {
             showValidationError("Please select a difficulty level.");
             return;
         }
 
-        // ── 5. Duplicate text check (within same skill) ───────────────────────
-        if (selectedSkill != null) {
-            int excludeId = (editingQuestion != null) ? editingQuestion.getQuestionId() : 0;
-            if (db.checkDuplicateQuestionText(text, selectedSkill.getSkillId(), excludeId)) {
-                showValidationError("An identical question already exists for this skill.");
-                return;
-            }
-        }
-
-        // ── 6. Persist ────────────────────────────────────────────────────────
         boolean isActive = toggleActive.isSelected();
 
-        if (editingQuestion == null) {
-            // Add mode
-            int coordinatorId = UserSession.getInstance().getCurrentUser().getUserId();
-            int newId = db.createQuestion(
-                    selectedSkill.getSkillId(), text,
-                    optA, optB, optC, optD,
-                    correctOption, difficulty, coordinatorId);
-            if (newId < 0) {
-                showValidationError("Database error: could not create question. Please try again.");
-                return;
-            }
-        } else {
-            // Edit mode
-            boolean ok = db.updateQuestion(
-                    editingQuestion.getQuestionId(), text,
-                    optA, optB, optC, optD,
-                    correctOption, difficulty, isActive);
-            if (!ok) {
-                showValidationError("Database error: could not update question. Please try again.");
-                return;
-            }
+        Integer questionId = editingQuestion != null ? editingQuestion.getQuestionId() : null;
+        int coordinatorId = UserSession.getInstance().getCurrentUser().getUserId();
+        QuestionSaveResult result = facade.saveQuestionWithDuplicateGuard(questionId,
+                selectedSkill.getSkillId(), text, optA, optB, optC, optD,
+                correctOption, difficulty, isActive, coordinatorId);
+        if (!result.success()) {
+            showValidationError(result.message());
+            return;
         }
 
         closeModal();
         refreshList();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Delete / Deactivate handlers
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleConfirmDelete() {
         if (pendingDelete == null) return;
-        boolean ok = db.deleteQuestion(pendingDelete.getQuestionId());
-        if (!ok) {
-            lblDeleteSubtext.setText("Database error: could not delete the question. Please try again.");
+        OperationResult result = facade.deleteQuestionWithSafetyCheck(
+                pendingDelete.getQuestionId(), selectedSkill, pendingDelete.isActive());
+        if (!result.success()) {
+            lblDeleteSubtext.setText(result.message());
             return;
         }
         closeModal();
@@ -638,18 +585,14 @@ public class QuestionBankViewController implements Initializable {
     @FXML
     private void handleDeactivateQuestion() {
         if (pendingDelete == null) return;
-        boolean ok = db.deactivateQuestion(pendingDelete.getQuestionId());
-        if (!ok) {
-            lblAssessmentUsage.setText("Database error: could not deactivate the question. Please try again.");
+        OperationResult result = facade.deactivateQuestionWithUsagePolicy(pendingDelete.getQuestionId());
+        if (!result.success()) {
+            lblAssessmentUsage.setText(result.message());
             return;
         }
         closeModal();
         refreshList();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Validation helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void showValidationError(String message) {
         lblValidationError.setText(message);
@@ -671,10 +614,6 @@ public class QuestionBankViewController implements Initializable {
         lblValidationError.setVisible(false);
         lblValidationError.setManaged(false);
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Animation helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void wireLiquidScale(ButtonBase btn) {
         btn.setOnMouseEntered(e -> animateScale(btn, 1.04, 1.04, 180, LIQUID));
@@ -706,10 +645,6 @@ public class QuestionBankViewController implements Initializable {
         ).play();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Tooltip helper
-    // ─────────────────────────────────────────────────────────────────────────
-
     private Tooltip styledTooltip(String text) {
         Tooltip tip = new Tooltip(text);
         tip.setStyle(
@@ -728,3 +663,5 @@ public class QuestionBankViewController implements Initializable {
         return tip;
     }
 }
+
+

@@ -1,7 +1,14 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseCatalog;
-import com.example.michiru.db.MySQLHandler;
+/**
+ * Class definition for SkillCatalogueViewController.
+ */
+
+import com.example.michiru.facade.CatalogAndInternshipFacade;
+import com.example.michiru.facade.CatalogAndInternshipFacade.OperationResult;
+import com.example.michiru.facade.CatalogAndInternshipFacade.SkillDeletionPlan;
+import com.example.michiru.facade.CatalogAndInternshipFacade.SkillSaveResult;
+import com.example.michiru.model.ProficiencyLadder;
 import com.example.michiru.model.Skill;
 import com.example.michiru.session.UserSession;
 
@@ -24,35 +31,20 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
-/**
- * JavaFX controller for {@code SkillCatalogueView.fxml} (UC02).
- *
- * <p>Full single-page CRUD for the {@code skills} table.</p>
- *
- * <h3>Delete / Deactivate logic (Q3 — Option C)</h3>
- * <ol>
- *   <li>Query dependency counts via {@link MySQLHandler#checkSkillDependencies}.</li>
- *   <li>If both counts are zero → show standard hard-delete confirmation.</li>
- *   <li>If any count &gt; 0 → explain dependencies, offer only "Deactivate"
- *       (sets {@code is_active = 0}), hard-delete button is hidden.</li>
- * </ol>
- */
 public class SkillCatalogueViewController implements Initializable {
 
-    // ── Animation interpolators ───────────────────────────────────────────────
     private static final Interpolator SILK   = Interpolator.SPLINE(0.16, 1.0, 0.30, 1.0);
     private static final Interpolator LIQUID = Interpolator.SPLINE(0.22, 0.68, 0.0, 1.0);
 
     private static final List<String> DIFFICULTY_TIERS =
-            List.of("BEGINNER", "INTERMEDIATE", "ADVANCED");
-
-    // ── FXML injections ───────────────────────────────────────────────────────
+            ProficiencyLadder.skillDifficultyTierNames();
 
     @FXML private StackPane root;
     @FXML private VBox      mainContentLayer;
 
     @FXML private Label  lblSubtitle;
     @FXML private Button btnAdd;
+    @FXML private TextField searchField;
 
     @FXML private ScrollPane listScrollPane;
     @FXML private VBox        cardContainer;
@@ -60,7 +52,6 @@ public class SkillCatalogueViewController implements Initializable {
     @FXML private Pane      overlayDim;
     @FXML private StackPane modalHost;
 
-    // Add / Edit form modal
     @FXML private VBox         formModal;
     @FXML private Label        lblModalTitle;
     @FXML private TextField    fieldName;
@@ -73,7 +64,6 @@ public class SkillCatalogueViewController implements Initializable {
     @FXML private Button       btnCancel;
     @FXML private Button       btnSave;
 
-    // Delete / deactivate modal
     @FXML private VBox   deleteModal;
     @FXML private Label  lblDeleteModalTitle;
     @FXML private Label  lblDeleteTarget;
@@ -83,9 +73,10 @@ public class SkillCatalogueViewController implements Initializable {
     @FXML private Button btnConfirmHardDelete;
     @FXML private Button btnDeactivateSkill;
 
-    // ── State ─────────────────────────────────────────────────────────────────
+    private final CatalogAndInternshipFacade facade = new CatalogAndInternshipFacade();
 
-    private final DatabaseCatalog db = new MySQLHandler();
+    /** Full skill list from DB — kept for search re-filtering. */
+    private List<Skill> allSkills = List.of();
 
     /** Non-null when editing; null when adding. */
     private Skill editingSkill;
@@ -93,36 +84,40 @@ public class SkillCatalogueViewController implements Initializable {
     /** Held during the delete/deactivate confirmation flow. */
     private Skill pendingDelete;
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Initialization
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Wires search listeners, form defaults, and loads the initial skill catalogue list.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         hideOverlayAndModals();
         setupFormControls();
         refreshList();
         wireLiquidScale(btnAdd);
+
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> applySearchFilter(newVal));
     }
 
     private void setupFormControls() {
-        // Difficulty ComboBox — fixed ENUM values
+
         fieldDifficulty.getItems().addAll(DIFFICULTY_TIERS);
 
-        // Pass threshold Spinner — range 1-50, default 5
         SpinnerValueFactory<Integer> svf =
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 50, 5);
         spinnerPassThreshold.setValueFactory(svf);
         spinnerPassThreshold.setEditable(true);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Data loading
-    // ─────────────────────────────────────────────────────────────────────────
-
     private void refreshList() {
-        List<Skill> skills = db.getAllSkills();
+        allSkills = facade.getAllSkills();
+        searchField.clear();
+        renderSkills(allSkills);
+    }
 
+    /** Renders the given skill list into cards with stagger-fade. */
+    private void renderSkills(List<Skill> skills) {
         int count = skills.size();
         lblSubtitle.setText(count == 0
                 ? "No skills registered yet"
@@ -141,7 +136,6 @@ public class SkillCatalogueViewController implements Initializable {
             cardContainer.getChildren().add(card);
         }
 
-        // Stagger-fade
         for (int i = 0; i < cardContainer.getChildren().size(); i++) {
             Node card = cardContainer.getChildren().get(i);
             double delayMs = i * 30.0;
@@ -154,6 +148,20 @@ public class SkillCatalogueViewController implements Initializable {
         }
     }
 
+    /** Filters the full skill list by the search query, matching name or category. */
+    private void applySearchFilter(String query) {
+        if (query == null || query.isBlank()) {
+            renderSkills(allSkills);
+            return;
+        }
+        String lowerQuery = query.trim().toLowerCase();
+        List<Skill> filtered = allSkills.stream()
+                .filter(s -> s.getName().toLowerCase().contains(lowerQuery)
+                          || (s.getCategory() != null && s.getCategory().toLowerCase().contains(lowerQuery)))
+                .toList();
+        renderSkills(filtered);
+    }
+
     /**
      * Loads distinct category strings from the DB into the category ComboBox.
      * Called every time a modal is opened so that newly created categories
@@ -161,16 +169,11 @@ public class SkillCatalogueViewController implements Initializable {
      */
     private void refreshCategoryOptions() {
         String current = fieldCategory.getEditor().getText();
-        fieldCategory.getItems().setAll(db.getDistinctCategories());
-        // Restore whatever the user had typed/selected
+        fieldCategory.getItems().setAll(facade.getDistinctCategories());
         if (current != null && !current.isBlank()) {
             fieldCategory.getEditor().setText(current);
         }
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Card builder
-    // ─────────────────────────────────────────────────────────────────────────
 
     private HBox buildCard(Skill s) {
         HBox card = new HBox(14);
@@ -178,7 +181,6 @@ public class SkillCatalogueViewController implements Initializable {
         card.getStyleClass().add("internship-card");
         card.setPadding(new Insets(15, 20, 15, 20));
 
-        // Icon pill
         StackPane iconPill = new StackPane();
         iconPill.getStyleClass().add("card-icon-pill");
         iconPill.setMinSize(42, 42);
@@ -188,7 +190,6 @@ public class SkillCatalogueViewController implements Initializable {
         icon.getStyleClass().add("card-icon");
         iconPill.getChildren().add(icon);
 
-        // Name + description text block
         VBox textBlock = new VBox(4);
         HBox.setHgrow(textBlock, Priority.ALWAYS);
         textBlock.setMinWidth(0);
@@ -206,7 +207,6 @@ public class SkillCatalogueViewController implements Initializable {
 
         textBlock.getChildren().addAll(lblName, lblDesc);
 
-        // Meta badges: category + pass threshold
         VBox metaBlock = new VBox(5);
         metaBlock.setAlignment(Pos.CENTER_RIGHT);
         metaBlock.setMinWidth(130);
@@ -226,17 +226,14 @@ public class SkillCatalogueViewController implements Initializable {
 
         metaBlock.getChildren().addAll(categoryBadge, passBox);
 
-        // Difficulty tier badge (color-coded)
         Label diffBadge = new Label(s.getDifficultyTier());
         diffBadge.getStyleClass().add(difficultyStyleClass(s.getDifficultyTier()));
         diffBadge.setMinWidth(Region.USE_PREF_SIZE);
 
-        // Active / Inactive badge
         Label statusBadge = new Label(s.isActive() ? "● Active" : "○ Inactive");
         statusBadge.getStyleClass().add(s.isActive() ? "active-badge" : "inactive-badge");
         statusBadge.setMinWidth(Region.USE_PREF_SIZE);
 
-        // Edit button
         Button btnEdit = new Button();
         btnEdit.getStyleClass().add("card-action-btn");
         FontIcon editIcon = new FontIcon("fas-edit");
@@ -247,7 +244,6 @@ public class SkillCatalogueViewController implements Initializable {
         btnEdit.setOnAction(e -> openEditModal(s));
         wireLiquidScale(btnEdit);
 
-        // Delete button
         Button btnDelete = new Button();
         btnDelete.getStyleClass().add("card-action-delete-btn");
         FontIcon trashIcon = new FontIcon("fas-trash-alt");
@@ -296,10 +292,6 @@ public class SkillCatalogueViewController implements Initializable {
         };
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Modal — open / close
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleOpenAddModal() {
         editingSkill = null;
@@ -340,7 +332,7 @@ public class SkillCatalogueViewController implements Initializable {
         toggleActive.getStyleClass().add(active ? "status-toggle-active" : "status-toggle-inactive");
 
         refreshCategoryOptions();
-        // Pre-select category; setEditable ComboBox uses getEditor().setText for display
+
         fieldCategory.getEditor().setText(s.getCategory());
 
         clearValidationError();
@@ -352,13 +344,13 @@ public class SkillCatalogueViewController implements Initializable {
 
         lblDeleteTarget.setText("You are about to act on:\n\"" + s.getName() + "\"");
 
-        int[] deps = db.checkSkillDependencies(s.getSkillId());
-        int questionCount     = deps[0];
-        int requirementCount  = deps[1];
-        boolean hasDeps       = (questionCount + requirementCount) > 0;
+        SkillDeletionPlan plan = facade.planSkillDeletion(s.getSkillId());
+        int questionCount     = plan.questionCount();
+        int requirementCount  = plan.requirementCount();
+        boolean hasDeps       = plan.hasDependencies();
 
         if (hasDeps) {
-            // Explain dependencies — only offer Deactivate
+
             lblDeleteModalTitle.setText("Skill In Use");
 
             StringBuilder sb = new StringBuilder();
@@ -381,7 +373,7 @@ public class SkillCatalogueViewController implements Initializable {
             btnDeactivateSkill.setManaged(true);
 
         } else {
-            // No dependencies — standard hard delete
+
             lblDeleteModalTitle.setText("Delete Skill");
             dependencyInfoBox.setVisible(false);
             dependencyInfoBox.setManaged(false);
@@ -468,10 +460,6 @@ public class SkillCatalogueViewController implements Initializable {
         mainContentLayer.setEffect(null);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Status toggle
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleToggleActive() {
         boolean active = toggleActive.isSelected();
@@ -480,79 +468,52 @@ public class SkillCatalogueViewController implements Initializable {
         toggleActive.getStyleClass().add(active ? "status-toggle-active" : "status-toggle-inactive");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Save handler
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleSave() {
         clearValidationError();
 
-        // ── 1. Name ──────────────────────────────────────────────────────────
         String name = fieldName.getText().trim();
         if (name.isBlank()) {
             showValidationError("Skill name is required.");
             return;
         }
 
-        // ── 2. Category (editable ComboBox — always read from editor) ────────
         String category = fieldCategory.getEditor().getText().trim();
         if (category.isBlank()) {
             showValidationError("Category is required. Select one or type a new category name.");
             return;
         }
 
-        // ── 3. Difficulty tier ───────────────────────────────────────────────
         String tier = fieldDifficulty.getValue();
         if (tier == null || tier.isBlank()) {
             showValidationError("Please select a difficulty tier.");
             return;
         }
 
-        // ── 4. Duplicate name ────────────────────────────────────────────────
-        int excludeId = (editingSkill != null) ? editingSkill.getSkillId() : 0;
-        if (db.checkSkillNameExists(name, excludeId)) {
-            showValidationError("A skill named \"" + name + "\" already exists.");
-            return;
-        }
-
-        // ── 5. Persist ───────────────────────────────────────────────────────
         String  description = fieldDesc.getText().trim();
         boolean isActive    = toggleActive.isSelected();
         int     passThresh  = spinnerPassThreshold.getValue() != null
                               ? spinnerPassThreshold.getValue() : 5;
 
-        if (editingSkill == null) {
-            int coordinatorId = UserSession.getInstance().getCurrentUser().getUserId();
-            int newId = db.createSkill(name, category, description, tier,
-                                       isActive, passThresh, coordinatorId);
-            if (newId < 0) {
-                showValidationError("Database error: could not create skill. Please try again.");
-                return;
-            }
-        } else {
-            boolean ok = db.updateSkill(editingSkill.getSkillId(), name, category,
-                                        description, tier, isActive, passThresh);
-            if (!ok) {
-                showValidationError("Database error: could not update skill. Please try again.");
-                return;
-            }
+        Integer skillId = editingSkill != null ? editingSkill.getSkillId() : null;
+        int coordinatorId = UserSession.getInstance().getCurrentUser().getUserId();
+        SkillSaveResult result = facade.saveSkillWithDuplicateGuard(skillId, name, category,
+                description, tier, isActive, passThresh, coordinatorId);
+        if (!result.success()) {
+            showValidationError(result.message());
+            return;
         }
 
         closeModal();
         refreshList();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Delete / Deactivate handlers
-    // ─────────────────────────────────────────────────────────────────────────
-
     @FXML
     private void handleConfirmDelete() {
         if (pendingDelete == null) return;
-        boolean ok = db.deleteSkill(pendingDelete.getSkillId());
-        if (!ok) {
-            lblDeleteSubtext.setText("Database error: could not delete the skill. Please try again.");
+        OperationResult result = facade.deleteSkillWithDependencyCheck(pendingDelete.getSkillId());
+        if (!result.success()) {
+            lblDeleteSubtext.setText(result.message());
             return;
         }
         closeModal();
@@ -562,18 +523,14 @@ public class SkillCatalogueViewController implements Initializable {
     @FXML
     private void handleDeactivateSkill() {
         if (pendingDelete == null) return;
-        boolean ok = db.deactivateSkill(pendingDelete.getSkillId());
-        if (!ok) {
-            lblDeleteSubtext.setText("Database error: could not deactivate the skill. Please try again.");
+        OperationResult result = facade.deactivateSkillWithDependencyCheck(pendingDelete.getSkillId());
+        if (!result.success()) {
+            lblDeleteSubtext.setText(result.message());
             return;
         }
         closeModal();
         refreshList();
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Validation helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void showValidationError(String message) {
         lblValidationError.setText(message);
@@ -595,10 +552,6 @@ public class SkillCatalogueViewController implements Initializable {
         lblValidationError.setVisible(false);
         lblValidationError.setManaged(false);
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Animation helpers
-    // ─────────────────────────────────────────────────────────────────────────
 
     private void wireLiquidScale(ButtonBase btn) {
         btn.setOnMouseEntered(e -> animateScale(btn, 1.04, 1.04, 180, LIQUID));
@@ -630,10 +583,6 @@ public class SkillCatalogueViewController implements Initializable {
         ).play();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Tooltip helper
-    // ─────────────────────────────────────────────────────────────────────────
-
     private Tooltip styledTooltip(String text) {
         Tooltip tip = new Tooltip(text);
         tip.setStyle(
@@ -650,3 +599,5 @@ public class SkillCatalogueViewController implements Initializable {
         return tip;
     }
 }
+
+

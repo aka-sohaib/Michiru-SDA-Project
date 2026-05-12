@@ -60,8 +60,23 @@
             </Button>
         </HBox>
 
+        <!-- Search bar -->
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <VBox.margin><Insets top="14"/></VBox.margin>
+            <StackPane styleClass="search-icon-wrap"
+                       minWidth="36" minHeight="36"
+                       maxWidth="36" maxHeight="36">
+                <FontIcon iconLiteral="fas-search" iconSize="13"
+                          styleClass="search-field-icon"/>
+            </StackPane>
+            <TextField fx:id="searchField"
+                       promptText="Search skills by name or category…"
+                       styleClass="assessment-search-field"
+                       HBox.hgrow="ALWAYS"/>
+        </HBox>
+
         <Separator styleClass="section-divider">
-            <VBox.margin><Insets top="18" bottom="18"/></VBox.margin>
+            <VBox.margin><Insets top="14" bottom="18"/></VBox.margin>
         </Separator>
 
         <!-- Scrollable card list -->

@@ -1,20 +1,29 @@
 package com.example.michiru;
 
+/**
+ * Class definition for MichiruApplication.
+ */
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.Parent;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
-/**
- * Main JavaFX entry point for the MICHIRU application.
- */
 public class MichiruApplication extends Application {
 
+    /**
+     * Builds the primary stage with the login FXML, application icon, and minimum window size.
+     */
     @Override
+    /**
+     * Executes start.
+     */
     public void start(Stage stage) throws IOException {
         URL loginUrl = getClass().getResource("LoginView.fxml");
         if (loginUrl == null) {
@@ -24,6 +33,11 @@ public class MichiruApplication extends Application {
         Parent root = FXMLLoader.load(loginUrl);
         Scene scene = new Scene(root);
 
+        InputStream iconStream = getClass().getResourceAsStream("images/logo.png");
+        if (iconStream != null) {
+            stage.getIcons().add(new Image(iconStream));
+        }
+
         stage.setTitle("MICHIRU - Sign In");
         stage.setScene(scene);
         stage.setMinWidth(1200);
@@ -31,7 +45,11 @@ public class MichiruApplication extends Application {
         stage.show();
     }
 
+    /**
+     * Program entry point that delegates to {@link Application#launch(String...)}.
+     */
     public static void main(String[] args) {
         launch(args);
     }
 }
+

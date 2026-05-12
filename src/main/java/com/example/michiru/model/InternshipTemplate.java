@@ -1,22 +1,9 @@
 package com.example.michiru.model;
 
 /**
- * Domain model representing a row in {@code internship_templates}.
- *
- * <p>Column mapping (snake_case → camelCase):</p>
- * <pre>
- *  template_id  → templateId   (INT UNSIGNED AUTO_INCREMENT)
- *  name         → name         (VARCHAR 255, UNIQUE)
- *  description  → description  (TEXT, nullable)
- *  is_active    → isActive     (TINYINT 1, default 1)
- *  created_by   → createdBy    (INT UNSIGNED, nullable FK → coordinators)
- *  created_at   → createdAt    (DATETIME, DB default)
- * </pre>
- *
- * <p>{@code skillCount} is a denormalized read-only field populated by a
- * COUNT JOIN in {@code MySQLHandler.getAllInternshipTemplates()} — it is
- * never written back to the database.</p>
+ * Class definition for InternshipTemplate.
  */
+
 public class InternshipTemplate {
 
     private int    templateId;
@@ -66,7 +53,11 @@ public class InternshipTemplate {
     public void setSkillCount(int skillCount)    { this.skillCount  = skillCount; }
 
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "InternshipTemplate{id=" + templateId + ", name='" + name + "', active=" + isActive + "}";
     }
 }
+

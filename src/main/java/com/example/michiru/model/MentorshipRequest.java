@@ -1,31 +1,12 @@
 package com.example.michiru.model;
 
+/**
+ * Class definition for MentorshipRequest.
+ */
+
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Display model for a single pending mentorship request, as seen from the Mentor side.
- *
- * <p>Combines data from two tables in one JOIN query:</p>
- * <pre>
- *  mentorship_requests : request_id, student_id, message, request_date, credit_cost
- *  users               : first_name, last_name  (student side)
- * </pre>
- *
- * <p>Skill proficiencies ({@link SkillTag}) are fetched separately per student via a
- * second query against {@code skill_proficiencies} JOIN {@code skills}.</p>
- *
- * <h3>Proficiency level CSS mapping</h3>
- * Each {@link SkillTag#getCssClass()} returns {@code "mr-skill-<level>"} which maps
- * directly to the {@code exam-tier-badge-*} palette already defined in the stylesheet:
- * <ul>
- *   <li>EXPERT       → exam-tier-badge-expert</li>
- *   <li>ADVANCED     → exam-tier-badge-advanced</li>
- *   <li>INTERMEDIATE → exam-tier-badge-intermediate</li>
- *   <li>BEGINNER     → exam-tier-badge-beginner</li>
- *   <li>NOVICE       → (no special glow — default pill)</li>
- * </ul>
- */
 public class MentorshipRequest {
 
     // ── Inner record: one skill proficiency tag ───────────────────────────────
@@ -54,6 +35,9 @@ public class MentorshipRequest {
         }
 
         /** Short display label (capitalised first letter). */
+        /**
+         * Executes getLevelLabel.
+         */
         public String getLevelLabel() {
             if (level == null || level.isEmpty()) return "Novice";
             return level.charAt(0) + level.substring(1).toLowerCase();
@@ -102,6 +86,9 @@ public class MentorshipRequest {
     public int            getCreditCost()       { return creditCost; }
     public List<SkillTag> getSkillTags()        { return skillTags; }
 
+    /**
+     * Executes setSkillTags.
+     */
     public void setSkillTags(List<SkillTag> tags) {
         this.skillTags = tags != null ? tags : new ArrayList<>();
     }
@@ -150,6 +137,9 @@ public class MentorshipRequest {
     // ── Display helpers ───────────────────────────────────────────────────────
 
     /** e.g. {@code "Jane Doe"} */
+    /**
+     * Executes getFullName.
+     */
     public String getFullName() {
         return studentFirstName + " " + studentLastName;
     }
@@ -167,13 +157,20 @@ public class MentorshipRequest {
     }
 
     /** {@code true} when the student included a non-blank intro message. */
+    /**
+     * Executes hasMessage.
+     */
     public boolean hasMessage() {
         return message != null && !message.isBlank();
     }
 
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "MentorshipRequest{requestId=" + requestId
                + ", student='" + getFullName() + "'}";
     }
 }
+

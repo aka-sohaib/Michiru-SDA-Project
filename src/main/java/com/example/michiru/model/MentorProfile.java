@@ -1,33 +1,13 @@
 package com.example.michiru.model;
 
+/**
+ * Class definition for MentorProfile.
+ */
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Display model for a mentor in the MentorSearchView directory.
- *
- * <p>Combines data from three tables in one query:</p>
- * <pre>
- *  users   : user_id, first_name, last_name
- *  mentors : bio, years_of_experience, rating, is_available, credit_cost
- *  skills  : name (via mentor_expertise_skills JOIN, GROUP_CONCAT'd as "||"-delimited string)
- * </pre>
- *
- * <p>The {@code skillNames} list is never null — an empty list means the mentor
- * has no linked skills yet.</p>
- *
- * <h3>Rating-tier helpers</h3>
- * The three {@code getRating*} methods return CSS class names / labels that
- * drive the dynamic card border glow and the profile-modal tier badge:
- * <ul>
- *   <li>&gt; 4.8 → Expert  (gold)</li>
- *   <li>&gt; 4.0 → Advanced  (purple)</li>
- *   <li>&gt; 3.0 → Intermediate  (blue)</li>
- *   <li>&gt; 2.0 → Beginner  (green)</li>
- *   <li>otherwise → no tier decoration applied</li>
- * </ul>
- */
 public class MentorProfile {
 
     // ── Fields ───────────────────────────────────────────────────────────────
@@ -44,6 +24,9 @@ public class MentorProfile {
 
     // ── Constructors ──────────────────────────────────────────────────────────
 
+    /**
+     * Executes MentorProfile.
+     */
     public MentorProfile() {
         this.skillNames = new ArrayList<>();
     }
@@ -96,6 +79,9 @@ public class MentorProfile {
     // ── Display helpers ───────────────────────────────────────────────────────
 
     /** e.g. {@code "John Doe"} */
+    /**
+     * Executes getFullName.
+     */
     public String getFullName() {
         return firstName + " " + lastName;
     }
@@ -111,12 +97,18 @@ public class MentorProfile {
     }
 
     /** e.g. {@code "3 yrs exp"} or {@code "New mentor"} */
+    /**
+     * Executes getExperienceLabel.
+     */
     public String getExperienceLabel() {
         if (yearsOfExperience <= 0) return "New mentor";
         return yearsOfExperience == 1 ? "1 yr exp" : yearsOfExperience + " yrs exp";
     }
 
     /** e.g. {@code "4.5"} — returns {@code "—"} when rating is zero/unset */
+    /**
+     * Executes getRatingDisplay.
+     */
     public String getRatingDisplay() {
         return rating <= 0 ? "—" : String.format("%.1f", rating);
     }
@@ -163,6 +155,9 @@ public class MentorProfile {
     // ── Filtering helper ──────────────────────────────────────────────────────
 
     /** {@code true} when this mentor teaches the given skill (case-insensitive). */
+    /**
+     * Executes teachesSkill.
+     */
     public boolean teachesSkill(String skillName) {
         if (skillName == null || skillName.isBlank()) return true;
         String lower = skillName.toLowerCase();
@@ -177,8 +172,12 @@ public class MentorProfile {
     }
 
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "MentorProfile{id=" + mentorId + ", name='" + getFullName()
                + "', rating=" + rating + ", available=" + isAvailable + "}";
     }
 }
+

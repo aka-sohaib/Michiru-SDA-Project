@@ -1,27 +1,9 @@
 package com.example.michiru.model;
 
 /**
- * Domain model representing a row in the {@code validation_requests} table,
- * optionally enriched with the joined {@code skills.name} for display.
- *
- * <p>Column mapping (snake_case → camelCase):</p>
- * <pre>
- *  validation_id    → validationId    (INT UNSIGNED AUTO_INCREMENT)
- *  student_id       → studentId       (INT UNSIGNED NOT NULL, FK → students)
- *  mentor_id        → mentorId        (INT UNSIGNED NULLABLE, FK → mentors)
- *  skill_id         → skillId         (INT UNSIGNED NOT NULL, FK → skills)
- *  requested_level  → requestedLevel  (ENUM: NOVICE|BEGINNER|INTERMEDIATE|ADVANCED|EXPERT)
- *  evidence_type    → evidenceType    (ENUM: PORTFOLIO|CERTIFICATE|PROJECT|OTHER)
- *  note             → note            (TEXT, nullable — stores URL + description combined)
- *  request_date     → requestDate     (DATETIME, DB default CURRENT_TIMESTAMP)
- *  status           → status          (ENUM: PENDING|UNDER_REVIEW|APPROVED|REJECTED)
- *  mentor_feedback  → mentorFeedback  (TEXT, nullable)
- *  resolved_date    → resolvedDate    (DATETIME, nullable)
- * </pre>
- *
- * <p>The transient field {@code skillName} is populated by JOIN queries
- * (never persisted — not a DB column).</p>
+ * Class definition for ValidationRequest.
  */
+
 public class ValidationRequest {
 
     // ── DB-mapped fields ──────────────────────────────────────────────────────
@@ -42,6 +24,9 @@ public class ValidationRequest {
 
     /** Populated from the {@code skills.name} JOIN — not stored in this table. */
     private String skillName;
+
+    /** Populated from the {@code users} JOIN — not stored in this table. */
+    private String studentName;
 
     // ── Constructors ──────────────────────────────────────────────────────────
 
@@ -75,6 +60,7 @@ public class ValidationRequest {
     public Integer getMentorId()       { return mentorId; }
     public int     getSkillId()        { return skillId; }
     public String  getSkillName()      { return skillName; }
+    public String  getStudentName()    { return studentName; }
     public String  getRequestedLevel() { return requestedLevel; }
     public String  getEvidenceType()   { return evidenceType; }
     public String  getNote()           { return note; }
@@ -90,6 +76,7 @@ public class ValidationRequest {
     public void setMentorId(Integer id)             { this.mentorId       = id; }
     public void setSkillId(int id)                  { this.skillId        = id; }
     public void setSkillName(String name)           { this.skillName      = name; }
+    public void setStudentName(String name)         { this.studentName    = name; }
     public void setRequestedLevel(String level)     { this.requestedLevel = level; }
     public void setEvidenceType(String type)        { this.evidenceType   = type; }
     public void setNote(String note)                { this.note           = note; }
@@ -155,6 +142,9 @@ public class ValidationRequest {
     }
 
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "ValidationRequest{id=" + validationId
                + ", skill='" + skillName + "'"
@@ -163,3 +153,4 @@ public class ValidationRequest {
                + ", date='" + requestDate + "'}";
     }
 }
+

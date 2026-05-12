@@ -1,22 +1,9 @@
 package com.example.michiru.model;
 
 /**
- * Domain model representing a row in {@code internship_skill_requirements},
- * enriched with the skill's display name and category via a JOIN.
- *
- * <p>Column mapping:</p>
- * <pre>
- *  requirement_id            → requirementId          (INT UNSIGNED AUTO_INCREMENT)
- *  template_id               → templateId             (INT UNSIGNED FK)
- *  skill_id                  → skillId                (INT UNSIGNED FK)
- *  weight                    → weight                 (INT UNSIGNED DEFAULT 1)
- *  minimum_proficiency_level → minimumProficiencyLevel (ENUM)
- *  status                    → status                 (ENUM ACTIVE | INACTIVE)
- * </pre>
- *
- * <p>{@code skillName} and {@code skillCategory} are populated via a JOIN
- * on the {@code skills} table and are never written back directly.</p>
+ * Class definition for SkillAssignment.
  */
+
 public class SkillAssignment {
 
     private int    requirementId;
@@ -68,8 +55,12 @@ public class SkillAssignment {
     public void setStatus(String status)               { this.status = status; }
 
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "SkillAssignment{skillId=" + skillId + ", name='" + skillName +
                "', weight=" + weight + ", level='" + minimumProficiencyLevel + "'}";
     }
 }
+

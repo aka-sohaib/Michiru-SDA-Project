@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
@@ -12,12 +14,18 @@
 <!--
   CoordinatorDashboardHomeView — Landing view for the Coordinator dashboard.
   Asymmetrical layout: narrow identity pane on the left, KPI ribbon + recent
-  activity on the right. Root is an HBox that fills the dash-content-area.
+  activity on the right. Wrapped in a ScrollPane so the layout remains usable
+  on smaller / secondary screens.
 -->
-<HBox xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.example.michiru.CoordinatorHomeController"
-      maxWidth="Infinity" maxHeight="Infinity"
+<ScrollPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.michiru.CoordinatorHomeController"
+            fitToWidth="true" fitToHeight="true"
+            hbarPolicy="NEVER"
+            styleClass="assessment-scroll-pane"
+            maxWidth="Infinity" maxHeight="Infinity">
+
+<HBox maxWidth="Infinity" maxHeight="Infinity"
       spacing="18"
       styleClass="dashboard-home-root">
     <padding><Insets top="24" right="26" bottom="26" left="26"/></padding>
@@ -27,7 +35,7 @@
          LEFT — Identity pane
          ═══════════════════════════════════════════════════════════════════════ -->
     <VBox fx:id="identityPane"
-          prefWidth="204" minWidth="180"
+          prefWidth="204" minWidth="160"
           styleClass="dashboard-identity-pane"
           spacing="0">
         <padding><Insets top="28" right="20" bottom="24" left="20"/></padding>
@@ -170,6 +178,90 @@
 
         </HBox>
 
+        <!-- Row 2 — enrollments + user accounts -->
+        <HBox fx:id="kpiRow2" spacing="14">
+
+            <VBox fx:id="kpiCardEnrollments"
+                  styleClass="kpi-card"
+                  HBox.hgrow="ALWAYS">
+                <padding><Insets top="18" right="22" bottom="18" left="22"/></padding>
+                <HBox spacing="16" alignment="CENTER_LEFT">
+                    <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-green"
+                               minWidth="48" minHeight="48"
+                               maxWidth="48" maxHeight="48">
+                        <FontIcon iconLiteral="fas-user-graduate"
+                                  iconSize="20"
+                                  styleClass="kpi-icon kpi-icon-green"/>
+                    </StackPane>
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblKpiEnrollments"
+                               text="—"
+                               styleClass="kpi-count-label"/>
+                        <Label text="Active student enrollments"
+                               styleClass="kpi-title-label"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <VBox fx:id="kpiCardUsers"
+                  styleClass="kpi-card"
+                  HBox.hgrow="ALWAYS">
+                <padding><Insets top="18" right="22" bottom="18" left="22"/></padding>
+                <HBox spacing="16" alignment="CENTER_LEFT">
+                    <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-blue"
+                               minWidth="48" minHeight="48"
+                               maxWidth="48" maxHeight="48">
+                        <FontIcon iconLiteral="fas-users"
+                                  iconSize="20"
+                                  styleClass="kpi-icon kpi-icon-blue"/>
+                    </StackPane>
+                    <VBox spacing="6" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblKpiUserTotal"
+                               text="—"
+                               styleClass="kpi-count-label"/>
+                        <Label text="Registered accounts"
+                               styleClass="kpi-title-label"/>
+                        <Label fx:id="lblUserBreakdown"
+                               text="—"
+                               styleClass="coordinator-user-breakdown-label"
+                               wrapText="true"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+        </HBox>
+
+        <!-- Quick actions -->
+        <VBox fx:id="quickActionsBox" spacing="10" styleClass="coordinator-quick-actions">
+            <Label text="Quick actions" styleClass="recent-panel-title"/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Button fx:id="btnQuickSkills"
+                        text="Skill Catalogue"
+                        styleClass="action-btn-secondary"
+                        onAction="#handleQuickSkills">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-list" iconSize="11" styleClass="action-btn-icon"/>
+                    </graphic>
+                </Button>
+                <Button fx:id="btnQuickQuestionBank"
+                        text="Question Bank"
+                        styleClass="action-btn-secondary"
+                        onAction="#handleQuickQuestionBank">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-question-circle" iconSize="11" styleClass="action-btn-icon"/>
+                    </graphic>
+                </Button>
+                <Button fx:id="btnQuickInternships"
+                        text="Internships"
+                        styleClass="action-btn-secondary"
+                        onAction="#handleQuickInternships">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-building" iconSize="11" styleClass="action-btn-icon"/>
+                    </graphic>
+                </Button>
+            </HBox>
+        </VBox>
+
 
         <!-- Recent Activity Panel -->
         <VBox fx:id="recentPanel"
@@ -203,3 +295,5 @@
     </VBox>
 
 </HBox>
+
+</ScrollPane>

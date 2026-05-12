@@ -1,21 +1,9 @@
 package com.example.michiru.model;
 
 /**
- * Domain model representing a row in the {@code skills} table.
- *
- * <p>Column mapping (snake_case → camelCase):</p>
- * <pre>
- *  skill_id                   → skillId                  (INT UNSIGNED AUTO_INCREMENT)
- *  name                       → name                     (VARCHAR 255, UNIQUE NOT NULL)
- *  category                   → category                 (VARCHAR 100, NOT NULL)
- *  description                → description              (TEXT, nullable)
- *  difficulty_tier            → difficultyTier           (ENUM BEGINNER|INTERMEDIATE|ADVANCED)
- *  is_active                  → isActive                 (TINYINT 1, default 1)
- *  questions_required_to_pass → questionsRequiredToPass  (INT UNSIGNED, default 5)
- *  created_by                 → createdBy                (INT UNSIGNED, nullable FK → coordinators)
- *  created_at                 → createdAt                (DATETIME, DB default — formatted on read)
- * </pre>
+ * Class definition for Skill.
  */
+
 public class Skill {
 
     private int    skillId;
@@ -71,7 +59,11 @@ public class Skill {
     public void setCreatedAt(String createdAt)           { this.createdAt               = createdAt; }
 
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "Skill{id=" + skillId + ", name='" + name + "', tier='" + difficultyTier + "', active=" + isActive + "}";
     }
 }
+

@@ -1,37 +1,19 @@
 package com.example.michiru.session;
 
+/**
+ * Class definition for UserSession.
+ */
+
 import com.example.michiru.model.User;
 
-/**
- * Application-scoped singleton that holds the currently authenticated
- * {@link User} for the duration of the session.
- *
- * <h3>Lifecycle</h3>
- * <ol>
- *   <li>Set immediately after a successful login:
- *       {@code UserSession.getInstance().setCurrentUser(user);}</li>
- *   <li>Read from any controller that needs the logged-in user's data.</li>
- *   <li>Cleared on logout:
- *       {@code UserSession.getInstance().clearSession();}</li>
- * </ol>
- *
- * <h3>Thread-safety</h3>
- * Uses double-checked locking on the singleton; the {@code currentUser}
- * field is {@code volatile} so writes are visible across the JavaFX
- * Application Thread and any background threads.
- */
 public class UserSession {
-
-    // ── Singleton ────────────────────────────────────────────────────────────
 
     private static volatile UserSession instance;
 
     private UserSession() {}
 
     /**
-     * Returns the one global {@link UserSession}, creating it on first call.
-     *
-     * @return the singleton {@code UserSession}
+     * Returns the process-wide session holder, creating it on first use.
      */
     public static UserSession getInstance() {
         if (instance == null) {
@@ -44,61 +26,52 @@ public class UserSession {
         return instance;
     }
 
-    // ── Session state ─────────────────────────────────────────────────────────
-
-    /** The currently logged-in user. {@code null} if no one is logged in. */
     private volatile User currentUser;
 
-    // ── Public API ────────────────────────────────────────────────────────────
-
     /**
-     * Stores the authenticated user.  Call this right after a successful
-     * {@code loginUser()} response from the DAO.
-     *
-     * @param user the authenticated {@link User}; must not be {@code null}
+     * Stores the user returned from a successful login flow.
      */
     public void setCurrentUser(User user) {
         this.currentUser = user;
     }
 
     /**
-     * Returns the currently logged-in user.
-     *
-     * @return the {@link User}, or {@code null} if no session is active
+     * Returns the logged-in user, or null when no session exists.
      */
     public User getCurrentUser() {
         return currentUser;
     }
 
     /**
-     * Convenience: returns the role string of the current user, or
-     * {@code null} if no session is active.
-     *
-     * @return one of {@code "STUDENT"}, {@code "MENTOR"},
-     *         {@code "INTERNSHIP_COORDINATOR"}, or {@code null}
+     * Returns the raw role string from the current user, or null if logged out.
      */
     public String getCurrentRole() {
         return currentUser != null ? currentUser.getRole() : null;
     }
 
     /**
-     * Convenience: checks whether a session is currently active.
-     *
-     * @return {@code true} if a user is logged in
+     * Returns true when a non-null user is bound to this session.
      */
     public boolean isLoggedIn() {
         return currentUser != null;
     }
 
     /**
-     * Clears the session.  Call this when the user logs out.
+     * Clears the bound user on logout.
      */
     public void clearSession() {
         this.currentUser = null;
     }
 
+    /**
+     * Returns a short diagnostic representation of session state.
+     */
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "UserSession{currentUser=" + currentUser + '}';
     }
 }
+

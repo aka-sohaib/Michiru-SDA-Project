@@ -1,7 +1,10 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseCatalog;
-import com.example.michiru.db.MySQLHandler;
+/**
+ * Class definition for MentorSearchViewController.
+ */
+
+import com.example.michiru.facade.MentorshipLifecycleFacade;
 import com.example.michiru.model.MentorProfile;
 import com.example.michiru.session.UserSession;
 
@@ -24,35 +27,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ResourceBundle;
 
-/**
- * Controller for MentorSearchView.fxml — UC08: Request Mentorship.
- *
- * <h3>UX flow</h3>
- * <pre>
- *   GRID  →  (click any card)  →  PROFILE MODAL  →  (Send Request / Cancel)  →  GRID
- * </pre>
- *
- * <h3>Dynamic card styling</h3>
- * Each mentor card receives a {@code hub-card-*} CSS modifier based on their rating,
- * giving top-rated mentors the same Expert/Advanced/Intermediate colour glow that
- * skill cards use for difficulty tiers.
- *
- * <h3>Profile modal</h3>
- * A full-detail overlay (not just a send-request form) that displays:
- * full bio, years of experience, credit cost, ALL linked skills (not just 4),
- * a tier badge, and a message TextArea with the "Send Mentorship Request" button.
- *
- * <h3>Threading</h3>
- * All DB fetches run on a background daemon thread; UI mutations are pushed back
- * to the FX thread via {@code Platform.runLater()} / {@code Task.setOnSucceeded()}.
- */
+
 public class MentorSearchViewController implements Initializable {
 
-    // ── Animation constants ───────────────────────────────────────────────────
     private static final Interpolator SILK   = Interpolator.SPLINE(0.16, 1.0, 0.30, 1.0);
     private static final Interpolator LIQUID = Interpolator.SPLINE(0.22, 0.68, 0.0,  1.0);
 
-    // ── FXML injections ───────────────────────────────────────────────────────
     @FXML private Label               lblMentorCount;
     @FXML private TextField           searchField;
     @FXML private ComboBox<String>    cmbSkillFilter;
@@ -62,43 +42,40 @@ public class MentorSearchViewController implements Initializable {
     @FXML private StackPane           modalWrapper;
     @FXML private VBox                modalCard;
 
-    // ── State ─────────────────────────────────────────────────────────────────
     private List<MentorProfile> allMentors = new ArrayList<>();
     private MentorProfile       selectedMentor;
     private TextArea            modalMessageArea;
 
-    // ── DB & session ──────────────────────────────────────────────────────────
-    private final DatabaseCatalog db = new MySQLHandler();
+    private final MentorshipLifecycleFacade facade = new MentorshipLifecycleFacade();
     private int studentId;
 
-
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Wires FXML controls and listeners after the scene graph is loaded.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         studentId = UserSession.getInstance().getCurrentUser().getUserId();
 
-        // Real-time filter listeners (wired once)
         searchField.textProperty().addListener((obs, o, n) -> applyFilters());
         cmbSkillFilter.valueProperty().addListener((obs, o, n) -> applyFilters());
 
-        // Clicking the dim layer closes the modal
         overlayDim.setOnMouseClicked(e -> closeModal());
 
-        // Load mentors and skill filters from DB on a background thread
         Task<Void> initTask = new Task<>() {
             @Override
             protected Void call() {
-                List<MentorProfile> mentors = db.getAvailableMentors();
-                List<String> skills = db.getMentorSkillFilters();
+                MentorshipLifecycleFacade.MentorSearchOptions options = facade.loadMentorSearchOptions();
 
                 Platform.runLater(() -> {
-                    allMentors = mentors;
-                    cmbSkillFilter.getItems().setAll(skills);
-                    long availableCount = mentors.stream()
+                    allMentors = options.mentors();
+                    cmbSkillFilter.getItems().setAll(options.skillFilters());
+                    long availableCount = options.mentors().stream()
                             .filter(MentorProfile::isAvailable).count();
                     lblMentorCount.setText(String.valueOf(availableCount));
-                    renderMentorCards(mentors, true);
+                    renderMentorCards(options.mentors(), true);
                 });
                 return null;
             }
@@ -107,10 +84,6 @@ public class MentorSearchViewController implements Initializable {
         t.setDaemon(true);
         t.start();
     }
-
-
-
-    // ── Filtering ─────────────────────────────────────────────────────────────
 
     private void applyFilters() {
         String query = searchField.getText();
@@ -142,8 +115,6 @@ public class MentorSearchViewController implements Initializable {
         cmbSkillFilter.setValue(null);
         renderMentorCards(allMentors, false);
     }
-
-    // ── Card grid rendering ───────────────────────────────────────────────────
 
     private void renderMentorCards(List<MentorProfile> mentors, boolean animate) {
         mentorGrid.getChildren().clear();
@@ -189,7 +160,6 @@ public class MentorSearchViewController implements Initializable {
         card.setMinHeight(296);
         card.setCursor(Cursor.HAND);
 
-        // Entire card body opens the profile modal
         card.setOnMouseClicked(e -> openProfileModal(mentor));
         card.setOnMousePressed(e -> {
             ScaleTransition st = new ScaleTransition(Duration.millis(80), card);
@@ -202,7 +172,6 @@ public class MentorSearchViewController implements Initializable {
             st.play();
         });
 
-        // ── Top band: avatar + name/rating/experience + availability badge ────
         HBox topBand = new HBox(12);
         topBand.setAlignment(Pos.CENTER_LEFT);
         topBand.setPadding(new Insets(16, 16, 12, 16));
@@ -221,7 +190,6 @@ public class MentorSearchViewController implements Initializable {
         Label nameLbl = new Label(mentor.getFullName());
         nameLbl.getStyleClass().add("mentor-name");
 
-        // Rating row: ★ 4.9  ·  Expert Tier  ·  8 yrs exp
         HBox metaRow = new HBox(7);
         metaRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -233,7 +201,6 @@ public class MentorSearchViewController implements Initializable {
             ratingLbl.getStyleClass().add("mentor-rating-lbl");
             metaRow.getChildren().addAll(star, ratingLbl);
 
-            // Tier label inline (e.g. "· Expert")
             String tier = mentor.getRatingTierLabel();
             if (tier != null) {
                 Label dot = new Label("·");
@@ -252,7 +219,6 @@ public class MentorSearchViewController implements Initializable {
 
         nameCol.getChildren().addAll(nameLbl, metaRow);
 
-        // Availability badge (top-right column)
         Label availBadge = mentor.isAvailable()
                 ? makeBadge("Available",   "mentor-badge-available")
                 : makeBadge("Unavailable", "mentor-badge-unavailable");
@@ -262,7 +228,6 @@ public class MentorSearchViewController implements Initializable {
 
         topBand.getChildren().addAll(avatar, nameCol, rightCol);
 
-        // ── Bio (truncated preview) ───────────────────────────────────────────
         VBox bioSection = new VBox();
         bioSection.setPadding(new Insets(0, 16, 10, 16));
         if (mentor.getBio() != null && !mentor.getBio().isBlank()) {
@@ -272,12 +237,10 @@ public class MentorSearchViewController implements Initializable {
             bioSection.getChildren().add(bioLbl);
         }
 
-        // ── Divider ───────────────────────────────────────────────────────────
         Region divider = new Region();
         divider.getStyleClass().add("mentor-card-divider");
         divider.setMaxHeight(1); divider.setMinHeight(1);
 
-        // ── Skill tags (max 4, overflow shown as "+N more") ───────────────────
         FlowPane skillTags = new FlowPane(5, 5);
         skillTags.setPadding(new Insets(10, 14, 10, 14));
         skillTags.setMaxWidth(Double.MAX_VALUE);
@@ -298,11 +261,9 @@ public class MentorSearchViewController implements Initializable {
             skillTags.getChildren().add(noSkill);
         }
 
-        // ── Vertical spring ───────────────────────────────────────────────────
         Region vSpacer = new Region();
         VBox.setVgrow(vSpacer, Priority.ALWAYS);
 
-        // ── Footer: credit pill + "View Full Profile" button ─────────────────
         HBox footer = new HBox(10);
         footer.setAlignment(Pos.CENTER_LEFT);
         footer.getStyleClass().add("mentor-card-footer");
@@ -331,7 +292,6 @@ public class MentorSearchViewController implements Initializable {
         viewBtn.setGraphic(arrowIcon);
         viewBtn.setGraphicTextGap(7);
         viewBtn.setDisable(!mentor.isAvailable());
-        // Button also opens the profile modal; consume prevents double-fire from card click
         viewBtn.setOnAction(e -> {
             e.consume();
             openProfileModal(mentor);
@@ -342,8 +302,6 @@ public class MentorSearchViewController implements Initializable {
         card.getChildren().addAll(topBand, bioSection, divider, skillTags, vSpacer, footer);
         return card;
     }
-
-    // ── Profile detail modal ──────────────────────────────────────────────────
 
     /**
      * Opens the full mentor profile overlay.
@@ -372,7 +330,6 @@ public class MentorSearchViewController implements Initializable {
         modalCard.setMaxWidth(580);
         modalCard.setPadding(new Insets(0));
 
-        // ── Header ────────────────────────────────────────────────────────────
         HBox header = new HBox(12);
         header.setAlignment(Pos.CENTER_LEFT);
         header.getStyleClass().add("modal-header");
@@ -405,12 +362,10 @@ public class MentorSearchViewController implements Initializable {
 
         header.getChildren().addAll(iconPill, titleCol, closeBtn);
 
-        // ── Top separator ─────────────────────────────────────────────────────
         Region topSep = new Region();
         topSep.getStyleClass().add("modal-separator");
         topSep.setMinHeight(1); topSep.setMaxHeight(1);
 
-        // ── Scrollable body ───────────────────────────────────────────────────
         VBox bodyContent = new VBox(0);
         bodyContent.setFillWidth(true);
 
@@ -422,12 +377,10 @@ public class MentorSearchViewController implements Initializable {
         bodyScroll.getStyleClass().addAll("assessment-scroll-pane", "mp-body-scroll");
         VBox.setVgrow(bodyScroll, Priority.ALWAYS);
 
-        // ── Profile band ──────────────────────────────────────────────────────
         HBox profileBand = new HBox(16);
         profileBand.setAlignment(Pos.CENTER_LEFT);
         profileBand.setPadding(new Insets(22, 24, 18, 24));
 
-        // Large avatar with rating-glow
         StackPane bigAvatar = new StackPane();
         bigAvatar.getStyleClass().addAll("mentor-avatar", "mp-modal-avatar");
         bigAvatar.setMinWidth(58); bigAvatar.setMaxWidth(58);
@@ -437,7 +390,6 @@ public class MentorSearchViewController implements Initializable {
         bigInitials.setStyle("-fx-font-size: 18px;");
         bigAvatar.getChildren().add(bigInitials);
 
-        // Rating glow on the modal avatar
         String tierLabel    = mentor.getRatingTierLabel();
         String tierBadgeCls = mentor.getRatingBadgeClass();
         if (tierLabel != null) {
@@ -451,7 +403,6 @@ public class MentorSearchViewController implements Initializable {
         profileName.getStyleClass().add("mentor-name");
         profileName.setStyle("-fx-font-size: 16px;");
 
-        // Rating + experience row
         HBox ratingRow = new HBox(8);
         ratingRow.setAlignment(Pos.CENTER_LEFT);
         if (mentor.getRating() > 0) {
@@ -469,7 +420,6 @@ public class MentorSearchViewController implements Initializable {
         modalExpLbl.getStyleClass().add("mentor-meta");
         ratingRow.getChildren().add(modalExpLbl);
 
-        // Badge row: tier badge + availability + credit pill
         HBox badgeRow = new HBox(8);
         badgeRow.setAlignment(Pos.CENTER_LEFT);
         badgeRow.setPadding(new Insets(4, 0, 0, 0));
@@ -501,7 +451,6 @@ public class MentorSearchViewController implements Initializable {
         profileBand.getChildren().addAll(bigAvatar, infoCol);
         bodyContent.getChildren().add(profileBand);
 
-        // ── Bio section ───────────────────────────────────────────────────────
         if (mentor.getBio() != null && !mentor.getBio().isBlank()) {
             bodyContent.getChildren().add(sectionSep());
 
@@ -517,7 +466,6 @@ public class MentorSearchViewController implements Initializable {
             bodyContent.getChildren().add(bioSection);
         }
 
-        // ── Skills section (ALL skills) ───────────────────────────────────────
         if (!mentor.getSkillNames().isEmpty()) {
             bodyContent.getChildren().add(sectionSep());
 
@@ -533,7 +481,6 @@ public class MentorSearchViewController implements Initializable {
             bodyContent.getChildren().add(skillsSection);
         }
 
-        // ── Message section ───────────────────────────────────────────────────
         bodyContent.getChildren().add(sectionSep());
 
         VBox messageSection = new VBox(9);
@@ -561,7 +508,6 @@ public class MentorSearchViewController implements Initializable {
         messageSection.getChildren().addAll(msgLabelRow, modalMessageArea);
         bodyContent.getChildren().add(messageSection);
 
-        // ── Error bar (outside scroll, visible without scrolling) ─────────────
         HBox modalErrorBar = new HBox(8);
         modalErrorBar.setAlignment(Pos.CENTER_LEFT);
         modalErrorBar.getStyleClass().add("vr-error-bar");
@@ -579,7 +525,6 @@ public class MentorSearchViewController implements Initializable {
         errWrapper.setPadding(new Insets(0, 22, 0, 22));
         HBox.setHgrow(modalErrorBar, Priority.ALWAYS);
 
-        // ── Footer: Cancel + Send ─────────────────────────────────────────────
         HBox footer = new HBox(12);
         footer.setAlignment(Pos.CENTER_RIGHT);
         footer.setPadding(new Insets(16, 22, 22, 22));
@@ -608,38 +553,18 @@ public class MentorSearchViewController implements Initializable {
         });
     }
 
-    // ── Request submission ────────────────────────────────────────────────────
-
     private void handleSendRequest(MentorProfile mentor, TextArea msgArea,
                                    HBox errorBar, Label errLbl) {
-        if (hasExistingRequest(mentor.getMentorId())) {
-            showModalError(errorBar, errLbl,
-                    "You already have a pending or active request with "
-                    + mentor.getFullName() + ".");
-            return;
-        }
-
-        String message = msgArea.getText().trim();
-
-        boolean saved = db.saveMentorshipRequest(
-                studentId, mentor.getMentorId(),
-                message.isEmpty() ? null : message,
-                mentor.getCreditCost());
-        if (!saved) {
-            showModalError(errorBar, errLbl,
-                    "Database error: request could not be saved.");
+        MentorshipLifecycleFacade.OperationResult result =
+                facade.requestMentorship(studentId, mentor, msgArea.getText());
+        if (!result.success()) {
+            showModalError(errorBar, errLbl, result.message());
             return;
         }
 
         closeModal();
-        showSuccessToast("Mentorship request sent to " + mentor.getFullName() + "!");
+        showSuccessToast(result.message());
     }
-
-    private boolean hasExistingRequest(int mentorId) {
-        return db.hasExistingMentorshipRequest(studentId, mentorId);
-    }
-
-    // ── Modal show / hide animations ──────────────────────────────────────────
 
     private void showModal() {
         overlayDim.setVisible(true);
@@ -670,8 +595,6 @@ public class MentorSearchViewController implements Initializable {
         });
         hide.play();
     }
-
-    // ── Toast notification ────────────────────────────────────────────────────
 
     private void showSuccessToast(String message) {
         Label toastLbl = new Label(message);
@@ -704,8 +627,6 @@ public class MentorSearchViewController implements Initializable {
         fadeOut.setOnFinished(e -> root.getChildren().remove(toast));
         new SequentialTransition(fadeIn, hold, fadeOut).play();
     }
-
-    // ── UI helpers ────────────────────────────────────────────────────────────
 
     private void showModalError(HBox errorBar, Label errLbl, String msg) {
         errLbl.setText(msg);
@@ -744,8 +665,6 @@ public class MentorSearchViewController implements Initializable {
         return s.length() <= max ? s : s.substring(0, max).strip() + "…";
     }
 
-    // ── Card entrance animation ───────────────────────────────────────────────
-
     private void animateCardIn(VBox card, double delayMs) {
         Timeline tl = new Timeline(
                 new KeyFrame(Duration.millis(delayMs)),
@@ -755,3 +674,5 @@ public class MentorSearchViewController implements Initializable {
         tl.play();
     }
 }
+
+

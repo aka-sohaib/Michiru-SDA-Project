@@ -36,7 +36,12 @@
            maxWidth="Infinity" maxHeight="Infinity"
            styleClass="assessment-root">
 
-    <VBox maxWidth="Infinity" maxHeight="Infinity"
+    <ScrollPane fitToWidth="true"
+                hbarPolicy="NEVER"
+                styleClass="assessment-scroll-pane"
+                maxWidth="Infinity" maxHeight="Infinity">
+
+    <VBox maxWidth="Infinity"
           spacing="20"
           styleClass="assessment-main-view">
         <padding><Insets top="28" right="28" bottom="20" left="28"/></padding>
@@ -318,5 +323,7 @@
         </VBox>
 
     </VBox>
+
+    </ScrollPane>
 
 </StackPane>

@@ -1,3 +1,6 @@
+/**
+ * JPMS module descriptor defining JavaFX, SQL, HTTP, and Gson dependencies for the MICHIRU desktop application.
+ */
 module com.example.michiru {
     requires javafx.controls;
     requires javafx.fxml;
@@ -8,18 +11,22 @@ module com.example.michiru {
     requires org.kordamp.ikonli.fontawesome5;
     requires org.kordamp.bootstrapfx.core;
 
-    // ── Persistence ──────────────────────────────────────────────────────────
-    requires java.sql;          // java.sql.Connection, PreparedStatement, etc.
-    requires mysql.connector.j; // mysql-connector-j automatic module (jar filename → mysql.connector.j)
+    requires java.sql;
+    requires mysql.connector.j;
 
-    // ── Opens/Exports ────────────────────────────────────────────────────────
+    requires java.net.http;
+    requires com.google.gson;
+
     opens com.example.michiru to javafx.fxml;
     exports com.example.michiru;
 
     exports com.example.michiru.model;
+    exports com.example.michiru.model.dashboard;
     opens com.example.michiru.model to javafx.fxml;
 
     exports com.example.michiru.db;
     exports com.example.michiru.session;
     opens com.example.michiru.session to javafx.fxml;
+
+    exports com.example.michiru.service;
 }

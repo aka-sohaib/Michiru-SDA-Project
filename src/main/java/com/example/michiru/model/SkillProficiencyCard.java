@@ -1,13 +1,9 @@
 package com.example.michiru.model;
 
 /**
- * Lightweight DTO that combines a Skill's core fields with the student's
- * current (highest achieved) proficiency level for that skill.
- *
- * Used exclusively by the Skill Assessment hub view — not persisted directly.
- *
- * proficiency_level maps to ENUM: NOVICE → BEGINNER → INTERMEDIATE → ADVANCED → EXPERT
+ * Class definition for SkillProficiencyCard.
  */
+
 public class SkillProficiencyCard {
 
     private final int    skillId;
@@ -55,6 +51,9 @@ public class SkillProficiencyCard {
     }
 
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "SkillProficiencyCard{skillId=" + skillId
                 + ", name='" + name + '\''
@@ -62,3 +61,4 @@ public class SkillProficiencyCard {
                 + '}';
     }
 }
+

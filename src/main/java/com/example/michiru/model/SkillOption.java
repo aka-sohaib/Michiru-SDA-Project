@@ -1,12 +1,9 @@
 package com.example.michiru.model;
 
 /**
- * Lightweight read model representing a selectable skill in the
- * internship template form's skill-picker {@link javafx.scene.control.ComboBox}.
- *
- * <p>Only the columns needed for display and FK insertion are included.
- * Sourced from {@code skills WHERE is_active = 1}.</p>
+ * Class definition for SkillOption.
  */
+
 public class SkillOption {
 
     private int    skillId;
@@ -17,6 +14,9 @@ public class SkillOption {
 
     public SkillOption() {}
 
+    /**
+     * Executes SkillOption.
+     */
     public SkillOption(int skillId, String name, String category) {
         this.skillId  = skillId;
         this.name     = name;
@@ -38,7 +38,11 @@ public class SkillOption {
      * Format: "Skill Name  (Category)"
      */
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return name + "  (" + category + ")";
     }
 }
+

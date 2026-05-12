@@ -1,8 +1,12 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseCatalog;
-import com.example.michiru.db.MySQLHandler;
+/**
+ * Class definition for ReadinessViewController.
+ */
+
+import com.example.michiru.facade.EvaluationFacade;
 import com.example.michiru.model.InternshipTemplate;
+import com.example.michiru.model.ProficiencyLadder;
 import com.example.michiru.model.ReadinessReport;
 import com.example.michiru.model.ReadinessSkillResult;
 import com.example.michiru.model.SkillAssignment;
@@ -26,24 +30,12 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import java.net.URL;
 import java.util.*;
 
-/**
- * Controller for ReadinessView.fxml — UC07: Assess Readiness.
- *
- * State machine:  HUB  →  DETAIL  →  RESULT  →  HUB
- *
- * Scoring algorithm (uses actual DB schema — no is_required column):
- *   skillScore_i = min(studentPoints_i / requiredPoints_i, 1.0)
- *   overallScore = SUM(skillScore_i × weight_i) / SUM(weight_i) × 100
- *
- * ENUM → point mapping: NOVICE=0, BEGINNER=1, INTERMEDIATE=2, ADVANCED=3, EXPERT=4
- */
+
 public class ReadinessViewController implements Initializable {
 
-    // ── Animation curves ─────────────────────────────────────────────────────
     private static final Interpolator SILK   = Interpolator.SPLINE(0.16, 1.0, 0.30, 1.0);
     private static final Interpolator LIQUID = Interpolator.SPLINE(0.22, 0.68, 0.0, 1.0);
 
-    // ── FXML injections ──────────────────────────────────────────────────────
     @FXML private Label     lblTemplateCount;
     @FXML private TextField searchField;
     @FXML private FlowPane  templateGrid;
@@ -51,17 +43,19 @@ public class ReadinessViewController implements Initializable {
     @FXML private StackPane modalWrapper;
     @FXML private VBox      modalCard;
 
-    // ── State ────────────────────────────────────────────────────────────────
     private InternshipTemplate              selectedTemplate;
     private List<InternshipTemplate>        allTemplates = new ArrayList<>();
 
-    // ── DB & session ─────────────────────────────────────────────────────────
-    private final DatabaseCatalog db        = new MySQLHandler();
+    private final EvaluationFacade facade = new EvaluationFacade();
     private       int          studentId;
 
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Wires FXML controls and listeners after the scene graph is loaded.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         studentId = UserSession.getInstance().getCurrentUser().getUserId();
         loadTemplateGrid();
@@ -70,12 +64,8 @@ public class ReadinessViewController implements Initializable {
         overlayDim.setOnMouseClicked(e -> closeModal());
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // HUB — Internship template grid
-    // ══════════════════════════════════════════════════════════════════════════
-
     private void loadTemplateGrid() {
-        allTemplates = db.getActiveInternshipTemplates();
+        allTemplates = facade.getActiveInternshipTemplates();
         lblTemplateCount.setText(String.valueOf(allTemplates.size()));
         renderTemplateCards(allTemplates, true);
     }
@@ -125,11 +115,9 @@ public class ReadinessViewController implements Initializable {
         card.setPrefWidth(230);
         card.setMinWidth(230);
         card.setMaxWidth(230);
-        // Keep all cards at a consistent height so CTA alignment is uniform.
         card.setPrefHeight(265);
         card.setMinHeight(265);
 
-        // ── Top: briefcase icon pill + skill count badge
         HBox topRow = new HBox(8);
         topRow.setAlignment(Pos.CENTER_LEFT);
         topRow.setPadding(new Insets(14, 14, 10, 14));
@@ -159,14 +147,12 @@ public class ReadinessViewController implements Initializable {
 
         topRow.getChildren().addAll(iconPill, spacer, skillBadge);
 
-        // ── Template name
         Label nameLbl = new Label(t.getName());
         nameLbl.getStyleClass().add("readiness-card-name");
         nameLbl.setWrapText(true);
         nameLbl.setPadding(new Insets(0, 14, 6, 14));
         nameLbl.setMaxWidth(Double.MAX_VALUE);
 
-        // ── Description (truncated)
         String desc = t.getDescription();
         Label descLbl = new Label(
                 (desc != null && !desc.isBlank()) ? desc : "No description provided.");
@@ -174,13 +160,11 @@ public class ReadinessViewController implements Initializable {
         descLbl.setWrapText(true);
         descLbl.setMaxWidth(Double.MAX_VALUE);
         descLbl.setPadding(new Insets(0, 14, 12, 14));
-        descLbl.setMaxHeight(42); // ~3 lines
+        descLbl.setMaxHeight(42);
 
-        // Flex-like spacer pushes the button row to the bottom in every card.
         Region ctaSpacer = new Region();
         VBox.setVgrow(ctaSpacer, Priority.ALWAYS);
 
-        // ── CTA button
         Button checkBtn = new Button("  Check Readiness  →");
         checkBtn.getStyleClass().add("readiness-card-cta-btn");
         checkBtn.setMaxWidth(Double.MAX_VALUE);
@@ -195,13 +179,9 @@ public class ReadinessViewController implements Initializable {
         return card;
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // DETAIL MODAL — requirements list + run check button
-    // ══════════════════════════════════════════════════════════════════════════
-
     private void openDetail(InternshipTemplate template) {
         selectedTemplate = template;
-        List<SkillAssignment> requirements = db.getSkillRequirements(template.getTemplateId());
+        List<SkillAssignment> requirements = facade.getSkillRequirements(template.getTemplateId());
         showModal(buildDetailContent(template, requirements), 600);
     }
 
@@ -209,10 +189,8 @@ public class ReadinessViewController implements Initializable {
         VBox root = new VBox(0);
         root.getStyleClass().add("modal-content-root");
 
-        // Header
         root.getChildren().add(buildModalHeader(t.getName(), true));
 
-        // Description
         if (t.getDescription() != null && !t.getDescription().isBlank()) {
             Label descLbl = new Label(t.getDescription());
             descLbl.getStyleClass().add("detail-description");
@@ -221,7 +199,6 @@ public class ReadinessViewController implements Initializable {
             root.getChildren().add(descLbl);
         }
 
-        // Section title
         HBox secRow = new HBox(8);
         secRow.setAlignment(Pos.CENTER_LEFT);
         secRow.setPadding(new Insets(0, 24, 10, 24));
@@ -238,7 +215,6 @@ public class ReadinessViewController implements Initializable {
         VBox.setMargin(sep, new Insets(0, 24, 12, 24));
         root.getChildren().add(sep);
 
-        // Skills list in a scroll pane
         VBox skillsBox = new VBox(8);
         skillsBox.setPadding(new Insets(0, 24, 4, 24));
 
@@ -262,7 +238,6 @@ public class ReadinessViewController implements Initializable {
         VBox.setMargin(skillsScroll, new Insets(0, 0, 0, 0));
         root.getChildren().add(skillsScroll);
 
-        // CTA
         HBox btnRow = new HBox();
         btnRow.setAlignment(Pos.CENTER);
         btnRow.setPadding(new Insets(20, 24, 26, 24));
@@ -283,21 +258,17 @@ public class ReadinessViewController implements Initializable {
         row.getStyleClass().add("detail-req-row");
         row.setPadding(new Insets(10, 14, 10, 14));
 
-        // Category pill
         Label catPill = new Label(req.getSkillCategory());
         catPill.getStyleClass().add("skill-card-category-pill");
 
-        // Skill name
         Label nameLbl = new Label(req.getSkillName());
         nameLbl.getStyleClass().add("detail-req-name");
         HBox.setHgrow(nameLbl, Priority.ALWAYS);
 
-        // Min level badge
         Label levelBadge = new Label(formatLevel(req.getMinimumProficiencyLevel()));
         levelBadge.getStyleClass().addAll("detail-req-level-badge",
                 "req-level-" + req.getMinimumProficiencyLevel().toLowerCase());
 
-        // Weight indicator (shown only if weight != 1)
         if (req.getWeight() != 1) {
             Label weightLbl = new Label("×" + req.getWeight());
             weightLbl.getStyleClass().add("detail-req-weight");
@@ -308,52 +279,26 @@ public class ReadinessViewController implements Initializable {
         return row;
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // READINESS ENGINE — math + DB persistence
-    // ══════════════════════════════════════════════════════════════════════════
-
     private void runReadinessCheck() {
-        List<SkillAssignment>    reqs         = db.getSkillRequirements(selectedTemplate.getTemplateId());
-        Map<Integer, String>     proficiencies = db.getStudentHighestProficiencies(studentId);
+        EvaluationFacade.ReadinessCheckResult result =
+                facade.runReadinessCheck(studentId, selectedTemplate.getTemplateId());
 
-        // Phase 4B: Delegate scoring to ReadinessReport entity (Information Expert)
-        ReadinessReport report = new ReadinessReport(studentId, selectedTemplate.getTemplateId());
-        report.evaluate(reqs, proficiencies);
-
-        double overallScore                    = report.getOverallScore();
-        List<ReadinessSkillResult> results     = report.getResults();
-
-        // ── Persist
-        int reportId = db.saveReadinessReport(studentId, selectedTemplate.getTemplateId(), overallScore);
-        if (reportId > 0) {
-            report.setReportId(reportId);
-            db.saveSkillGaps(reportId, report.getGaps());
-        }
-
-        showModal(buildResultContent(overallScore, results), 680);
+        showModal(buildResultContent(result.overallScore(), result.verdict(), result.results()), 680);
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // RESULT MODAL — circular progress + skill gap list
-    // ══════════════════════════════════════════════════════════════════════════
-
-    private VBox buildResultContent(double overallScore,
+    private VBox buildResultContent(double overallScore, String verdict,
                                     List<ReadinessSkillResult> results) {
         VBox root = new VBox(0);
         root.getStyleClass().add("modal-content-root");
 
-        // ── Header
         root.getChildren().add(buildModalHeader("Readiness Report  ·  " + selectedTemplate.getName(), true));
 
-        // ── Circular progress ring
         StackPane ring = buildProgressRing(overallScore);
         VBox.setMargin(ring, new Insets(10, 0, 6, 0));
         root.getChildren().add(ring);
 
-        // ── Readiness verdict badge
-        String verdict   = readinessVerdict(overallScore);
-        String vStyle    = readinessVerdictStyle(overallScore);
-        Label verdictLbl = new Label(verdict);
+        String vStyle    = readinessVerdictStyle(verdict);
+        Label verdictLbl = new Label("  " + verdict + "  ");
         verdictLbl.getStyleClass().addAll("readiness-verdict-badge", vStyle);
         VBox verdictRow = new VBox();
         verdictRow.setAlignment(Pos.CENTER);
@@ -361,7 +306,6 @@ public class ReadinessViewController implements Initializable {
         VBox.setMargin(verdictRow, new Insets(0, 0, 18, 0));
         root.getChildren().add(verdictRow);
 
-        // ── Separator + "Skill Analysis" heading
         Separator sep = new Separator();
         sep.getStyleClass().add("modal-separator");
         VBox.setMargin(sep, new Insets(0, 24, 12, 24));
@@ -378,7 +322,6 @@ public class ReadinessViewController implements Initializable {
         analysisHeader.getChildren().addAll(aIcon, aTitle);
         root.getChildren().add(analysisHeader);
 
-        // ── Skill result rows in a scroll pane
         VBox gapBox = new VBox(8);
         gapBox.setPadding(new Insets(0, 24, 8, 24));
 
@@ -387,7 +330,6 @@ public class ReadinessViewController implements Initializable {
             noReq.getStyleClass().add("detail-description");
             gapBox.getChildren().add(noReq);
         } else {
-            // Sort: NO_GAP last so gaps appear prominently at top
             results.stream()
                     .sorted(Comparator.comparing(r -> switch (r.getGapStatus()) {
                         case "MAJOR_GAP" -> 0;
@@ -405,7 +347,6 @@ public class ReadinessViewController implements Initializable {
         gapScroll.setMaxHeight(220);
         root.getChildren().add(gapScroll);
 
-        // ── Action buttons
         HBox btnRow = new HBox(12);
         btnRow.setAlignment(Pos.CENTER);
         btnRow.setPadding(new Insets(18, 24, 26, 24));
@@ -433,7 +374,6 @@ public class ReadinessViewController implements Initializable {
         double radius = 54.0;
         double stroke = 9.0;
 
-        // Background ring
         Arc bgArc = new Arc(center, center, radius, radius, 90, 360);
         bgArc.setType(ArcType.OPEN);
         bgArc.setFill(Color.TRANSPARENT);
@@ -441,7 +381,6 @@ public class ReadinessViewController implements Initializable {
         bgArc.setStrokeWidth(stroke);
         bgArc.setStrokeLineCap(StrokeLineCap.ROUND);
 
-        // Progress arc (clockwise = negative length, starts at top = 90°)
         Arc progressArc = new Arc(center, center, radius, radius, 90, 0);
         progressArc.setType(ArcType.OPEN);
         progressArc.setFill(Color.TRANSPARENT);
@@ -449,11 +388,9 @@ public class ReadinessViewController implements Initializable {
         progressArc.setStrokeWidth(stroke);
         progressArc.setStrokeLineCap(StrokeLineCap.ROUND);
 
-        // Centre text: score percentage
         Label scoreLbl = new Label("0%");
         scoreLbl.getStyleClass().add("readiness-ring-score");
 
-        // Subtitle inside ring
         Label subtitleLbl = new Label("score");
         subtitleLbl.getStyleClass().add("readiness-ring-subtitle");
 
@@ -467,8 +404,7 @@ public class ReadinessViewController implements Initializable {
         ring.setMaxSize(size, size);
         ring.setAlignment(Pos.CENTER);
 
-        // Animate: arc sweep + counter
-        double targetLength = -overallScore * 3.6; // 100% → -360°
+        double targetLength = -overallScore * 3.6;
         int[] counter = {0};
         int targetInt = (int) Math.round(overallScore);
 
@@ -480,7 +416,6 @@ public class ReadinessViewController implements Initializable {
                         new KeyValue(progressArc.lengthProperty(), targetLength, SILK))
         );
 
-        // Separate counter animation at 60fps-ish ticks
         Timeline counter_ = new Timeline();
         counter_.getKeyFrames().add(new KeyFrame(Duration.millis(900 / Math.max(targetInt, 1)),
                 e -> {
@@ -497,24 +432,26 @@ public class ReadinessViewController implements Initializable {
     }
 
     private Color scoreArcColor(double score) {
-        if (score >= 80) return Color.web("rgba(80, 185, 100, 0.90)");
-        if (score >= 60) return Color.web("rgba(80, 165, 210, 0.90)");
-        if (score >= 40) return Color.web("rgba(215, 170, 50, 0.90)");
-        return Color.web("rgba(215, 90, 80, 0.85)");
+        return switch (ReadinessReport.ReadinessVerdict.fromScore(score)) {
+            case READY        -> Color.web("rgba(80, 185, 100, 0.90)");
+            case ALMOST_READY -> Color.web("rgba(80, 165, 210, 0.90)");
+            case NEEDS_WORK   -> Color.web("rgba(215, 170, 50, 0.90)");
+            case NOT_READY    -> Color.web("rgba(215, 90, 80, 0.85)");
+        };
     }
 
-    private String readinessVerdict(double score) {
-        if (score >= 80) return "  Ready  ";
-        if (score >= 60) return "  Almost Ready  ";
-        if (score >= 40) return "  Needs Work  ";
-        return "  Not Ready  ";
-    }
-
-    private String readinessVerdictStyle(double score) {
-        if (score >= 80) return "verdict-ready";
-        if (score >= 60) return "verdict-almost";
-        if (score >= 40) return "verdict-needs-work";
-        return "verdict-not-ready";
+    /**
+     * Maps a verdict label (from the model) to a CSS style class.
+     * This is a display-only concern — the threshold policy lives in
+     * {@link ReadinessReport.ReadinessVerdict}.
+     */
+    private String readinessVerdictStyle(String verdict) {
+        return switch (verdict) {
+            case "Ready"        -> "verdict-ready";
+            case "Almost Ready" -> "verdict-almost";
+            case "Needs Work"   -> "verdict-needs-work";
+            default             -> "verdict-not-ready";
+        };
     }
 
     private HBox buildSkillResultRow(ReadinessSkillResult r) {
@@ -524,7 +461,6 @@ public class ReadinessViewController implements Initializable {
                 "gap-row-" + r.getGapStatus().toLowerCase().replace('_', '-'));
         row.setPadding(new Insets(10, 14, 10, 14));
 
-        // Gap icon
         FontIcon gapIcon = switch (r.getGapStatus()) {
             case "NO_GAP"    -> new FontIcon("fas-check-circle");
             case "MINOR_GAP" -> new FontIcon("fas-exclamation-circle");
@@ -533,7 +469,6 @@ public class ReadinessViewController implements Initializable {
         gapIcon.setIconSize(14);
         gapIcon.getStyleClass().add("gap-icon-" + r.getGapStatus().toLowerCase().replace('_', '-'));
 
-        // Skill name + category
         VBox textCol = new VBox(2);
         HBox.setHgrow(textCol, Priority.ALWAYS);
         Label nameLbl = new Label(r.getSkillName());
@@ -542,7 +477,6 @@ public class ReadinessViewController implements Initializable {
         catLbl.getStyleClass().add("tier-row-sub");
         textCol.getChildren().addAll(nameLbl, catLbl);
 
-        // Level comparison: "NOVICE  →  INTERMEDIATE"
         HBox levelRow = new HBox(6);
         levelRow.setAlignment(Pos.CENTER_RIGHT);
         levelRow.setMinWidth(160);
@@ -560,7 +494,6 @@ public class ReadinessViewController implements Initializable {
 
         levelRow.getChildren().addAll(curLbl, arrowLbl, reqLbl);
 
-        // Score %
         Label pctLbl = new Label(String.format("%.0f%%", r.getSkillScorePct()));
         pctLbl.getStyleClass().add("gap-score-pct");
         pctLbl.setMinWidth(34);
@@ -568,10 +501,6 @@ public class ReadinessViewController implements Initializable {
         row.getChildren().addAll(gapIcon, textCol, levelRow, pctLbl);
         return row;
     }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // MODAL MANAGEMENT
-    // ══════════════════════════════════════════════════════════════════════════
 
     private void showModal(VBox content, double maxHeight) {
         modalCard.setMaxHeight(maxHeight);
@@ -627,10 +556,6 @@ public class ReadinessViewController implements Initializable {
         return header;
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // ANIMATION & UTILITY
-    // ══════════════════════════════════════════════════════════════════════════
-
     private void animateIn(Node node, double delayMs) {
         new Timeline(
                 new KeyFrame(Duration.millis(delayMs)),
@@ -662,13 +587,13 @@ public class ReadinessViewController implements Initializable {
     }
 
     private String formatLevel(String level) {
-        return switch (level) {
-            case "NOVICE"        -> "Novice";
-            case "BEGINNER"      -> "Beginner";
-            case "INTERMEDIATE"  -> "Intermediate";
-            case "ADVANCED"      -> "Advanced";
-            case "EXPERT"        -> "Expert";
-            default              -> level;
-        };
+        if ("NOVICE".equals(level)) return "Novice";
+        try {
+            return ProficiencyLadder.valueOf(level).getDisplayLabel();
+        } catch (IllegalArgumentException e) {
+            return level;
+        }
     }
 }
+
+

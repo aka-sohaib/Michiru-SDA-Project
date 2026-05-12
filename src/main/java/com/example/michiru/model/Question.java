@@ -1,25 +1,9 @@
 package com.example.michiru.model;
 
 /**
- * Domain model representing a row in the {@code questions} table.
- *
- * <p>Column mapping (snake_case → camelCase):</p>
- * <pre>
- *  question_id    → questionId     (INT UNSIGNED AUTO_INCREMENT)
- *  skill_id       → skillId        (INT UNSIGNED FK → skills, NOT NULL)
- *  question_text  → questionText   (TEXT NOT NULL)
- *  option_a       → optionA        (VARCHAR 1000 NOT NULL)
- *  option_b       → optionB        (VARCHAR 1000 NOT NULL)
- *  option_c       → optionC        (VARCHAR 1000 NOT NULL)
- *  option_d       → optionD        (VARCHAR 1000 NOT NULL)
- *  correct_option → correctOption  (ENUM A|B|C|D NOT NULL)
- *  difficulty_level → difficultyLevel (ENUM EASY|MEDIUM|HARD NOT NULL)
- *  is_active      → isActive       (TINYINT 1, default 1)
- *  created_by     → createdBy      (INT UNSIGNED, nullable FK → coordinators)
- * </pre>
- *
- * <p>Note: the {@code questions} table has no {@code created_at} column.</p>
+ * Class definition for Question.
  */
+
 public class Question {
 
     private int    questionId;
@@ -84,8 +68,12 @@ public class Question {
     public void setCreatedBy(int id)             { this.createdBy      = id; }
 
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "Question{id=" + questionId + ", skill=" + skillId +
                ", difficulty='" + difficultyLevel + "', active=" + isActive + "}";
     }
 }
+

@@ -1,7 +1,10 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseCatalog;
-import com.example.michiru.db.MySQLHandler;
+/**
+ * Class definition for ProgressTrackingViewController.
+ */
+
+import com.example.michiru.facade.MentorshipLifecycleFacade;
 import com.example.michiru.model.MentorshipActivity;
 import com.example.michiru.session.UserSession;
 
@@ -23,45 +26,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-/**
- * Controller for ProgressTrackingView.fxml — UC09: Track Mentorship Progress.
- *
- * <h3>Layout pattern</h3>
- * Mirrors InternshipsViewController: a scrollable VBox of cards, all built
- * programmatically.  Each card is a glassmorphism accordion:
- * <pre>
- *   VBox (pt-activity-card)
- *     ├── HBox  header  — Mentor Name, date, status badge, chevron [always visible]
- *     └── VBox  details — message, credits, decline reason, dates [collapsed by default]
- * </pre>
- *
- * <h3>Accordion animation</h3>
- * Expand:  maxHeight 0 → 800 + fade-in  (240 ms, SILK easing)
- * Collapse: maxHeight → 0 + fade-out    (200 ms, SILK easing), then managed/visible = false
- * The chevron icon rotates 0° ↔ 180° as a visual affordance.
- *
- * <h3>Status display logic</h3>
- * The {@code mentorships.status} (ACTIVE/COMPLETED) overrides the request status
- * (ACCEPTED) when a mentorship row has been created.
- */
+
 public class ProgressTrackingViewController implements Initializable {
 
-    // ── Easing curves ────────────────────────────────────────────────────────
     private static final Interpolator SILK   = Interpolator.SPLINE(0.16, 1.0, 0.30, 1.0);
     private static final Interpolator LIQUID = Interpolator.SPLINE(0.22, 0.68, 0.0,  1.0);
 
-    // ── FXML injections ───────────────────────────────────────────────────────
     @FXML private Label     lblSubtitle;
     @FXML private Label     lblTotalCount;
     @FXML private VBox      cardContainer;
 
-    // ── Session & DB ──────────────────────────────────────────────────────────
-    private final DatabaseCatalog db = new MySQLHandler();
+    private final MentorshipLifecycleFacade facade = new MentorshipLifecycleFacade();
     private int studentId;
 
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Wires FXML controls and listeners after the scene graph is loaded.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         studentId = UserSession.getInstance().getCurrentUser().getUserId();
 
@@ -80,13 +64,9 @@ public class ProgressTrackingViewController implements Initializable {
         t.start();
     }
 
-    // ── DB fetch ──────────────────────────────────────────────────────────────
-
     private List<MentorshipActivity> fetchActivities() {
-        return db.getStudentMentorshipActivity(studentId);
+        return facade.getStudentMentorshipActivity(studentId);
     }
-
-    // ── Card rendering ────────────────────────────────────────────────────────
 
     private void renderCards(List<MentorshipActivity> activities) {
         cardContainer.getChildren().clear();
@@ -108,7 +88,6 @@ public class ProgressTrackingViewController implements Initializable {
             cardContainer.getChildren().add(card);
         }
 
-        // Staggered fade-in — mirrors InternshipsViewController
         for (int i = 0; i < cardContainer.getChildren().size(); i++) {
             Node card = cardContainer.getChildren().get(i);
             double delay = i * 45.0;
@@ -120,8 +99,6 @@ public class ProgressTrackingViewController implements Initializable {
             ).play();
         }
     }
-
-    // ── Single accordion card ─────────────────────────────────────────────────
 
     /**
      * Builds one accordion card for a MentorshipActivity.
@@ -140,12 +117,10 @@ public class ProgressTrackingViewController implements Initializable {
         card.getStyleClass().add("pt-activity-card");
         card.setCursor(javafx.scene.Cursor.HAND);
 
-        // ── Header (always visible) ───────────────────────────────────────────
         HBox header = new HBox(14);
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(16, 18, 16, 18));
 
-        // Status-tinted icon pill
         StackPane iconPill = new StackPane();
         iconPill.getStyleClass().addAll("card-icon-pill", "pt-pill-" + statusKey);
         iconPill.setMinSize(44, 44);
@@ -155,7 +130,6 @@ public class ProgressTrackingViewController implements Initializable {
         pillIcon.getStyleClass().addAll("card-icon", "pt-icon-" + statusKey);
         iconPill.getChildren().add(pillIcon);
 
-        // Name + date column
         VBox nameCol = new VBox(4);
         HBox.setHgrow(nameCol, Priority.ALWAYS);
         nameCol.setMinWidth(0);
@@ -169,16 +143,13 @@ public class ProgressTrackingViewController implements Initializable {
 
         nameCol.getChildren().addAll(nameLbl, dateLbl);
 
-        // Spring
         Region spring = new Region();
         HBox.setHgrow(spring, Priority.ALWAYS);
 
-        // Status badge
         Label statusBadge = new Label(statusLabel(status));
         statusBadge.getStyleClass().addAll("pt-status-badge", "pt-status-" + statusKey);
         statusBadge.setMinWidth(Region.USE_PREF_SIZE);
 
-        // Chevron button
         Button chevronBtn = new Button();
         chevronBtn.getStyleClass().add("pt-chevron-btn");
         FontIcon chevronIcon = new FontIcon("fas-chevron-down");
@@ -188,42 +159,35 @@ public class ProgressTrackingViewController implements Initializable {
 
         header.getChildren().addAll(iconPill, nameCol, spring, statusBadge, chevronBtn);
 
-        // ── Details section (accordion, initially collapsed) ──────────────────
         VBox details = new VBox(0);
         details.setManaged(false);
         details.setVisible(false);
         details.setMaxHeight(0);
         details.setOpacity(0);
 
-        // Separator between header and detail body
         Region detailSep = new Region();
         detailSep.getStyleClass().add("pt-detail-sep");
         detailSep.setMinHeight(1); detailSep.setMaxHeight(1);
 
-        // Detail rows container
         VBox detailBody = new VBox(10);
         detailBody.setPadding(new Insets(14, 18, 18, 18));
 
-        // ── Message row ───────────────────────────────────────────────────────
         if (a.hasMessage()) {
             detailBody.getChildren().add(
                     buildDetailRow("fas-comment-alt", "Message", a.getMessage(), true));
         }
 
-        // ── Credit cost row ───────────────────────────────────────────────────
         detailBody.getChildren().add(
                 buildDetailRow("fas-coins", "Credit Cost",
                         a.getCreditCost() == 0 ? "Free" : a.getCreditCost() + " credits",
                         false));
 
-        // ── Decline reason (only when declined) ───────────────────────────────
         if (a.hasDeclineReason()) {
             detailBody.getChildren().add(
                     buildDetailRow("fas-info-circle", "Declined Because",
                             a.getDeclineReason(), true));
         }
 
-        // ── Mentorship dates (only when active/completed) ─────────────────────
         if (a.hasMentorshipDates()) {
             detailBody.getChildren().add(
                     buildDetailRow("fas-play-circle", "Started",
@@ -238,8 +202,6 @@ public class ProgressTrackingViewController implements Initializable {
         details.getChildren().addAll(detailSep, detailBody);
         card.getChildren().addAll(header, details);
 
-        // ── Wire accordion toggle ─────────────────────────────────────────────
-        // Track expanded state in a single-element array (effectively a mutable bool)
         boolean[] expanded = {false};
 
         Runnable toggle = () -> {
@@ -251,15 +213,12 @@ public class ProgressTrackingViewController implements Initializable {
             expanded[0] = !expanded[0];
         };
 
-        // Clicking anywhere on the card toggles it
         card.setOnMouseClicked(e -> toggle.run());
-        // Chevron button also toggles (consume prevents double-fire from card click)
         chevronBtn.setOnAction(e -> {
             e.consume();
             toggle.run();
         });
 
-        // Subtle press feedback on the whole card
         card.setOnMousePressed(e -> {
             ScaleTransition st = new ScaleTransition(Duration.millis(80), card);
             st.setToX(0.99); st.setToY(0.99);
@@ -271,7 +230,6 @@ public class ProgressTrackingViewController implements Initializable {
             st.play();
         });
 
-        // Hover lift — mirrors animateCardHover from InternshipsViewController
         card.setOnMouseEntered(e -> new Timeline(
                 new KeyFrame(Duration.millis(160),
                         new KeyValue(card.translateYProperty(), -2.0, SILK))).play());
@@ -281,8 +239,6 @@ public class ProgressTrackingViewController implements Initializable {
 
         return card;
     }
-
-    // ── Accordion animation ───────────────────────────────────────────────────
 
     private void expandCard(VBox details, FontIcon chevron) {
         details.setManaged(true);
@@ -296,7 +252,6 @@ public class ProgressTrackingViewController implements Initializable {
                         new KeyValue(details.opacityProperty(),   1.0, SILK)));
         tl.play();
 
-        // Rotate chevron 180°
         new Timeline(new KeyFrame(Duration.millis(240),
                 new KeyValue(chevron.rotateProperty(), 180, SILK))).play();
     }
@@ -312,12 +267,9 @@ public class ProgressTrackingViewController implements Initializable {
         });
         tl.play();
 
-        // Rotate chevron back to 0°
         new Timeline(new KeyFrame(Duration.millis(200),
                 new KeyValue(chevron.rotateProperty(), 0, SILK))).play();
     }
-
-    // ── Detail row builder ────────────────────────────────────────────────────
 
     /**
      * Builds one detail row: [icon]  [label]  [value].
@@ -335,7 +287,6 @@ public class ProgressTrackingViewController implements Initializable {
         FontIcon icon = new FontIcon(iconLiteral);
         icon.setIconSize(12);
         icon.getStyleClass().add("pt-detail-icon");
-        // Align icon with first line of text
         VBox iconWrap = new VBox(icon);
         iconWrap.setAlignment(Pos.TOP_CENTER);
         iconWrap.setMinWidth(16); iconWrap.setMaxWidth(16);
@@ -353,8 +304,6 @@ public class ProgressTrackingViewController implements Initializable {
         row.getChildren().addAll(iconWrap, lbl, val);
         return row;
     }
-
-    // ── Empty state ───────────────────────────────────────────────────────────
 
     private Node buildEmptyState() {
         VBox box = new VBox(12);
@@ -377,8 +326,6 @@ public class ProgressTrackingViewController implements Initializable {
         box.getChildren().addAll(icon, lbl, hint);
         return box;
     }
-
-    // ── String helpers ────────────────────────────────────────────────────────
 
     /**
      * Maps the raw status string to a clean display label.
@@ -416,3 +363,5 @@ public class ProgressTrackingViewController implements Initializable {
         return s.charAt(0) + s.substring(1).toLowerCase();
     }
 }
+
+

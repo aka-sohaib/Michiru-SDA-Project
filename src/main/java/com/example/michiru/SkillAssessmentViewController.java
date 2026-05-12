@@ -1,8 +1,11 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseCatalog;
-import com.example.michiru.db.MySQLHandler;
-import com.example.michiru.model.Assessment;
+/**
+ * Class definition for SkillAssessmentViewController.
+ */
+
+import com.example.michiru.facade.EvaluationFacade;
+import com.example.michiru.model.ProficiencyLadder;
 import com.example.michiru.model.Question;
 import com.example.michiru.model.SkillProficiencyCard;
 import com.example.michiru.session.UserSession;
@@ -23,22 +26,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Locale;
 
-/**
- * Controller for SkillAssessmentView.fxml — the "Belt System" skill assessment hub.
- *
- * State machine:
- *   HUB → LADDER → EXAM → RESULT → HUB (or LADDER)
- *
- * All modal content is built programmatically for full control over dynamic data and
- * transitions. The FXML provides only the structural skeleton (overlay, modal card).
- */
+
 public class SkillAssessmentViewController implements Initializable {
 
-    // ── Animation curves ─────────────────────────────────────────────────────
     private static final Interpolator SILK   = Interpolator.SPLINE(0.16, 1.0, 0.30, 1.0);
     private static final Interpolator LIQUID = Interpolator.SPLINE(0.22, 0.68, 0.0, 1.0);
 
-    // ── FXML injections ──────────────────────────────────────────────────────
     @FXML private Label     lblSkillCount;
     @FXML private TextField searchField;
     @FXML private FlowPane  skillGrid;
@@ -46,59 +39,43 @@ public class SkillAssessmentViewController implements Initializable {
     @FXML private StackPane modalWrapper;
     @FXML private VBox      modalCard;
 
-    // ── Exam state ───────────────────────────────────────────────────────────
     private SkillProficiencyCard selectedSkill;
-    private String               selectedTier;        // BEGINNER | INTERMEDIATE | ADVANCED | EXPERT
+    private String               selectedTier;
     private boolean              isProgressionAttempt;
-    private List<Question>       examQuestions;
-    private final Map<Integer, String> examAnswers = new LinkedHashMap<>();
-    private int                  currentQuestionIndex;
 
-    /** Active Assessment domain entity — owns the exam session state (Phase 4A). */
-    private Assessment           activeAssessment;
-
-    // ── Live exam UI refs (refreshed each question) ───────────────────────────
     private Label       examProgressLabel;
     private ProgressBar examProgressBar;
     private Label       examQuestionText;
     private final List<HBox> optionRows = new ArrayList<>();
     private Button      examActionBtn;
 
-    // ── DB & session ─────────────────────────────────────────────────────────
-    private final DatabaseCatalog db        = new MySQLHandler();
+    private final EvaluationFacade facade = new EvaluationFacade();
     private       int          studentId;
 
-    // ── Full skill list (for search filtering) ────────────────────────────────
     private List<SkillProficiencyCard> allSkills = new ArrayList<>();
 
-    // ── Tier definitions (ordered) ───────────────────────────────────────────
-    private static final String[] TIERS      = {"BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT"};
-    private static final String[] TIER_LABEL = {"Beginner",  "Intermediate",  "Advanced",  "Expert"};
-    private static final String[] TIER_DIFF  = {"EASY",      "MEDIUM",        "HARD",      "MIX"};
-    private static final String[] TIER_ICON  = {"fas-seedling", "fas-fire", "fas-bolt", "fas-crown"};
+    // Tier policy constants are now in ProficiencyLadder (model) — single source of truth.
 
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Wires FXML controls and listeners after the scene graph is loaded.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         studentId = UserSession.getInstance().getCurrentUser().getUserId();
         loadSkillGrid();
 
-        // Real-time search filter
         searchField.textProperty().addListener((obs, oldVal, newVal) -> filterSkills(newVal));
 
-        // Clicking the dim layer closes the ladder modal (but NOT during an exam)
         overlayDim.setOnMouseClicked(e -> {
             if (selectedTier == null) closeModal();
         });
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // HUB — Skill grid
-    // ══════════════════════════════════════════════════════════════════════════
-
     private void loadSkillGrid() {
-        allSkills = db.getSkillsWithStudentProficiency(studentId);
+        allSkills = facade.getSkillsWithStudentProficiency(studentId);
         lblSkillCount.setText(String.valueOf(allSkills.size()));
         renderSkillCards(allSkills, true);
     }
@@ -150,7 +127,6 @@ public class SkillAssessmentViewController implements Initializable {
         card.setMinWidth(220);
         card.setMaxWidth(220);
 
-        // ── Top band: category pill + difficulty badge
         HBox topRow = new HBox(8);
         topRow.setAlignment(Pos.CENTER_LEFT);
         topRow.setPadding(new Insets(14, 14, 8, 14));
@@ -167,14 +143,12 @@ public class SkillAssessmentViewController implements Initializable {
 
         topRow.getChildren().addAll(catPill, spacer, diffBadge);
 
-        // ── Skill name
         Label nameLbl = new Label(skill.getName());
         nameLbl.getStyleClass().add("skill-card-name");
         nameLbl.setWrapText(true);
         nameLbl.setPadding(new Insets(2, 14, 8, 14));
         nameLbl.setMaxWidth(Double.MAX_VALUE);
 
-        // ── Proficiency belt badge
         HBox beltRow = new HBox(6);
         beltRow.setAlignment(Pos.CENTER_LEFT);
         beltRow.setPadding(new Insets(2, 14, 0, 14));
@@ -189,8 +163,7 @@ public class SkillAssessmentViewController implements Initializable {
 
         beltRow.getChildren().addAll(beltIcon, beltLbl);
 
-        // ── Tier progress bar (x / 4 tiers)
-        int passedTiers = skill.getLevelOrdinal(); // 0-4
+        int passedTiers = skill.getLevelOrdinal();
         double progress = passedTiers / 4.0;
 
         VBox progressBox = new VBox(4);
@@ -209,7 +182,6 @@ public class SkillAssessmentViewController implements Initializable {
 
         progressBox.getChildren().addAll(progressHeader, pb);
 
-        // ── CTA button
         Button viewBtn = new Button(passedTiers == 4 ? "  View Belts  " : "  View Progress  ");
         viewBtn.getStyleClass().add("skill-card-cta-btn");
         viewBtn.setMaxWidth(Double.MAX_VALUE);
@@ -219,20 +191,15 @@ public class SkillAssessmentViewController implements Initializable {
         wireLiquidScale(viewBtn);
         card.getChildren().addAll(topRow, nameLbl, beltRow, progressBox, viewBtn);
 
-        // Hover lift
         card.setOnMouseEntered(e -> animateLift(card, -3, 1.01, 160));
         card.setOnMouseExited(e  -> animateLift(card,  0, 1.00, 200));
 
         return card;
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // LADDER MODAL — tier progression view
-    // ══════════════════════════════════════════════════════════════════════════
-
     private void openLadder(SkillProficiencyCard skill) {
         selectedSkill = skill;
-        selectedTier  = null; // not in exam yet
+        selectedTier  = null;
         showModal(buildLadderContent(skill), 580);
     }
 
@@ -240,11 +207,9 @@ public class SkillAssessmentViewController implements Initializable {
         VBox root = new VBox(0);
         root.getStyleClass().add("modal-content-root");
 
-        // ── Header
         HBox header = buildModalHeader(skill.getName(), true);
         root.getChildren().add(header);
 
-        // ── Skill meta row
         HBox metaRow = new HBox(8);
         metaRow.setAlignment(Pos.CENTER_LEFT);
         metaRow.setPadding(new Insets(0, 24, 16, 24));
@@ -255,7 +220,7 @@ public class SkillAssessmentViewController implements Initializable {
         Label diffLbl = new Label(skill.getDifficultyTier() + " difficulty");
         diffLbl.getStyleClass().add("modal-meta-subtle");
 
-        Label passReqLbl = new Label("·  " + skill.getQuestionsRequiredToPass() + "/10 to pass each tier");
+        Label passReqLbl = new Label("·  " + skill.getQuestionsRequiredToPass() + "/" + ProficiencyLadder.EXAM_QUESTION_COUNT + " to pass each tier");
         passReqLbl.getStyleClass().add("modal-meta-subtle");
 
         metaRow.getChildren().addAll(catLbl, diffLbl, passReqLbl);
@@ -266,33 +231,22 @@ public class SkillAssessmentViewController implements Initializable {
         VBox.setMargin(sep, new Insets(0, 24, 16, 24));
         root.getChildren().add(sep);
 
-        // ── Tier rows
         String currentLevel = skill.getCurrentLevel();
-        int    currentOrd   = skill.getLevelOrdinal(); // 0-4
+        int    currentOrd   = skill.getLevelOrdinal();
 
         VBox tiersBox = new VBox(10);
         tiersBox.setPadding(new Insets(0, 24, 24, 24));
 
-        for (int i = 0; i < 4; i++) {
-            String tier      = TIERS[i];
-            String tierLabel = TIER_LABEL[i];
-            String diff      = TIER_DIFF[i];
-
-            // Tier states:
-            // passed   → ordinal(tier) < currentOrd  (already achieved, practice)
-            // unlocked → ordinal(tier) == currentOrd  (next progression attempt)
-            // locked   → ordinal(tier) > currentOrd
-            int tierOrd = i + 1; // BEGINNER=1, INTERMEDIATE=2, ADVANCED=3, EXPERT=4
+        for (ProficiencyLadder rung : ProficiencyLadder.ladder()) {
+            int tierOrd = rung.getLadderOrdinal();
 
             boolean passed   = tierOrd <= currentOrd;
             boolean unlocked = tierOrd == currentOrd + 1;
             boolean locked   = tierOrd > currentOrd + 1;
 
-            // Special: EXPERT (i==3) is always unlocked when currentOrd == 3 (ADVANCED)
-            // Already handled correctly by the formula above.
-
-            HBox tierRow = buildTierRow(skill, tier, tierLabel, diff,
-                    TIER_ICON[i], passed, unlocked, locked);
+            HBox tierRow = buildTierRow(skill, rung.name(), rung.getDisplayLabel(),
+                    rung.getQuestionDifficulty(), rung.getIconLiteral(),
+                    passed, unlocked, locked);
             tiersBox.getChildren().add(tierRow);
         }
 
@@ -313,7 +267,6 @@ public class SkillAssessmentViewController implements Initializable {
                                    : "tier-row-unlocked";
         row.getStyleClass().addAll("tier-row", rowStyle);
 
-        // Icon pill
         StackPane iconPill = new StackPane();
         iconPill.setMinSize(40, 40);
         iconPill.setMaxSize(40, 40);
@@ -324,7 +277,6 @@ public class SkillAssessmentViewController implements Initializable {
         icon.getStyleClass().addAll("tier-icon", rowStyle + "-icon");
         iconPill.getChildren().add(icon);
 
-        // Text column
         VBox textCol = new VBox(3);
         HBox.setHgrow(textCol, Priority.ALWAYS);
 
@@ -332,15 +284,13 @@ public class SkillAssessmentViewController implements Initializable {
         titleLbl.getStyleClass().addAll("tier-row-title", rowStyle + "-title");
 
         String diffDisplay = "MIX".equals(diff) ? "All difficulties · Gauntlet" : diff + " questions";
-        Label subLbl = new Label(diffDisplay + "  ·  " + skill.getQuestionsRequiredToPass() + "/10 to pass");
+        Label subLbl = new Label(diffDisplay + "  ·  " + skill.getQuestionsRequiredToPass() + "/" + ProficiencyLadder.EXAM_QUESTION_COUNT + " to pass");
         subLbl.getStyleClass().add("tier-row-sub");
 
         textCol.getChildren().addAll(titleLbl, subLbl);
 
-        // Right: status/action
         Node rightNode;
         if (passed) {
-            // checkmark badge + practice button
             HBox rightBox = new HBox(10);
             rightBox.setAlignment(Pos.CENTER_RIGHT);
 
@@ -375,36 +325,18 @@ public class SkillAssessmentViewController implements Initializable {
         return row;
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // EXAM ENGINE — question-by-question modal
-    // ══════════════════════════════════════════════════════════════════════════
-
     private void startExam(SkillProficiencyCard skill, String tier, boolean isProgression) {
         selectedSkill        = skill;
         selectedTier         = tier;
         isProgressionAttempt = isProgression;
-        examAnswers.clear();
-        currentQuestionIndex = 0;
 
-        // Determine difficulty
-        int tierIndex = Arrays.asList(TIERS).indexOf(tier);
-        String difficulty = TIER_DIFF[tierIndex];
-
-        examQuestions = db.fetchExamQuestions(skill.getSkillId(), difficulty, 10);
-
-        int fetchedCount = examQuestions.size();
         int requiredPass = skill.getQuestionsRequiredToPass();
-        // Pre-flight guard: avoid unwinnable/invalid exams.
-        if (fetchedCount < 10 || fetchedCount < requiredPass) {
-            showModal(buildInsufficientQuestionsContent(skill, tier, fetchedCount, requiredPass), 360);
+        EvaluationFacade.ExamQuestionDrawResult draw =
+                facade.tryBeginActiveExam(skill.getSkillId(), tier, ProficiencyLadder.EXAM_QUESTION_COUNT, requiredPass);
+        if (!draw.success()) {
+            showModal(buildInsufficientQuestionsContent(skill, tier, draw.fetchedCount(), requiredPass), 360);
             return;
         }
-
-        // Phase 4A: Create the Assessment entity in-memory ONLY.
-        // No DB write here — the atomic saveAssessment() happens at submit time.
-        // This eliminates orphaned IN_PROGRESS rows when students exit mid-exam.
-        activeAssessment = new Assessment(studentId, skill.getSkillId());
-        activeAssessment.setQuestionSequence(examQuestions);
 
         showModal(buildExamContent(), 640);
     }
@@ -414,15 +346,12 @@ public class SkillAssessmentViewController implements Initializable {
         VBox root = new VBox(0);
         root.getStyleClass().add("modal-content-root");
 
-        // ── Header (non-closeable during exam)
         HBox header = buildExamHeader();
         root.getChildren().add(header);
 
-        // ── Progress area
         VBox progressArea = new VBox(6);
         progressArea.setPadding(new Insets(0, 24, 16, 24));
 
-        // examProgressLabel is set inside examProgressHeader()
         examProgressBar = new ProgressBar(0);
         examProgressBar.getStyleClass().add("exam-progress-bar");
         examProgressBar.setMaxWidth(Double.MAX_VALUE);
@@ -435,7 +364,6 @@ public class SkillAssessmentViewController implements Initializable {
         VBox.setMargin(sep, new Insets(0, 24, 20, 24));
         root.getChildren().add(sep);
 
-        // ── Question text
         examQuestionText = new Label();
         examQuestionText.getStyleClass().add("exam-question-text");
         examQuestionText.setWrapText(true);
@@ -443,7 +371,6 @@ public class SkillAssessmentViewController implements Initializable {
         examQuestionText.setPadding(new Insets(0, 24, 20, 24));
         root.getChildren().add(examQuestionText);
 
-        // ── Option rows (A–D)
         VBox optionsBox = new VBox(10);
         optionsBox.setPadding(new Insets(0, 24, 24, 24));
         optionRows.clear();
@@ -456,12 +383,10 @@ public class SkillAssessmentViewController implements Initializable {
         }
         root.getChildren().add(optionsBox);
 
-        // ── Spacer
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         root.getChildren().add(spacer);
 
-        // ── Action button
         HBox btnRow = new HBox();
         btnRow.setAlignment(Pos.CENTER_RIGHT);
         btnRow.setPadding(new Insets(0, 24, 24, 24));
@@ -472,7 +397,6 @@ public class SkillAssessmentViewController implements Initializable {
         btnRow.getChildren().add(examActionBtn);
         root.getChildren().add(btnRow);
 
-        // Populate first question
         refreshExamQuestion();
         return root;
     }
@@ -488,30 +412,27 @@ public class SkillAssessmentViewController implements Initializable {
 
     /** Updates question text, option labels, progress, and button text for current index. */
     private void refreshExamQuestion() {
-        Question q    = examQuestions.get(currentQuestionIndex);
-        int total     = examQuestions.size();
-        double pct    = (double) (currentQuestionIndex) / total;
+        Question q    = facade.getActiveExamCurrentQuestion();
+        int total     = facade.getActiveExamQuestionCount();
+        int idx       = facade.getActiveExamCurrentIndex();
+        double pct    = (double) idx / total;
 
-        examProgressLabel.setText("Question  " + (currentQuestionIndex + 1) + "  /  " + total);
+        examProgressLabel.setText("Question  " + (idx + 1) + "  /  " + total);
 
-        // Animate progress bar
         Timeline pbAnim = new Timeline(new KeyFrame(Duration.millis(300),
                 new KeyValue(examProgressBar.progressProperty(), pct, SILK)));
         pbAnim.play();
 
-        // Fade + update question text
         fadeSwapLabel(examQuestionText, q.getQuestionText());
 
-        // Options
         String[] texts = {q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()};
-        String selected = examAnswers.get(currentQuestionIndex);
+        String selected = facade.getActiveExamAnswerForIndex(idx);
         for (int i = 0; i < 4; i++) {
             updateOptionRow(optionRows.get(i), String.valueOf((char)('A'+i)), texts[i],
                     String.valueOf((char)('A'+i)).equals(selected));
         }
 
-        // Button
-        boolean isLast = currentQuestionIndex == total - 1;
+        boolean isLast = facade.isActiveExamLastQuestion();
         examActionBtn.setText(isLast ? "  Submit Assessment  " : "  Next  →");
         examActionBtn.setOnAction(isLast ? e -> submitExam() : e -> advanceQuestion());
     }
@@ -532,7 +453,7 @@ public class SkillAssessmentViewController implements Initializable {
         HBox.setHgrow(textLbl, Priority.ALWAYS);
 
         row.getChildren().addAll(badgeLbl, textLbl);
-        row.setUserData(label); // store option key for click handler
+        row.setUserData(label);
         row.setOnMouseClicked(e -> onOptionSelected(label));
         return row;
     }
@@ -552,14 +473,11 @@ public class SkillAssessmentViewController implements Initializable {
     }
 
     private void onOptionSelected(String option) {
-        examAnswers.put(currentQuestionIndex, option);
+        facade.recordActiveExamAnswer(option);
 
-        // ── Phase 4A: Record the response in the Assessment entity
-        // (responses accumulate; re-selection for same index overwrites the map
-        //  but the entity collects all — deduplication happens at finalize)
-
-        String selected = examAnswers.get(currentQuestionIndex);
-        Question q = examQuestions.get(currentQuestionIndex);
+        int idx = facade.getActiveExamCurrentIndex();
+        String selected = facade.getActiveExamAnswerForIndex(idx);
+        Question q = facade.getActiveExamCurrentQuestion();
         String[] texts = {q.getOptionA(), q.getOptionB(), q.getOptionC(), q.getOptionD()};
         for (int i = 0; i < 4; i++) {
             updateOptionRow(optionRows.get(i), String.valueOf((char)('A'+i)), texts[i],
@@ -568,51 +486,22 @@ public class SkillAssessmentViewController implements Initializable {
     }
 
     private void advanceQuestion() {
-        currentQuestionIndex++;
+        facade.advanceActiveExamQuestion();
         refreshExamQuestion();
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // GRADING & RESULT
-    // ══════════════════════════════════════════════════════════════════════════
-
     private void submitExam() {
-        // ── Phase 4A: Record all answers into the Assessment entity ──────────
-        int total = examQuestions.size();
-
-        // Build a clean Assessment with definitive responses from examAnswers
-        activeAssessment = new Assessment(studentId, selectedSkill.getSkillId());
-        activeAssessment.setQuestionSequence(examQuestions);
-        activeAssessment.setAttemptedTier(selectedTier); // e.g. "BEGINNER" — what gets persisted
-
-        for (int i = 0; i < total; i++) {
-            Question q = examQuestions.get(i);
-            String chosen = examAnswers.getOrDefault(i, null);
-            if (chosen != null) {
-                activeAssessment.recordResponse(q.getQuestionId(), chosen);
-            } else {
-                activeAssessment.recordSkip(q.getQuestionId());
-            }
-        }
-
-        // ── Delegate grading to the Assessment entity (Information Expert) ───
-        Assessment.FinalResult result = activeAssessment.finalizeAssessment();
-
-        int    correct  = activeAssessment.getCorrectCount();
+        int total = facade.getActiveExamQuestionCount();
         int    required = selectedSkill.getQuestionsRequiredToPass();
-        double score    = result.score();
-        boolean passed  = correct >= required;
 
-        // ── ACID Persist: atomic save of parent + all children in one txn ────
-        int savedId = db.saveAssessment(activeAssessment);
+        EvaluationFacade.AssessmentSubmissionResult result = facade.submitActiveExam(
+                studentId,
+                selectedSkill.getSkillId(),
+                selectedTier,
+                required,
+                isProgressionAttempt);
 
-        // Only record proficiency advancement on a progression pass with successful save
-        if (passed && isProgressionAttempt && savedId > 0) {
-            db.recordProficiencyAchievement(studentId, selectedSkill.getSkillId(),
-                    savedId, selectedTier, score);
-        }
-
-        showModal(buildResultContent(correct, total, required, score, passed), 500);
+        showModal(buildResultContent(result.correct(), total, required, result.score(), result.passed()), 500);
     }
 
     private VBox buildResultContent(int correct, int total, int required,
@@ -621,7 +510,6 @@ public class SkillAssessmentViewController implements Initializable {
         root.getStyleClass().add("modal-content-root");
         root.setAlignment(Pos.CENTER);
 
-        // ── Result icon
         StackPane iconArea = new StackPane();
         iconArea.setMinSize(80, 80);
         iconArea.setMaxSize(80, 80);
@@ -637,7 +525,6 @@ public class SkillAssessmentViewController implements Initializable {
 
         if (passed) pulseAnimation(iconArea);
 
-        // ── Heading
         String heading;
         String subHeading;
         if (passed && isProgressionAttempt) {
@@ -663,7 +550,6 @@ public class SkillAssessmentViewController implements Initializable {
 
         root.getChildren().addAll(headingLbl, subLbl);
 
-        // ── Score bar
         Label scoreLbl = new Label(correct + " / " + total + " correct");
         scoreLbl.getStyleClass().add("result-score-label");
         VBox.setMargin(scoreLbl, new Insets(0, 24, 8, 24));
@@ -680,7 +566,6 @@ public class SkillAssessmentViewController implements Initializable {
 
         root.getChildren().addAll(scoreLbl, scoreBar, pctLbl);
 
-        // Animate bar fill after a short delay
         PauseTransition pause = new PauseTransition(Duration.millis(200));
         pause.setOnFinished(e2 -> new Timeline(
                 new KeyFrame(Duration.millis(600),
@@ -688,7 +573,6 @@ public class SkillAssessmentViewController implements Initializable {
         ).play());
         pause.play();
 
-        // ── Action buttons
         HBox btnRow = new HBox(12);
         btnRow.setAlignment(Pos.CENTER);
         VBox.setMargin(btnRow, new Insets(0, 24, 32, 24));
@@ -698,7 +582,6 @@ public class SkillAssessmentViewController implements Initializable {
         backBtn.setOnAction(e -> {
             closeModal();
             if (passed && isProgressionAttempt) {
-                // Reload the hub to reflect new belt
                 loadSkillGrid();
             }
         });
@@ -707,7 +590,6 @@ public class SkillAssessmentViewController implements Initializable {
         Button retryBtn = new Button("  Try Again  →");
         retryBtn.getStyleClass().add("result-primary-btn");
         retryBtn.setOnAction(e -> {
-            // Restart the same tier exam
             startExam(selectedSkill, selectedTier, isProgressionAttempt);
         });
         wireLiquidScale(retryBtn);
@@ -722,10 +604,6 @@ public class SkillAssessmentViewController implements Initializable {
         return root;
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // HELPERS — modal management
-    // ══════════════════════════════════════════════════════════════════════════
-
     private void showModal(VBox content, double maxHeight) {
         modalCard.setMaxHeight(maxHeight);
         modalCard.getChildren().setAll(content);
@@ -733,7 +611,6 @@ public class SkillAssessmentViewController implements Initializable {
         overlayDim.setVisible(true);
         modalWrapper.setVisible(true);
 
-        // Entrance: fade + scale from 0.92
         modalCard.setScaleX(0.92);
         modalCard.setScaleY(0.92);
         modalCard.setOpacity(0);
@@ -762,8 +639,6 @@ public class SkillAssessmentViewController implements Initializable {
         });
         exit.play();
     }
-
-    // ── Modal header builders ─────────────────────────────────────────────────
 
     private HBox buildModalHeader(String title, boolean closeable) {
         HBox header = new HBox(10);
@@ -794,17 +669,15 @@ public class SkillAssessmentViewController implements Initializable {
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(20, 20, 16, 24));
 
-        // Skill + tier badges
         Label skillLbl = new Label(selectedSkill.getName());
         skillLbl.getStyleClass().add("modal-title");
         HBox.setHgrow(skillLbl, Priority.ALWAYS);
 
-        int tierIdx = Arrays.asList(TIERS).indexOf(selectedTier);
-        Label tierBadge = new Label("  " + TIER_LABEL[tierIdx] + "  ");
+        ProficiencyLadder rung = ProficiencyLadder.valueOf(selectedTier);
+        Label tierBadge = new Label("  " + rung.getDisplayLabel() + "  ");
         tierBadge.getStyleClass().addAll("exam-tier-badge",
                 "exam-tier-badge-" + selectedTier.toLowerCase());
 
-        // Cancel exam — custom in-app glass confirmation modal
         Button cancelBtn = new Button("Exit");
         cancelBtn.getStyleClass().add("exam-cancel-btn");
         cancelBtn.setOnAction(e -> showModal(buildExitConfirmContent(), 340));
@@ -832,7 +705,7 @@ public class SkillAssessmentViewController implements Initializable {
 
         Label msg = new Label(
                 "Cannot start the " + formatLevel(tier) + " exam yet.\n\n"
-              + "Required exam size: 10 questions\n"
+              + "Required exam size: " + ProficiencyLadder.EXAM_QUESTION_COUNT + " questions\n"
               + "Required to pass: " + requiredPass + "\n"
               + "Currently available: " + fetchedCount + "\n\n"
               + "Add more active questions in this tier before attempting."
@@ -894,9 +767,7 @@ public class SkillAssessmentViewController implements Initializable {
         Button exitBtn = new Button("  Exit  ");
         exitBtn.getStyleClass().add("result-secondary-btn");
         exitBtn.setOnAction(e -> {
-            // Phase 4A: no DB cleanup needed — nothing was written yet.
-            // The in-memory entity is simply discarded.
-            activeAssessment = null;
+            facade.clearActiveExamSession();
             closeModal();
         });
         wireLiquidScale(exitBtn);
@@ -905,10 +776,6 @@ public class SkillAssessmentViewController implements Initializable {
         root.getChildren().addAll(icon, title, msg, btnRow);
         return root;
     }
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // ANIMATION helpers
-    // ══════════════════════════════════════════════════════════════════════════
 
     private void animateIn(Node node, double delayMs) {
         Timeline t = new Timeline(
@@ -967,30 +834,22 @@ public class SkillAssessmentViewController implements Initializable {
         )).play();
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // UTILITY — level / tier mappings
-    // ══════════════════════════════════════════════════════════════════════════
-
     private String formatLevel(String level) {
-        return switch (level) {
-            case "NOVICE"       -> "Novice";
-            case "BEGINNER"     -> "Beginner";
-            case "INTERMEDIATE" -> "Intermediate";
-            case "ADVANCED"     -> "Advanced";
-            case "EXPERT"       -> "Expert";
-            default             -> level;
-        };
+        if ("NOVICE".equals(level)) return "Novice";
+        try {
+            return ProficiencyLadder.valueOf(level).getDisplayLabel();
+        } catch (IllegalArgumentException e) {
+            return level;
+        }
     }
 
     private String levelIcon(String level) {
-        return switch (level) {
-            case "NOVICE"       -> "fas-circle";
-            case "BEGINNER"     -> "fas-seedling";
-            case "INTERMEDIATE" -> "fas-fire";
-            case "ADVANCED"     -> "fas-bolt";
-            case "EXPERT"       -> "fas-crown";
-            default             -> "fas-circle";
-        };
+        if ("NOVICE".equals(level)) return "fas-circle";
+        try {
+            return ProficiencyLadder.valueOf(level).getIconLiteral();
+        } catch (IllegalArgumentException e) {
+            return "fas-circle";
+        }
     }
 
     private String levelCardStyle(String level) {
@@ -1003,3 +862,5 @@ public class SkillAssessmentViewController implements Initializable {
         };
     }
 }
+
+

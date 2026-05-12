@@ -4,11 +4,10 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Priority?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -16,7 +15,7 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════
      StudentDashboard.fxml
-     Root: StackPane (dark canvas, same as root-canvas / Right Panel)
+     Root: StackPane (dark canvas)
      ├── VBox (full-size layout spine)
      │   ├── HBox  ← TOP NAV PANE (~15%) — transparent wrapper
      │   │   ├── HBox: logo capsule (floating glass)
@@ -24,6 +23,7 @@
      │   │   └── HBox: logout capsule
      │   └── StackPane ← MASTER CONTENT CARD (85%) — frosted glass
      │       └── StackPane fx:id="contentArea"  ← hot-swap zone
+     │           └── ScrollPane fx:id="studentHomeRoot" (student home)
 ═══════════════════════════════════════════════════════════════════ -->
 <StackPane xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
@@ -39,8 +39,6 @@
 
         <!-- ─────────────────────────────────────────────────────
              TOP NAVIGATION PANE (~15% vertical)
-             HBox wrapper: transparent, no background — acts as
-             air between the canvas and the "floating" nav pieces.
         ──────────────────────────────────────────────────────── -->
         <HBox fx:id="navPane" styleClass="nav-pane"
               alignment="CENTER" spacing="10">
@@ -48,7 +46,7 @@
                 <Insets top="14" right="20" bottom="14" left="20"/>
             </padding>
 
-            <!-- ── Logo Capsule — left anchor ──────────────────── -->
+            <!-- ── Logo Capsule ──────────────────────────────── -->
             <HBox styleClass="nav-logo-capsule" alignment="CENTER_LEFT" spacing="10"
                   pickOnBounds="true">
                 <padding>
@@ -65,7 +63,6 @@
                 </VBox>
             </HBox>
 
-            <!-- ── Spacer — pushes nav menu to true center ─────── -->
             <Region HBox.hgrow="ALWAYS"/>
 
             <!-- ══ NAVIGATION MENU CAPSULE ══════════════════════ -->
@@ -74,7 +71,6 @@
                     <Insets top="6" right="6" bottom="6" left="6"/>
                 </padding>
 
-                <!-- Dashboard -->
                 <Button fx:id="btnDashboard"
                         styleClass="nav-item-btn, nav-item-active"
                         onAction="#handleNavDashboard"
@@ -88,7 +84,6 @@
                     </graphic>
                 </Button>
 
-                <!-- Skill Assessment -->
                 <Button fx:id="btnSkillAssessment"
                         styleClass="nav-item-btn"
                         onAction="#handleNavSkillAssessment"
@@ -102,7 +97,6 @@
                     </graphic>
                 </Button>
 
-                <!-- Readiness Check -->
                 <Button fx:id="btnReadinessCheck"
                         styleClass="nav-item-btn"
                         onAction="#handleNavReadinessCheck"
@@ -116,7 +110,6 @@
                     </graphic>
                 </Button>
 
-                <!-- Validation Request -->
                 <Button fx:id="btnValidationRequest"
                         styleClass="nav-item-btn"
                         onAction="#handleNavValidationRequest"
@@ -130,7 +123,6 @@
                     </graphic>
                 </Button>
 
-                <!-- Find Mentor -->
                 <Button fx:id="btnFindMentor"
                         styleClass="nav-item-btn"
                         onAction="#handleNavFindMentor"
@@ -144,7 +136,6 @@
                     </graphic>
                 </Button>
 
-                <!-- My Progress -->
                 <Button fx:id="btnMyProgress"
                         styleClass="nav-item-btn"
                         onAction="#handleNavMyProgress"
@@ -161,10 +152,8 @@
             </HBox>
             <!-- ══ END NAV MENU CAPSULE ══════════════════════════ -->
 
-            <!-- ── Spacer — mirrors left-side spacer ───────────── -->
             <Region HBox.hgrow="ALWAYS"/>
 
-            <!-- ── Logout Capsule — right anchor ───────────────── -->
             <Button fx:id="btnLogout"
                     styleClass="nav-logout-btn"
                     onAction="#handleLogout"
@@ -183,62 +172,250 @@
 
         <!-- ═══════════════════════════════════════════════════════
              MASTER CONTENT CARD (remaining ~85%)
-             Floats off the canvas via padding + the frosted-glass
-             gradient that mirrors the login screen's Left Panel.
-             VBox.vgrow="ALWAYS" ensures it fills all remaining
-             vertical space regardless of window height.
         ═══════════════════════════════════════════════════════════ -->
         <StackPane fx:id="masterContentCard"
                    styleClass="dash-content-card"
                    VBox.vgrow="ALWAYS">
             <padding>
-                <!-- Breathing room all around so card "floats" -->
                 <Insets top="0" right="20" bottom="20" left="20"/>
             </padding>
 
-            <!-- ── Inner hot-swap zone ── -->
-            <!-- This is the ONLY node you swap when navigating.
-                 Its alignment is CENTER so child views self-center.
-                 maxWidth/Height=Infinity + vgrow/hgrow=ALWAYS
-                 means any child card — no matter its preferred
-                 size — will remain perfectly centered and expandable. -->
             <StackPane fx:id="contentArea"
                        styleClass="dash-content-area"
                        alignment="CENTER"
                        maxWidth="Infinity" maxHeight="Infinity">
 
-                <!-- ── DEFAULT PLACEHOLDER VIEW ──────────────────
-                     Replace this with the real StudentHomeView
-                     FXML load once it's built.
-                ─────────────────────────────────────────────────── -->
-                <VBox fx:id="placeholderView"
-                      alignment="CENTER" spacing="18"
-                      maxWidth="520">
+                <!-- ── Student home (data-driven dashboard) ─── -->
+                <ScrollPane fx:id="studentHomeRoot"
+                            fitToWidth="true"
+                            fitToHeight="true"
+                            hbarPolicy="NEVER"
+                            vbarPolicy="NEVER"
+                            styleClass="assessment-scroll-pane"
+                            maxWidth="Infinity" maxHeight="Infinity">
 
-                    <!-- Decorative glyph -->
-                    <FontIcon iconLiteral="fas-compass"
-                              iconSize="64"
-                              styleClass="placeholder-icon"
-                              StackPane.alignment="CENTER"/>
+                    <!-- ══════════════════════════════════════════════
+                         COORDINATOR-STYLE LAYOUT: identity pane left,
+                         data panels right
+                    ══════════════════════════════════════════════ -->
+                    <HBox spacing="18"
+                          styleClass="dashboard-home-root"
+                          maxWidth="Infinity" maxHeight="Infinity">
+                        <padding><Insets top="24" right="26" bottom="26" left="26"/></padding>
 
-                    <Label text="Student Dashboard"
-                           styleClass="placeholder-title"/>
 
-                    <Label text="Your personalised overview is loading soon. Use the navigation above to explore your assessments, readiness score, and mentor connections."
-                           styleClass="placeholder-body"
-                           wrapText="true"
-                           textAlignment="CENTER"/>
+                        <!-- ─────────────────────────────────────────
+                             LEFT — Identity pane
+                        ───────────────────────────────────────────── -->
+                        <VBox fx:id="studentIdentityPane"
+                              prefWidth="204" minWidth="180"
+                              maxHeight="Infinity"
+                              styleClass="dashboard-identity-pane"
+                              spacing="0">
+                            <padding><Insets top="28" right="20" bottom="24" left="20"/></padding>
 
-                    <!-- Subtle divider -->
-                    <Region prefHeight="1" prefWidth="80" maxWidth="80"
-                            styleClass="placeholder-divider"/>
+                            <!-- Avatar + name + role badge -->
+                            <VBox alignment="CENTER" spacing="10">
 
-                    <Label fx:id="welcomeLabel"
-                           styleClass="placeholder-welcome"
-                           wrapText="true"
-                           textAlignment="CENTER"/>
+                                <StackPane styleClass="identity-avatar-circle"
+                                           minWidth="72" minHeight="72"
+                                           maxWidth="72" maxHeight="72">
+                                    <FontIcon iconLiteral="fas-user-graduate"
+                                              iconSize="28"
+                                              styleClass="identity-avatar-icon"/>
+                                </StackPane>
 
-                </VBox>
+                                <Label fx:id="lblStudentName"
+                                       text="—"
+                                       styleClass="identity-name-label"
+                                       wrapText="false"
+                                       maxWidth="164"/>
+
+                                <HBox alignment="CENTER">
+                                    <Label text="Student"
+                                           styleClass="identity-role-badge"/>
+                                </HBox>
+
+                            </VBox>
+
+                            <!-- Separator -->
+                            <Separator styleClass="identity-separator">
+                                <VBox.margin><Insets top="22" bottom="20"/></VBox.margin>
+                            </Separator>
+
+                            <!-- Email detail row -->
+                            <HBox alignment="CENTER_LEFT" spacing="9">
+                                <FontIcon iconLiteral="fas-envelope"
+                                          iconSize="12"
+                                          styleClass="identity-detail-icon"/>
+                                <Label fx:id="lblStudentEmail"
+                                       text="—"
+                                       styleClass="identity-detail-label"
+                                       wrapText="false"
+                                       maxWidth="148"/>
+                            </HBox>
+
+                            <!-- Spacer pushes status pill to bottom -->
+                            <Region VBox.vgrow="ALWAYS"/>
+
+                            <!-- System online status pill -->
+                            <HBox styleClass="system-online-pill"
+                                  alignment="CENTER"
+                                  spacing="8"
+                                  maxWidth="Infinity">
+                                <padding><Insets top="9" right="14" bottom="9" left="14"/></padding>
+                                <StackPane styleClass="system-online-dot"
+                                           minWidth="7" minHeight="7"
+                                           maxWidth="7" maxHeight="7"/>
+                                <Label text="System Online" styleClass="system-online-label"/>
+                            </HBox>
+
+                        </VBox>
+                        <!-- ─── END LEFT IDENTITY PANE ────────────── -->
+
+
+                        <!-- ─────────────────────────────────────────
+                             RIGHT — KPI ribbon + data panels
+                        ───────────────────────────────────────────── -->
+                        <VBox HBox.hgrow="ALWAYS" maxHeight="Infinity" spacing="16">
+
+                            <!-- Welcome header -->
+                            <VBox spacing="6" VBox.vgrow="NEVER">
+                                <Label fx:id="welcomeLabel"
+                                       styleClass="assessment-page-title"
+                                       wrapText="true"/>
+                                <Label text="Your credits, roadmap progress, readiness, and mentorship at a glance."
+                                       styleClass="assessment-page-subtitle"
+                                       wrapText="true"/>
+                            </VBox>
+
+                            <!-- KPI ribbon -->
+                            <HBox spacing="12" alignment="CENTER_LEFT">
+                                <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="18" bottom="16" left="18"/></padding>
+                                    <HBox spacing="12" alignment="CENTER_LEFT">
+                                        <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-green"
+                                                   minWidth="44" minHeight="44" maxWidth="44" maxHeight="44">
+                                            <FontIcon iconLiteral="fas-coins" iconSize="17" styleClass="kpi-icon kpi-icon-green"/>
+                                        </StackPane>
+                                        <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                            <Label fx:id="lblKpiCredits" text="—" styleClass="kpi-count-label"/>
+                                            <Label text="Credit balance" styleClass="kpi-title-label"/>
+                                        </VBox>
+                                    </HBox>
+                                </VBox>
+                                <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="18" bottom="16" left="18"/></padding>
+                                    <HBox spacing="12" alignment="CENTER_LEFT">
+                                        <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-blue"
+                                                   minWidth="44" minHeight="44" maxWidth="44" maxHeight="44">
+                                            <FontIcon iconLiteral="fas-route" iconSize="17" styleClass="kpi-icon kpi-icon-blue"/>
+                                        </StackPane>
+                                        <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                            <Label fx:id="lblKpiRoadmap" text="—" styleClass="kpi-count-label"/>
+                                            <Label text="Roadmap progress" styleClass="kpi-title-label"/>
+                                        </VBox>
+                                    </HBox>
+                                </VBox>
+                                <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="18" bottom="16" left="18"/></padding>
+                                    <HBox spacing="12" alignment="CENTER_LEFT">
+                                        <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-amber"
+                                                   minWidth="44" minHeight="44" maxWidth="44" maxHeight="44">
+                                            <FontIcon iconLiteral="fas-chart-line" iconSize="17" styleClass="kpi-icon kpi-icon-amber"/>
+                                        </StackPane>
+                                        <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                            <Label fx:id="lblKpiReadiness" text="—" styleClass="kpi-count-label"/>
+                                            <Label text="Latest readiness" styleClass="kpi-title-label"/>
+                                        </VBox>
+                                    </HBox>
+                                </VBox>
+                                <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="16" right="18" bottom="16" left="18"/></padding>
+                                    <HBox spacing="12" alignment="CENTER_LEFT">
+                                        <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-green"
+                                                   minWidth="44" minHeight="44" maxWidth="44" maxHeight="44">
+                                            <FontIcon iconLiteral="fas-hands-helping" iconSize="17" styleClass="kpi-icon kpi-icon-green"/>
+                                        </StackPane>
+                                        <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                            <Label fx:id="lblKpiMentorship" text="—" styleClass="kpi-count-label"/>
+                                            <Label text="Mentorship" styleClass="kpi-title-label"/>
+                                        </VBox>
+                                    </HBox>
+                                </VBox>
+                            </HBox>
+                            <!-- ─── END KPI RIBBON ─────────────────── -->
+
+                            <!-- Two-column: roadmap accordion + right mini panels -->
+                            <HBox spacing="16" VBox.vgrow="ALWAYS">
+
+                                <!-- Active Roadmap panel — accordion -->
+                                <VBox spacing="12" HBox.hgrow="ALWAYS" maxHeight="Infinity"
+                                      styleClass="glass-panel">
+                                    <padding><Insets top="18" right="20" bottom="20" left="20"/></padding>
+
+                                    <HBox alignment="CENTER_LEFT" spacing="10">
+                                        <FontIcon iconLiteral="fas-tasks" iconSize="14" styleClass="recent-section-icon"/>
+                                        <Label text="Active roadmap" styleClass="glass-card-title"/>
+                                    </HBox>
+                                    <Separator styleClass="recent-separator"/>
+
+                                    <!-- Empty state -->
+                                    <Label fx:id="lblRoadmapEmpty"
+                                           text="No approved roadmap yet. When your mentor generates one, your tasks will appear here."
+                                           styleClass="assessment-page-subtitle"
+                                           wrapText="true"
+                                           visible="false" managed="false"/>
+
+                                    <!-- Accordion container — controller builds collapsible cards here -->
+                                    <VBox fx:id="roadmapAccordionBox" spacing="10"/>
+
+                                </VBox>
+
+                                <!-- Right mini panels: readiness, mentorship, credits -->
+                                <VBox spacing="14" prefWidth="360" minWidth="300" maxWidth="400"
+                                      maxHeight="Infinity">
+
+                                    <VBox spacing="10" styleClass="glass-panel">
+                                        <padding><Insets top="16" right="18" bottom="16" left="18"/></padding>
+                                        <Label text="Readiness" styleClass="glass-card-title"/>
+                                        <Label fx:id="lblReadinessEmpty"
+                                               text="Run a Readiness Check to see your benchmark score."
+                                               styleClass="assessment-page-subtitle" wrapText="true"
+                                               visible="false" managed="false"/>
+                                        <VBox fx:id="readinessDetailBox" spacing="6">
+                                            <Label fx:id="lblReadinessTemplate" styleClass="rg-gap-skill-name" wrapText="true"/>
+                                            <Label fx:id="lblReadinessScore" styleClass="kpi-count-label" wrapText="true"/>
+                                            <Label fx:id="lblReadinessDate" styleClass="rg-gap-level-text" wrapText="true"/>
+                                        </VBox>
+                                    </VBox>
+
+                                    <VBox spacing="10" styleClass="glass-panel">
+                                        <padding><Insets top="16" right="18" bottom="16" left="18"/></padding>
+                                        <Label text="Mentorship" styleClass="glass-card-title"/>
+                                        <Label fx:id="lblMentorshipLine1" styleClass="assessment-page-subtitle" wrapText="true"/>
+                                        <Label fx:id="lblMentorshipLine2" styleClass="rg-gap-level-text" wrapText="true"/>
+                                    </VBox>
+
+                                    <VBox spacing="8" styleClass="recent-activity-panel" VBox.vgrow="ALWAYS">
+                                        <padding><Insets top="16" right="18" bottom="16" left="18"/></padding>
+                                        <Label text="Recent credit activity" styleClass="recent-panel-title"/>
+                                        <Label text="Last five transactions" styleClass="recent-panel-subtitle"/>
+                                        <Separator styleClass="recent-separator"/>
+                                        <VBox fx:id="creditActivityBox" spacing="8"/>
+                                    </VBox>
+
+                                </VBox>
+
+                            </HBox>
+                            <!-- ─── END TWO-COLUMN ROW ─────────────── -->
+
+                        </VBox>
+                        <!-- ─── END RIGHT PANEL ───────────────────── -->
+
+                    </HBox>
+
+                </ScrollPane>
 
             </StackPane>
 

@@ -1,16 +1,9 @@
 package com.example.michiru.model;
 
 /**
- * Immutable per-skill result produced by the Readiness Engine.
- *
- * Carries everything needed to render one row in the result modal and to
- * persist one row in the {@code skill_gaps} table.
- *
- * <pre>
- *  skillScore  = min(studentPoints / requiredPoints, 1.0)   (0.0 – 1.0)
- *  gapStatus   = NO_GAP | MINOR_GAP | MAJOR_GAP
- * </pre>
+ * Class definition for ReadinessSkillResult.
  */
+
 public class ReadinessSkillResult {
 
     private final int    skillId;
@@ -54,6 +47,9 @@ public class ReadinessSkillResult {
     public double getSkillScorePct() { return skillScore * 100.0; }
 
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "ReadinessSkillResult{skill='" + skillName
                 + "', current=" + currentLevel
@@ -62,3 +58,4 @@ public class ReadinessSkillResult {
                 + ", gap=" + gapStatus + '}';
     }
 }
+

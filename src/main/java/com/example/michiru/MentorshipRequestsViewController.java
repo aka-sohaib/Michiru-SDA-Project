@@ -1,7 +1,10 @@
 package com.example.michiru;
 
-import com.example.michiru.db.DatabaseCatalog;
-import com.example.michiru.db.MySQLHandler;
+/**
+ * Class definition for MentorshipRequestsViewController.
+ */
+
+import com.example.michiru.facade.MentorshipLifecycleFacade;
 import com.example.michiru.model.MentorshipRequest;
 import com.example.michiru.model.MentorshipRequest.SkillTag;
 import com.example.michiru.session.UserSession;
@@ -24,36 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-/**
- * Controller for MentorshipRequestsView.fxml — UC11: Review Mentorship Requests (Mentor Side).
- *
- * <h3>UX flow</h3>
- * <pre>
- *   GRID  →  (click any card)  →  REVIEW MODAL  →  Accept → INSERT mentorships + close
- *                                                →  Decline → show reason input → UPDATE + close
- * </pre>
- *
- * <h3>Accept logic</h3>
- * <ol>
- *   <li>UPDATE mentorship_requests SET status = 'ACCEPTED' WHERE request_id = ?</li>
- *   <li>INSERT INTO mentorships (request_id, student_id, mentor_id, status) VALUES (?, ?, ?, 'ACTIVE')</li>
- * </ol>
- *
- * <h3>Decline logic</h3>
- * Show a TextArea for the decline reason, then:
- * UPDATE mentorship_requests SET status = 'DECLINED', decline_reason = ? WHERE request_id = ?
- *
- * <h3>Threading</h3>
- * All DB writes use a background daemon thread; UI mutations are pushed back via
- * {@code Platform.runLater()} to keep the FX thread free.
- */
+
 public class MentorshipRequestsViewController implements Initializable {
 
-    // ── Animation constants ───────────────────────────────────────────────────
     private static final Interpolator SILK   = Interpolator.SPLINE(0.16, 1.0, 0.30, 1.0);
     private static final Interpolator LIQUID = Interpolator.SPLINE(0.22, 0.68, 0.0,  1.0);
 
-    // ── FXML injections ───────────────────────────────────────────────────────
     @FXML private Label     lblRequestCount;
     @FXML private TextField searchField;
     @FXML private Button    btnClearSearch;
@@ -62,18 +41,19 @@ public class MentorshipRequestsViewController implements Initializable {
     @FXML private StackPane modalWrapper;
     @FXML private VBox      modalCard;
 
-    // ── State ─────────────────────────────────────────────────────────────────
     private List<MentorshipRequest> allRequests = new ArrayList<>();
     private MentorshipRequest       selected;
 
-    // ── Session & DB ──────────────────────────────────────────────────────────
-    private final DatabaseCatalog db = new MySQLHandler();
+    private final MentorshipLifecycleFacade facade = new MentorshipLifecycleFacade();
     private int mentorId;
 
-
-    // ─────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Wires FXML controls and listeners after the scene graph is loaded.
+     */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
         mentorId = UserSession.getInstance().getCurrentUser().getUserId();
 
@@ -82,8 +62,6 @@ public class MentorshipRequestsViewController implements Initializable {
 
         loadRequestsAsync();
     }
-
-    // ── DB: fetch helpers ─────────────────────────────────────────────────────
 
     private void loadRequestsAsync() {
         Task<List<MentorshipRequest>> task = new Task<>() {
@@ -106,10 +84,8 @@ public class MentorshipRequestsViewController implements Initializable {
     }
 
     private List<MentorshipRequest> fetchRequests() {
-        return db.getPendingRequestsForMentor(mentorId);
+        return facade.loadPendingMentorshipRequests(mentorId);
     }
-
-    // ── Filter ────────────────────────────────────────────────────────────────
 
     private void applyFilter() {
         String query = searchField.getText();
@@ -129,8 +105,6 @@ public class MentorshipRequestsViewController implements Initializable {
         searchField.clear();
         renderCards(allRequests, false);
     }
-
-    // ── Card grid rendering ───────────────────────────────────────────────────
 
     private void renderCards(List<MentorshipRequest> requests, boolean animate) {
         requestGrid.getChildren().clear();
@@ -191,7 +165,6 @@ public class MentorshipRequestsViewController implements Initializable {
             st.play();
         });
 
-        // ── Top band: avatar + name/date + "PENDING" badge ────────────────────
         HBox topBand = new HBox(12);
         topBand.setAlignment(Pos.CENTER_LEFT);
         topBand.setPadding(new Insets(16, 16, 12, 16));
@@ -226,7 +199,6 @@ public class MentorshipRequestsViewController implements Initializable {
 
         topBand.getChildren().addAll(avatar, nameCol, pendingBadge);
 
-        // ── Message preview ───────────────────────────────────────────────────
         VBox msgSection = new VBox();
         msgSection.setPadding(new Insets(0, 16, 10, 16));
         if (req.hasMessage()) {
@@ -236,12 +208,10 @@ public class MentorshipRequestsViewController implements Initializable {
             msgSection.getChildren().add(msgLbl);
         }
 
-        // ── Divider ───────────────────────────────────────────────────────────
         Region divider = new Region();
         divider.getStyleClass().add("mentor-card-divider");
         divider.setMaxHeight(1); divider.setMinHeight(1);
 
-        // ── Skill proficiency tags (max 4 shown) ──────────────────────────────
         FlowPane skillTags = new FlowPane(5, 5);
         skillTags.setPadding(new Insets(10, 14, 10, 14));
         skillTags.setMaxWidth(Double.MAX_VALUE);
@@ -262,11 +232,9 @@ public class MentorshipRequestsViewController implements Initializable {
             skillTags.getChildren().add(noSkill);
         }
 
-        // ── Vertical spring ───────────────────────────────────────────────────
         Region vSpacer = new Region();
         VBox.setVgrow(vSpacer, Priority.ALWAYS);
 
-        // ── Footer: credit pill + "Review Request" button ─────────────────────
         HBox footer = new HBox(10);
         footer.setAlignment(Pos.CENTER_LEFT);
         footer.getStyleClass().add("mentor-card-footer");
@@ -304,8 +272,6 @@ public class MentorshipRequestsViewController implements Initializable {
         return card;
     }
 
-    // ── Review modal ──────────────────────────────────────────────────────────
-
     /**
      * Opens the full review modal for a pending request.
      *
@@ -329,7 +295,6 @@ public class MentorshipRequestsViewController implements Initializable {
         modalCard.getChildren().clear();
         modalCard.setPadding(new Insets(0));
 
-        // ── Header ────────────────────────────────────────────────────────────
         HBox header = new HBox(12);
         header.setAlignment(Pos.CENTER_LEFT);
         header.getStyleClass().add("modal-header");
@@ -362,12 +327,10 @@ public class MentorshipRequestsViewController implements Initializable {
 
         header.getChildren().addAll(iconPill, titleCol, closeBtn);
 
-        // ── Top separator ─────────────────────────────────────────────────────
         Region topSep = new Region();
         topSep.getStyleClass().add("modal-separator");
         topSep.setMinHeight(1); topSep.setMaxHeight(1);
 
-        // ── Scrollable body ───────────────────────────────────────────────────
         VBox bodyContent = new VBox(0);
         bodyContent.setFillWidth(true);
 
@@ -379,7 +342,6 @@ public class MentorshipRequestsViewController implements Initializable {
         bodyScroll.getStyleClass().addAll("assessment-scroll-pane", "mp-body-scroll");
         VBox.setVgrow(bodyScroll, Priority.ALWAYS);
 
-        // ── Profile band ──────────────────────────────────────────────────────
         HBox profileBand = new HBox(16);
         profileBand.setAlignment(Pos.CENTER_LEFT);
         profileBand.setPadding(new Insets(22, 24, 18, 24));
@@ -433,7 +395,6 @@ public class MentorshipRequestsViewController implements Initializable {
         profileBand.getChildren().addAll(bigAvatar, infoCol);
         bodyContent.getChildren().add(profileBand);
 
-        // ── Message section ───────────────────────────────────────────────────
         if (req.hasMessage()) {
             bodyContent.getChildren().add(sectionSep());
 
@@ -457,7 +418,6 @@ public class MentorshipRequestsViewController implements Initializable {
             bodyContent.getChildren().add(msgSection);
         }
 
-        // ── Skill proficiencies section ───────────────────────────────────────
         bodyContent.getChildren().add(sectionSep());
 
         VBox skillsSection = new VBox(10);
@@ -487,10 +447,8 @@ public class MentorshipRequestsViewController implements Initializable {
         skillsSection.getChildren().addAll(skillsTitleRow, skillFlow);
         bodyContent.getChildren().add(skillsSection);
 
-        // ── Footer wrapper (swappable between action row and decline reason) ──
         VBox footerWrapper = new VBox(0);
 
-        // ── ACTION FOOTER (default): Cancel | Decline | Accept ────────────────
         HBox actionFooter = buildActionFooter(req, footerWrapper);
         footerWrapper.getChildren().add(actionFooter);
 
@@ -572,7 +530,6 @@ public class MentorshipRequestsViewController implements Initializable {
 
         declineSection.getChildren().addAll(topSep2, labelRow, reasonArea);
 
-        // Error bar (hidden initially)
         HBox errorBar = new HBox(8);
         errorBar.setAlignment(Pos.CENTER_LEFT);
         errorBar.getStyleClass().add("vr-error-bar");
@@ -589,7 +546,6 @@ public class MentorshipRequestsViewController implements Initializable {
         errWrapper.setPadding(new Insets(4, 22, 0, 22));
         HBox.setHgrow(errorBar, Priority.ALWAYS);
 
-        // Buttons
         HBox btnRow = new HBox(12);
         btnRow.setAlignment(Pos.CENTER_RIGHT);
         btnRow.setPadding(new Insets(12, 22, 22, 22));
@@ -620,8 +576,6 @@ public class MentorshipRequestsViewController implements Initializable {
         Platform.runLater(reasonArea::requestFocus);
     }
 
-    // ── Accept / Decline actions ──────────────────────────────────────────────
-
     private void handleAccept(MentorshipRequest req) {
         Task<Boolean> task = new Task<>() {
             @Override
@@ -644,7 +598,7 @@ public class MentorshipRequestsViewController implements Initializable {
     }
 
     private boolean acceptInDb(MentorshipRequest req) {
-        return db.acceptMentorshipRequest(req, mentorId);
+        return facade.acceptMentorshipRequest(req, mentorId);
     }
 
     private void handleDecline(MentorshipRequest req, String reason,
@@ -675,7 +629,7 @@ public class MentorshipRequestsViewController implements Initializable {
     }
 
     private boolean declineInDb(MentorshipRequest req, String reason) {
-        return db.declineMentorshipRequest(req.getRequestId(),
+        return facade.declineMentorshipRequest(req.getRequestId(),
                 reason.isEmpty() ? null : reason);
     }
 
@@ -687,8 +641,6 @@ public class MentorshipRequestsViewController implements Initializable {
             applyFilter();
         });
     }
-
-    // ── Modal show / hide animations ──────────────────────────────────────────
 
     private void showModal() {
         overlayDim.setVisible(true);
@@ -718,8 +670,6 @@ public class MentorshipRequestsViewController implements Initializable {
         });
         hide.play();
     }
-
-    // ── Toast notification ────────────────────────────────────────────────────
 
     private void showToast(String message, boolean success) {
         Platform.runLater(() -> {
@@ -757,8 +707,6 @@ public class MentorshipRequestsViewController implements Initializable {
             new SequentialTransition(fadeIn, hold, fadeOut).play();
         });
     }
-
-    // ── UI helpers ────────────────────────────────────────────────────────────
 
     private void showModalError(HBox errorBar, Label errLbl, String msg) {
         errLbl.setText(msg);
@@ -809,8 +757,6 @@ public class MentorshipRequestsViewController implements Initializable {
         return s.length() <= max ? s : s.substring(0, max).strip() + "…";
     }
 
-    // ── Card entrance animation ───────────────────────────────────────────────
-
     private void animateCardIn(VBox card, double delayMs) {
         new Timeline(
                 new KeyFrame(Duration.millis(delayMs)),
@@ -820,3 +766,5 @@ public class MentorshipRequestsViewController implements Initializable {
                 .play();
     }
 }
+
+

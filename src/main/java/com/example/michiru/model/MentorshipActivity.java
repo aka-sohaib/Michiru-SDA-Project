@@ -1,27 +1,9 @@
 package com.example.michiru.model;
 
 /**
- * Display model for one row in the Mentorship Progress feed (UC09).
- *
- * <p>Combines data from two tables fetched in a single JOIN query:</p>
- * <pre>
- *  mentorship_requests : request_id, mentor_id, message, request_date,
- *                        status (PENDING/ACCEPTED/DECLINED/CANCELLED),
- *                        credit_cost, decline_reason
- *  mentorships         : mentorship_id, start_date, end_date,
- *                        status (ACTIVE/COMPLETED/CANCELLED)  — via LEFT JOIN
- *  users               : first_name, last_name  (mentor side)
- * </pre>
- *
- * <h3>Display status logic</h3>
- * The spec shows ACTIVE and COMPLETED as statuses, but those live in the
- * {@code mentorships} table, not {@code mentorship_requests}.
- * {@link #getDisplayStatus()} resolves the correct badge text:
- * <ul>
- *   <li>If {@code mentorshipStatus} is set → use it (ACTIVE / COMPLETED / CANCELLED)</li>
- *   <li>Otherwise → use {@code requestStatus} (PENDING / ACCEPTED / DECLINED / CANCELLED)</li>
- * </ul>
+ * Class definition for MentorshipActivity.
  */
+
 public class MentorshipActivity {
 
     // ── From mentorship_requests ──────────────────────────────────────────────
@@ -81,6 +63,9 @@ public class MentorshipActivity {
     // ── Display helpers ───────────────────────────────────────────────────────
 
     /** e.g. {@code "Steve Jobs"} */
+    /**
+     * Executes getMentorFullName.
+     */
     public String getMentorFullName() {
         return mentorFirstName + " " + mentorLastName;
     }
@@ -98,25 +83,38 @@ public class MentorshipActivity {
     }
 
     /** {@code true} when the student sent a non-blank intro message. */
+    /**
+     * Executes hasMessage.
+     */
     public boolean hasMessage() {
         return message != null && !message.isBlank();
     }
 
     /** {@code true} when a decline reason is available. */
+    /**
+     * Executes hasDeclineReason.
+     */
     public boolean hasDeclineReason() {
         return "DECLINED".equalsIgnoreCase(requestStatus)
                 && declineReason != null && !declineReason.isBlank();
     }
 
     /** {@code true} when an active mentorship row is linked (ACTIVE or COMPLETED). */
+    /**
+     * Executes hasMentorshipDates.
+     */
     public boolean hasMentorshipDates() {
         return mentorshipId != null && startDate != null;
     }
 
     @Override
+    /**
+     * Executes toString.
+     */
     public String toString() {
         return "MentorshipActivity{id=" + requestId
                + ", mentor='" + getMentorFullName()
                + "', status='" + getDisplayStatus() + "'}";
     }
 }
+

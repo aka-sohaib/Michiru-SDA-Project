@@ -1,7 +1,10 @@
 package com.example.michiru;
 
-import com.example.michiru.db.MySQLHandler;
-import com.example.michiru.db.PersistenceHandler;
+/**
+ * Class definition for LoginViewController.
+ */
+
+import com.example.michiru.facade.AccessAndOverviewFacade;
 import com.example.michiru.model.User;
 import com.example.michiru.session.UserSession;
 
@@ -37,18 +40,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-/**
- * UI Controller for the Login & Registration "Front Door" screen (UC01).
- *
- * <p>
- * Handles toggling between Sign-In and Register modes, basic field
- * validation, and delegates authentication / registration to the
- * domain-layer {@code RegistrationController} (to be wired later).
- * </p>
- */
+
 public class LoginViewController implements Initializable {
 
-    /* ── Toggle Tabs ─────────────────────────────────────────── */
     @FXML
     private ToggleButton loginTab;
     @FXML
@@ -56,7 +50,6 @@ public class LoginViewController implements Initializable {
     @FXML
     private ToggleGroup authToggle;
 
-    /* ── Login Form Fields ───────────────────────────────────── */
     @FXML
     private VBox loginForm;
     @FXML
@@ -66,7 +59,6 @@ public class LoginViewController implements Initializable {
     @FXML
     private Button loginButton;
 
-    /* ── Register Form Fields ────────────────────────────────── */
     @FXML
     private VBox registerForm;
     @FXML
@@ -80,7 +72,6 @@ public class LoginViewController implements Initializable {
     @FXML
     private Button registerButton;
 
-    /* ── Shared UI ───────────────────────────────────────────── */
     @FXML
     private Label statusLabel;
     @FXML
@@ -96,7 +87,6 @@ public class LoginViewController implements Initializable {
     @FXML
     private VBox formPanel;
 
-    /* ── Bento Widget References ─────────────────────────────── */
     @FXML
     private HBox bentoPill;
     @FXML
@@ -105,36 +95,28 @@ public class LoginViewController implements Initializable {
     private Label watermarkLabel;
     private boolean interactionsInitialized;
 
-    /** DAO — always talk to the interface, never the concrete class directly. */
-    private final PersistenceHandler persistenceHandler = new MySQLHandler();
+    /** Auth facade — shallow extraction over existing persistence calls. */
+    private final AccessAndOverviewFacade accessFacade = new AccessAndOverviewFacade();
 
-    /* ── Lerp-based parallax state ── */
     private double parallaxTargetX = 0, parallaxTargetY = 0;
     private double parallaxCurrentX = 0, parallaxCurrentY = 0;
     private static final double LERP_FACTOR = 0.045;
 
-    /*
-     * Easing curves — using ultra-smooth splines for organic motion.
-     * SILK: gentle ease-out with long deceleration tail (parallax, hover).
-     * BREATHE: symmetric ease-in-out for cyclical animations (float, pulse).
-     * LIQUID: snappy entrance → long settling (button interactions).
-     */
     private static final Interpolator SILK = Interpolator.SPLINE(0.16, 1.0, 0.3, 1.0);
     private static final Interpolator BREATHE = Interpolator.SPLINE(0.37, 0.0, 0.63, 1.0);
     private static final Interpolator LIQUID = Interpolator.SPLINE(0.22, 0.68, 0.0, 1.0);
 
-    /*
-     * ════════════════════════════════════════════════════════════
-     * INITIALISATION
-     * ════════════════════════════════════════════════════════
+    /**
+     * Wires FXML controls and listeners after the scene graph is loaded.
      */
     @Override
+    /**
+     * Executes initialize.
+     */
     public void initialize(URL location, ResourceBundle resources) {
 
-        // Populate the role selector (Coordinator cannot self-register)
         registerRole.getItems().addAll("Student", "Mentor");
 
-        // Prevent the toggle group from being empty (force at least one selected)
         authToggle.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null) {
                 oldVal.setSelected(true);
@@ -147,7 +129,6 @@ public class LoginViewController implements Initializable {
             }
         });
 
-        // Responsive kitsune image: bind fitHeight to 65% of its parent's height
         kitsuneImage.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
                 kitsuneImage.fitHeightProperty().bind(
@@ -157,7 +138,6 @@ public class LoginViewController implements Initializable {
             }
         });
 
-        // Wait until node graph is attached, then wire premium micro-interactions.
         kitsuneImage.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene == null) {
                 return;
@@ -171,24 +151,16 @@ public class LoginViewController implements Initializable {
             watermarkLabel = (Label) root.lookup(".brand-watermark");
 
             setupBentoPillFloat();
-            setupLerpParallax(); // breathing is merged inside
+            setupLerpParallax();
             setupAmbientWatermarkPulse();
             setupGlassmorphism();
             setupLiquidButtons(root);
             enforceProportions();
         });
 
-        // Default state
         showLoginForm();
     }
 
-
-
-    /*
-     * ════════════════════════════════════════════════════════════
-     * WATERMARK — ambient scale/opacity pulse
-     * ════════════════════════════════════════════════════════
-     */
     private void setupAmbientWatermarkPulse() {
         if (watermarkLabel == null) {
             return;
@@ -211,21 +183,11 @@ public class LoginViewController implements Initializable {
         pulse.play();
     }
 
-    /*
-     * ════════════════════════════════════════════════════════════
-     * BENTO WIDGETS — Delayed floating animations
-     * ════════════════════════════════════════════════════════════
-     * Each widget floats on its own timeline to create complex,
-     * premium depth. The pill floats vertically (5.4s period),
-     * the card floats vertically (6.8s period). Staggered start
-     * times prevent synchronization.
-     */
     private void setupBentoPillFloat() {
         if (bentoPill == null) {
             return;
         }
 
-        // Small vertical float — slightly faster rhythm than Kitsune
         Timeline pillFloat = new Timeline(
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(bentoPill.translateYProperty(), 0, BREATHE),
@@ -238,7 +200,6 @@ public class LoginViewController implements Initializable {
                         new KeyValue(bentoPill.translateXProperty(), 0, BREATHE)));
         pillFloat.setCycleCount(Animation.INDEFINITE);
 
-        // Gentle opacity shimmer
         Timeline pillShimmer = new Timeline(
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(bentoPill.opacityProperty(), 0.88, BREATHE)),
@@ -248,7 +209,6 @@ public class LoginViewController implements Initializable {
                         new KeyValue(bentoPill.opacityProperty(), 0.88, BREATHE)));
         pillShimmer.setCycleCount(Animation.INDEFINITE);
 
-        // Stagger: start after 800ms delay
         Timeline pillDelay = new Timeline(
                 new KeyFrame(Duration.millis(800), e -> {
                     pillFloat.play();
@@ -262,7 +222,6 @@ public class LoginViewController implements Initializable {
             return;
         }
 
-        // Slower, deeper float — out of sync with pill
         Timeline cardFloat = new Timeline(
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(bentoCard.translateYProperty(), 0, BREATHE),
@@ -275,7 +234,6 @@ public class LoginViewController implements Initializable {
                         new KeyValue(bentoCard.translateXProperty(), 0, BREATHE)));
         cardFloat.setCycleCount(Animation.INDEFINITE);
 
-        // Gentle opacity shimmer — offset from pill
         Timeline cardShimmer = new Timeline(
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(bentoCard.opacityProperty(), 0.86, BREATHE)),
@@ -285,7 +243,6 @@ public class LoginViewController implements Initializable {
                         new KeyValue(bentoCard.opacityProperty(), 0.86, BREATHE)));
         cardShimmer.setCycleCount(Animation.INDEFINITE);
 
-        // Stagger: start after 1600ms delay (double the pill delay)
         Timeline cardDelay = new Timeline(
                 new KeyFrame(Duration.millis(1600), e -> {
                     cardFloat.play();
@@ -294,51 +251,38 @@ public class LoginViewController implements Initializable {
         cardDelay.play();
     }
 
-    /*
-     * ════════════════════════════════════════════════════════════
-     * PARALLAX — Lerp-based 60fps smooth tracking
-     * ════════════════════════════════════════════════════════════
-     * Uses AnimationTimer + linear interpolation instead of
-     * creating new Timelines on every mouse event. Only responds
-     * to mouse movement inside the brand panel.
-     */
     private void setupLerpParallax() {
         final long[] startTime = {-1};
 
-        // Single master AnimationTimer — handles BOTH breathing float and parallax.
-        // Applying everything to kitsuneWrapper (the Group parent) is key:
-        // A Group's OWN transforms (translateX/Y, scaleX/Y) do NOT affect its
-        // layoutBounds. Only children's transforms affect that. So the VBox
-        // that contains kitsuneWrapper and the brand-badge will NEVER re-layout,
-        // keeping the capsule perfectly static.
         AnimationTimer masterTimer = new AnimationTimer() {
+            /**
+             * Advances parallax interpolation and subtle idle motion each frame.
+             */
             @Override
+            /**
+             * Executes handle.
+             */
             public void handle(long now) {
                 if (startTime[0] == -1) startTime[0] = now;
                 double t = (now - startTime[0]) / 1_000_000_000.0;
 
-                // ── Lerp parallax toward mouse target ──
                 parallaxCurrentX += (parallaxTargetX - parallaxCurrentX) * LERP_FACTOR;
                 parallaxCurrentY += (parallaxTargetY - parallaxCurrentY) * LERP_FACTOR;
                 if (Math.abs(parallaxCurrentX) < 0.01) parallaxCurrentX = 0;
                 if (Math.abs(parallaxCurrentY) < 0.01) parallaxCurrentY = 0;
 
-                // ── Sinusoidal breathing floats (prime-ratio periods = never syncs) ──
                 double floatY = Math.sin(t * 2.0 * Math.PI / 7.2) * 3.0;
                 double floatX = Math.sin(t * 2.0 * Math.PI / 9.1) * 1.5;
                 double scalePhase = Math.sin(t * 2.0 * Math.PI / 11.3);
 
-                // Apply combined parallax + float to the WRAPPER (Group)
                 kitsuneWrapper.setTranslateX(parallaxCurrentX + floatX);
                 kitsuneWrapper.setTranslateY(parallaxCurrentY + floatY);
-                // Scale on the Group itself — Group’s own scale doesn’t change its layoutBounds
                 kitsuneWrapper.setScaleX(1.0 + scalePhase * 0.004);
                 kitsuneWrapper.setScaleY(1.0 + scalePhase * 0.005);
             }
         };
         masterTimer.start();
 
-        // Only track mouse INSIDE the brand panel
         brandPanel.addEventFilter(MouseEvent.MOUSE_MOVED, e -> {
             double w = brandPanel.getWidth();
             double h = brandPanel.getHeight();
@@ -349,25 +293,17 @@ public class LoginViewController implements Initializable {
             parallaxTargetY = ny * 3.5;
         });
 
-        // Smoothly return to center when mouse leaves
         brandPanel.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {
             parallaxTargetX = 0;
             parallaxTargetY = 0;
         });
     }
 
-    /*
-     * ════════════════════════════════════════════════════════════
-     * GLASSMORPHISM — Frosted glass panel emulation
-     * ════════════════════════════════════════════════════════
-     */
     private void setupGlassmorphism() {
         if (formPanel == null) {
             return;
         }
 
-        // JavaFX has no CSS backdrop-filter; use blur + layered transparency to emulate
-        // frosted glass.
         formPanel.setBackground(new Background(new BackgroundFill(
                 Color.rgb(22, 24, 21, 0.68),
                 new CornerRadii(20, 0, 0, 20, false),
@@ -382,11 +318,6 @@ public class LoginViewController implements Initializable {
         formPanel.setEffect(new GaussianBlur(0.6));
     }
 
-    /*
-     * ════════════════════════════════════════════════════════════
-     * LIQUID BUTTONS — Premium micro-interaction on CTAs
-     * ════════════════════════════════════════════════════════
-     */
     private void setupLiquidButtons(Parent root) {
         for (Node n : root.lookupAll(".btn-cta")) {
             if (!(n instanceof Button btn)) {
@@ -414,11 +345,6 @@ public class LoginViewController implements Initializable {
         timeline.play();
     }
 
-    /*
-     * ════════════════════════════════════════════════════════════
-     * PROPORTIONS — Lock the 40/60 split during resize
-     * ════════════════════════════════════════════════════════
-     */
     private void enforceProportions() {
         if (masterCard == null || brandPanel == null || formPanel == null) {
             return;
@@ -430,11 +356,6 @@ public class LoginViewController implements Initializable {
         brandPanel.maxWidthProperty().bind(masterCard.widthProperty().multiply(0.60));
     }
 
-    /*
-     * ════════════════════════════════════════════════════════════
-     * FORM SWITCHING
-     * ════════════════════════════════════════════════════════
-     */
     private void showLoginForm() {
         loginForm.setVisible(true);
         loginForm.setManaged(true);
@@ -451,12 +372,6 @@ public class LoginViewController implements Initializable {
         clearStatus();
     }
 
-    /*
-     * ════════════════════════════════════════════════════════════
-     * ACTION HANDLERS
-     * ════════════════════════════════════════════════════════
-     */
-
     /**
      * Handles the Sign-In button click.
      * Validates inputs, then delegates to the domain controller.
@@ -471,15 +386,13 @@ public class LoginViewController implements Initializable {
             return;
         }
 
-        // ── Authenticate via DAO ──────────────────────────────────────────────
-        User user = persistenceHandler.loginUser(email, password);
+        User user = accessFacade.loginUser(email, password);
 
         if (user == null) {
             showError("Invalid email or password.");
             return;
         }
 
-        // ── Store session & navigate ─────────────────────────────────────────
         UserSession.getInstance().setCurrentUser(user);
         showSuccess("Login successful — redirecting…");
 
@@ -502,27 +415,12 @@ public class LoginViewController implements Initializable {
             return;
         }
 
-        // ── Split full name into first / last ────────────────────────────────
-        //    The register form has a single 'Full Name' field; we split on the
-        //    first space.  If only one word is provided, last name is left empty.
-        String firstName;
-        String lastName;
-        int spaceIdx = fullName.indexOf(' ');
-        if (spaceIdx > 0) {
-            firstName = fullName.substring(0, spaceIdx).trim();
-            lastName  = fullName.substring(spaceIdx + 1).trim();
-        } else {
-            firstName = fullName;
-            lastName  = "";
-        }
-
-        // ── Build User and delegate to DAO ───────────────────────────────────
-        User newUser = new User(0, firstName, lastName, email, password, role);
-        String result = persistenceHandler.registerUser(newUser);
+        User newUser = User.fromFullName(fullName, email, password, role);
+        String result = accessFacade.registerUser(newUser);
 
         switch (result) {
             case "Registration successful!" ->
-                showSuccess("Account created! Welcome, " + firstName + ". Please sign in.");
+                showSuccess("Account created! Welcome, " + newUser.getFirstName() + ". Please sign in.");
             case "Email already exists" ->
                 showError("An account with this email already exists.");
             default ->
@@ -530,45 +428,28 @@ public class LoginViewController implements Initializable {
         }
     }
 
-    /*
-     * ════════════════════════════════════════════════════════════
-     * SCENE SWITCHER — Role-based dashboard navigation
-     * ════════════════════════════════════════════════════════════
-     * Call this immediately after a successful login.
-     *
-     * @param role      the exact DB role string of the authenticated user
-     *                  ("STUDENT", "MENTOR", or "INTERNSHIP_COORDINATOR")
-     * @param anyNode   any node currently on screen — used to obtain the
-     *                  {@link Stage} via {@code getScene().getWindow()}
-     */
     private void switchScene(String role, Node anyNode) {
-        String normalizedRole = role == null ? "" : role.trim().toUpperCase();
+        AccessAndOverviewFacade.Role parsedRole;
+        try {
+            parsedRole = AccessAndOverviewFacade.Role.fromDatabaseValue(role);
+        } catch (IllegalArgumentException e) {
+            showError("Unknown role: " + role);
+            return;
+        }
 
-        // ── Map role → FXML file name ─────────────────────────────────────────
-        String fxmlFile = switch (normalizedRole) {
-            case "STUDENT"                    -> "StudentDashboard.fxml";
-            case "MENTOR"                     -> "MentorDashboard.fxml";
-            case "COORDINATOR",
-                 "INTERNSHIP_COORDINATOR"     -> "CoordinatorDashboard.fxml";
-            default -> {
-                showError("Unknown role: " + role);
-                yield null;
-            }
+        String fxmlFile = switch (parsedRole) {
+            case STUDENT     -> "StudentDashboard.fxml";
+            case MENTOR      -> "MentorDashboard.fxml";
+            case COORDINATOR -> "CoordinatorDashboard.fxml";
         };
 
-        if (fxmlFile == null) return;
-
-        // ── Map role → human-readable window title ────────────────────────────
-        String displayTitle = switch (normalizedRole) {
-            case "STUDENT"                    -> "Student Dashboard";
-            case "MENTOR"                     -> "Mentor Dashboard";
-            case "COORDINATOR",
-                 "INTERNSHIP_COORDINATOR"     -> "Coordinator Dashboard";
-            default                             -> role;
+        String displayTitle = switch (parsedRole) {
+            case STUDENT     -> "Student Dashboard";
+            case MENTOR      -> "Mentor Dashboard";
+            case COORDINATOR -> "Coordinator Dashboard";
         };
 
         try {
-            // Load FXML from the same resource directory as LoginView.fxml
             URL fxmlUrl = getClass().getResource(fxmlFile);
             if (fxmlUrl == null) {
                 showError("Dashboard not found: " + fxmlFile);
@@ -578,17 +459,11 @@ public class LoginViewController implements Initializable {
             Parent dashboardRoot = FXMLLoader.load(fxmlUrl);
             Stage  stage         = (Stage) anyNode.getScene().getWindow();
 
-            // Preserve current stage dimensions so the dashboard fills the
-            // same window — avoids a jarring size reset on scene swap.
-            double w = stage.getWidth();
-            double h = stage.getHeight();
-            Scene  dashScene = new Scene(dashboardRoot, w, h);
+            Scene  dashScene = new Scene(dashboardRoot);
 
             stage.setScene(dashScene);
             stage.setTitle("MICHIRU — " + displayTitle);
 
-            // Maximise for the full-app dashboard experience.
-            // Works on all platforms; ignored silently where unsupported.
             stage.setMaximized(true);
 
             stage.show();
@@ -599,11 +474,6 @@ public class LoginViewController implements Initializable {
         }
     }
 
-    /*
-     * ════════════════════════════════════════════════════════════
-     * STATUS HELPERS
-     * ════════════════════════════════════════════════════════════
-     */
     private void showError(String message) {
         statusLabel.setText(message);
         statusLabel.setStyle("-fx-text-fill: #c0392b;");
@@ -619,3 +489,5 @@ public class LoginViewController implements Initializable {
         statusLabel.setStyle("-fx-text-fill: transparent;");
     }
 }
+
+

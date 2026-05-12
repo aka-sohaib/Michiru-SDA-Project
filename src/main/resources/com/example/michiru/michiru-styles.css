@@ -683,10 +683,39 @@
     -fx-border-radius: 11;
     -fx-background-radius: 11;
     -fx-padding: 10 18 10 14;
+    -fx-text-fill: rgba(248, 246, 241, 0.96);
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 12px;
     -fx-cursor: hand;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
     -fx-effect: dropshadow(gaussian, rgba(92, 122, 90, 0.35), 16, 0.20, 0, 4);
+}
+
+/** Secondary outline button — Regenerate, Cancel-style actions inside glass panels */
+.action-btn-secondary {
+    -fx-background-color: rgba(36, 42, 36, 0.55);
+    -fx-border-color: rgba(163, 184, 153, 0.38);
+    -fx-border-width: 1;
+    -fx-border-radius: 11;
+    -fx-background-radius: 11;
+    -fx-padding: 10 18 10 14;
+    -fx-text-fill: rgba(248, 246, 241, 0.88);
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.action-btn-secondary:hover {
+    -fx-background-color: rgba(92, 122, 90, 0.22);
+    -fx-border-color: rgba(163, 184, 153, 0.52);
+    -fx-effect: dropshadow(gaussian, rgba(92, 122, 90, 0.28), 14, 0.18, 0, 3);
+}
+
+.action-btn-secondary:pressed {
+    -fx-background-color: rgba(68, 96, 66, 0.42);
 }
 
 .action-btn-primary:hover {
@@ -942,6 +971,7 @@
     -fx-border-width: 1;
     -fx-border-radius: 18;
     -fx-background-radius: 18;
+    -fx-max-height: 650;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.70), 60, 0.14, 0, 18);
 }
 
@@ -1872,6 +1902,33 @@
     -fx-letter-spacing: 0.2px;
 }
 
+/* Coordinator home — lighter elevation for SaaS admin feel */
+.dashboard-home-root .kpi-card {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.14), 10, 0.0, 0, 2);
+}
+
+.dashboard-home-root .recent-activity-panel {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.12), 12, 0.0, 0, 3);
+}
+
+.dashboard-home-root {
+    -fx-spacing: 18;
+}
+
+.coordinator-quick-actions {
+    -fx-spacing: 10;
+}
+
+.coordinator-user-breakdown-label {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(248, 246, 241, 0.52);
+}
+
+.student-dash-inner {
+    -fx-max-width: 1100px;
+}
+
 /* ── Recent Activity Panel ───────────────────────────────────────────────── */
 
 .recent-activity-panel {
@@ -1981,6 +2038,315 @@
     -fx-font-size: 12.5px;
     -fx-text-fill: rgba(248, 246, 241, 0.30);
     -fx-padding: 20 0 0 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK THEME TABLE VIEW  (.michiru-table)
+   Overrides every white-background default so the TableView blends into
+   our glassmorphism panels.  Apply styleClass="michiru-table" on any
+   TableView that lives inside a dark-theme container.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Outer shell ─────────────────────────────────────────────────────────── */
+.michiru-table {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(92, 122, 90, 0.20);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-table-cell-border-color: rgba(248, 246, 241, 0.05);
+}
+
+/* Erase the inner "base" layer that JavaFX paints white */
+.michiru-table > .virtual-flow > .clipped-container > .sheet > .table-row-cell,
+.michiru-table .virtual-flow .clipped-container {
+    -fx-background-color: transparent;
+}
+
+/* ── Column header strip ──────────────────────────────────────────────────── */
+.michiru-table .column-header-background {
+    -fx-background-color:
+        linear-gradient(to bottom,
+            rgba(36, 46, 34, 0.92) 0%,
+            rgba(28, 38, 28, 0.86) 100%);
+    -fx-border-color: transparent transparent rgba(92, 122, 90, 0.25) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.michiru-table .column-header,
+.michiru-table .filler {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent rgba(92, 122, 90, 0.12) transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-size: 38;
+}
+
+.michiru-table .column-header .label {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(163, 184, 153, 0.80);
+    -fx-letter-spacing: 0.4px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 8 0 12;
+}
+
+.michiru-table .column-header:hover {
+    -fx-background-color: rgba(92, 122, 90, 0.10);
+}
+
+/* ── Rows ─────────────────────────────────────────────────────────────────── */
+.michiru-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent rgba(248, 246, 241, 0.05) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 38px;
+}
+
+.michiru-table .table-row-cell:odd {
+    -fx-background-color: rgba(44, 54, 42, 0.22);
+}
+
+.michiru-table .table-row-cell:hover {
+    -fx-background-color: rgba(92, 122, 90, 0.16);
+    -fx-border-color: transparent transparent rgba(92, 122, 90, 0.18) transparent;
+}
+
+.michiru-table .table-row-cell:selected {
+    -fx-background-color: rgba(92, 122, 90, 0.32);
+    -fx-border-color: transparent transparent rgba(92, 122, 90, 0.30) transparent;
+}
+
+.michiru-table .table-row-cell:selected:focused {
+    -fx-background-color: rgba(92, 122, 90, 0.38);
+}
+
+/* ── Cells ────────────────────────────────────────────────────────────────── */
+.michiru-table .table-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(248, 246, 241, 0.82);
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12.5px;
+    -fx-padding: 0 8 0 12;
+    -fx-border-color: transparent;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.michiru-table .table-cell:selected {
+    -fx-text-fill: rgba(248, 246, 241, 0.96);
+}
+
+/* ── Scrollbars inside the table ─────────────────────────────────────────── */
+.michiru-table .scroll-bar:vertical,
+.michiru-table .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-pref-width: 6;
+}
+
+.michiru-table .scroll-bar:vertical .track,
+.michiru-table .scroll-bar:horizontal .track {
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+    -fx-background-radius: 4;
+    -fx-border-color: transparent;
+}
+
+.michiru-table .scroll-bar:vertical .thumb,
+.michiru-table .scroll-bar:horizontal .thumb {
+    -fx-background-color: rgba(92, 122, 90, 0.45);
+    -fx-background-radius: 4;
+}
+
+.michiru-table .scroll-bar:vertical .thumb:hover,
+.michiru-table .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: rgba(92, 122, 90, 0.62);
+}
+
+.michiru-table .scroll-bar .increment-button,
+.michiru-table .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* ── Empty-state placeholder ─────────────────────────────────────────────── */
+.michiru-table .placeholder .label {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12.5px;
+    -fx-text-fill: rgba(248, 246, 241, 0.28);
+}
+
+
+/* ── Mentor Profile Edit Modal ───────────────────────────────────────────── */
+
+.edit-modal-root {
+    -fx-background-color:
+        radial-gradient(center 30% 20%, radius 55%, rgba(92, 122, 90, 0.08), transparent),
+        linear-gradient(to bottom right, #121210 0%, #171815 45%, #0f0f0d 100%);
+}
+
+.edit-modal-card {
+    -fx-background-color:
+        linear-gradient(to bottom right,
+            rgba(36, 44, 36, 0.96) 0%,
+            rgba(26, 34, 26, 0.92) 60%,
+            rgba(46, 60, 44, 0.30) 100%);
+    -fx-border-color: rgba(92, 122, 90, 0.28);
+    -fx-border-width: 1;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-max-height: 650;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.60), 48, 0.12, 0, 16);
+}
+
+.edit-modal-title {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 17px;
+    -fx-text-fill: rgba(248, 246, 241, 0.94);
+}
+
+.edit-modal-subtitle {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(248, 246, 241, 0.36);
+}
+
+.edit-section-label {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 10.5px;
+    -fx-text-fill: rgba(163, 184, 153, 0.70);
+    -fx-letter-spacing: 0.5px;
+}
+
+.edit-field-input {
+    -fx-background-color: rgba(248, 246, 241, 0.07);
+    -fx-border-color: rgba(248, 246, 241, 0.12);
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 9 12 9 12;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+    -fx-text-fill: rgba(248, 246, 241, 0.90);
+    -fx-prompt-text-fill: rgba(248, 246, 241, 0.28);
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.edit-field-input:focused {
+    -fx-border-color: rgba(92, 122, 90, 0.65);
+    -fx-background-color: rgba(92, 122, 90, 0.08);
+    -fx-effect: dropshadow(gaussian, rgba(92, 122, 90, 0.18), 8, 0.2, 0, 0);
+}
+
+.edit-textarea {
+    -fx-background-color: rgba(248, 246, 241, 0.07);
+    -fx-border-color: rgba(248, 246, 241, 0.12);
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 9 12 9 12;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12.5px;
+    -fx-text-fill: rgba(248, 246, 241, 0.88);
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-control-inner-background: transparent;
+}
+
+.edit-textarea:focused {
+    -fx-border-color: rgba(92, 122, 90, 0.65);
+    -fx-effect: dropshadow(gaussian, rgba(92, 122, 90, 0.18), 8, 0.2, 0, 0);
+}
+
+.edit-textarea .content {
+    -fx-background-color: transparent;
+}
+
+.edit-textarea .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.edit-textarea .scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.edit-skills-scroll {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(248, 246, 241, 0.10);
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.edit-skills-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.edit-skill-checkbox {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12.5px;
+    -fx-text-fill: rgba(248, 246, 241, 0.78);
+}
+
+.edit-skill-checkbox .box {
+    -fx-background-color: rgba(248, 246, 241, 0.08);
+    -fx-border-color: rgba(163, 184, 153, 0.38);
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.edit-skill-checkbox:selected .box {
+    -fx-background-color: rgba(92, 122, 90, 0.60);
+    -fx-border-color: rgba(92, 122, 90, 0.80);
+}
+
+.edit-skill-checkbox:selected .mark {
+    -fx-background-color: rgba(248, 246, 241, 0.90);
+}
+
+.edit-skill-checkbox:hover .box {
+    -fx-background-color: rgba(92, 122, 90, 0.14);
+    -fx-border-color: rgba(163, 184, 153, 0.55);
+}
+
+.edit-available-checkbox {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 12.5px;
+    -fx-text-fill: rgba(140, 195, 128, 0.88);
+}
+
+.edit-available-checkbox .box {
+    -fx-background-color: rgba(92, 122, 90, 0.12);
+    -fx-border-color: rgba(92, 122, 90, 0.45);
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.edit-available-checkbox:selected .box {
+    -fx-background-color: rgba(92, 122, 90, 0.58);
+    -fx-border-color: rgba(92, 122, 90, 0.82);
+}
+
+.edit-available-checkbox:selected .mark {
+    -fx-background-color: rgba(248, 246, 241, 0.92);
+}
+
+.edit-modal-divider {
+    -fx-background-color: rgba(248, 246, 241, 0.07);
+}
+
+.edit-status-label {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(140, 195, 128, 0.82);
+}
+
+.edit-status-label-error {
+    -fx-text-fill: rgba(225, 88, 78, 0.88);
 }
 
 
@@ -2341,6 +2707,8 @@
     -fx-border-width: 1;
     -fx-border-radius: 22;
     -fx-background-radius: 22;
+    -fx-max-height: 650;
+    -fx-max-width: 560;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 36, 0.0, 0, 8);
 }
 
@@ -3903,6 +4271,43 @@
             rgba(54, 76, 50, 0.36) 100%);
 }
 
+/* ── Mentor card rating-tier glow (reuses hub-card colour system) ─── */
+.mentor-card.hub-card-expert {
+    -fx-border-color: rgba(210, 170, 50, 0.40);
+    -fx-effect: dropshadow(gaussian, rgba(210, 170, 50, 0.22), 18, 0.0, 0, 4);
+}
+.mentor-card.hub-card-expert:hover {
+    -fx-border-color: rgba(210, 170, 50, 0.60);
+    -fx-effect: dropshadow(gaussian, rgba(210, 170, 50, 0.38), 24, 0.08, 0, 6);
+}
+
+.mentor-card.hub-card-advanced {
+    -fx-border-color: rgba(130, 80, 210, 0.30);
+    -fx-effect: dropshadow(gaussian, rgba(130, 80, 210, 0.18), 18, 0.0, 0, 4);
+}
+.mentor-card.hub-card-advanced:hover {
+    -fx-border-color: rgba(130, 80, 210, 0.50);
+    -fx-effect: dropshadow(gaussian, rgba(130, 80, 210, 0.32), 22, 0.08, 0, 6);
+}
+
+.mentor-card.hub-card-intermediate {
+    -fx-border-color: rgba(60, 130, 200, 0.30);
+    -fx-effect: dropshadow(gaussian, rgba(60, 130, 200, 0.18), 18, 0.0, 0, 4);
+}
+.mentor-card.hub-card-intermediate:hover {
+    -fx-border-color: rgba(60, 130, 200, 0.50);
+    -fx-effect: dropshadow(gaussian, rgba(60, 130, 200, 0.32), 22, 0.08, 0, 6);
+}
+
+.mentor-card.hub-card-beginner {
+    -fx-border-color: rgba(80, 160, 100, 0.30);
+    -fx-effect: dropshadow(gaussian, rgba(80, 160, 100, 0.14), 14, 0.0, 0, 3);
+}
+.mentor-card.hub-card-beginner:hover {
+    -fx-border-color: rgba(80, 160, 100, 0.50);
+    -fx-effect: dropshadow(gaussian, rgba(80, 160, 100, 0.28), 20, 0.06, 0, 5);
+}
+
 .mentor-card-unavailable {
     -fx-opacity: 0.58;
     -fx-border-color: rgba(248, 246, 241, 0.08);
@@ -4532,4 +4937,301 @@
 
 .mr-decline-btn-icon {
     -fx-icon-color: rgba(255, 195, 195, 0.88);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   VALIDATION REVIEW VIEW  (UC12)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Static glass panel — same surface as glass-card but NO hover
+   translate (used for SplitPane host panels that are not
+   interactive cards).                                          */
+.glass-panel {
+    -fx-background-color:
+        linear-gradient(to bottom right,
+            rgba(36, 44, 36, 0.90) 0%,
+            rgba(28, 36, 30, 0.86) 55%,
+            rgba(48, 64, 46, 0.30) 100%);
+    -fx-border-color: rgba(92, 122, 90, 0.22);
+    -fx-border-width: 1;
+    -fx-border-radius: 18;
+    -fx-background-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.42), 32, 0.08, 0, 8);
+}
+
+/* Dark, transparent SplitPane — erases the default white chrome */
+.vr-split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-box-border: transparent;
+}
+
+.vr-split-pane > .split-pane-divider {
+    -fx-background-color: rgba(92, 122, 90, 0.22);
+    -fx-padding: 0 2 0 2;
+}
+
+/* Approval confirmation strip (inline, replaces action bar) */
+.vrv-confirm-strip {
+    -fx-background-color: rgba(38, 56, 36, 0.55);
+    -fx-border-color: rgba(92, 160, 88, 0.25) transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.vrv-confirm-title {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 12.5px;
+    -fx-text-fill: rgba(180, 235, 170, 0.92);
+}
+
+.vrv-confirm-sub {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(248, 246, 241, 0.42);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Roadmap Generator — Loading Overlay (UC10)
+   Colours the indeterminate ProgressIndicator arc with Matcha green.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.loading-spinner {
+    -fx-progress-color: #5C7A5A;
+    -fx-pref-width:  56;
+    -fx-pref-height: 56;
+}
+
+/* Erase default white/grey box around the spinner */
+.loading-spinner .indicator {
+    -fx-background-color: transparent;
+    -fx-border-color:     transparent;
+}
+
+/* Arc stroke — matcha green */
+.loading-spinner .arc {
+    -fx-stroke: #5C7A5A;
+    -fx-stroke-width: 3.5;
+}
+
+.loading-overlay-card {
+    -fx-background-color:
+        linear-gradient(to bottom right,
+            rgba(36, 44, 36, 0.95) 0%,
+            rgba(28, 36, 30, 0.92) 100%);
+    -fx-border-color:        rgba(92, 122, 90, 0.30);
+    -fx-border-width:        1;
+    -fx-border-radius:       20;
+    -fx-background-radius:   20;
+    -fx-effect:              dropshadow(gaussian, rgba(0,0,0,0.55), 40, 0.0, 0, 10);
+    /* Spinner + message row — vertically centred as one unit */
+    -fx-alignment:           center-left;
+    /* Padding applied in FXML so height stays compact */
+    -fx-padding:             0;
+}
+
+.loading-overlay-msg {
+    -fx-font-family:  "Segoe UI";
+    -fx-font-size:    13px;
+    -fx-text-fill:    rgba(248, 246, 241, 0.72);
+    -fx-font-style:   italic;
+    -fx-wrap-text:    true;
+    -fx-text-alignment: left;
+}
+
+/* ── Roadmap modifiers — dark glass CheckBox (UC10) ──────────────────────── */
+.glass-check {
+    -fx-text-fill: rgba(248, 246, 241, 0.82);
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.glass-check .box {
+    -fx-background-color: rgba(22, 24, 20, 0.75);
+    -fx-border-color: rgba(163, 184, 153, 0.35);
+    -fx-border-width: 1;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-pref-width: 16;
+    -fx-pref-height: 16;
+}
+
+.glass-check:hover .box {
+    -fx-border-color: rgba(92, 122, 90, 0.65);
+    -fx-background-color: rgba(32, 38, 32, 0.85);
+}
+
+.glass-check:selected .box {
+    -fx-background-color:
+        linear-gradient(to bottom right, rgba(92, 122, 90, 0.92), rgba(68, 96, 66, 0.88));
+    -fx-border-color: rgba(163, 184, 153, 0.55);
+}
+
+.glass-check:selected .mark {
+    -fx-background-color: rgba(248, 246, 241, 0.96);
+}
+
+/* ── Roadmap Generator — section labels ──────────────────────────────────── */
+.rg-section-label {
+    -fx-font-family:  "Segoe UI Semibold";
+    -fx-font-size:    11.5px;
+    -fx-text-fill:    rgba(163, 184, 153, 0.80);
+    -fx-padding:      14 0 4 0;
+}
+
+/* ── Roadmap Generator — gap row pill ────────────────────────────────────── */
+.rg-gap-row {
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+    -fx-border-color:     rgba(92, 122, 90, 0.18);
+    -fx-border-width:     1;
+    -fx-border-radius:    8;
+    -fx-background-radius: 8;
+    -fx-padding:          7 12 7 12;
+    -fx-spacing:          6;
+}
+
+.rg-gap-major {
+    -fx-border-color: rgba(220, 90, 80, 0.45);
+    -fx-background-color: rgba(220, 90, 80, 0.07);
+}
+
+.rg-gap-minor {
+    -fx-border-color: rgba(220, 180, 60, 0.40);
+    -fx-background-color: rgba(220, 180, 60, 0.06);
+}
+
+.rg-gap-skill-name {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size:   12px;
+    -fx-text-fill:   rgba(248, 246, 241, 0.88);
+}
+
+.rg-gap-badge {
+    -fx-font-family:       "Segoe UI";
+    -fx-font-size:         10px;
+    -fx-padding:           2 7 2 7;
+    -fx-background-radius: 12;
+    -fx-border-radius:     12;
+}
+
+.rg-gap-badge-major {
+    -fx-text-fill:        rgba(255, 140, 130, 0.95);
+    -fx-background-color: rgba(220, 90, 80, 0.18);
+    -fx-border-color:     rgba(220, 90, 80, 0.35);
+    -fx-border-width:     1;
+}
+
+.rg-gap-badge-minor {
+    -fx-text-fill:        rgba(255, 220, 100, 0.95);
+    -fx-background-color: rgba(220, 180, 60, 0.15);
+    -fx-border-color:     rgba(220, 180, 60, 0.32);
+    -fx-border-width:     1;
+}
+
+.rg-gap-level-text {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size:   10.5px;
+    -fx-text-fill:   rgba(248, 246, 241, 0.45);
+}
+
+/* ── Credit info label ───────────────────────────────────────────────────── */
+.rg-credit-label {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size:   11.5px;
+    -fx-text-fill:   rgba(163, 184, 153, 0.75);
+}
+
+.rg-credit-label-warn {
+    -fx-text-fill: rgba(220, 120, 80, 0.90);
+}
+
+/* ── Task count badge ────────────────────────────────────────────────────── */
+.rg-task-count {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size:   11px;
+    -fx-text-fill:   rgba(163, 184, 153, 0.70);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Native Alert / DialogPane — Sumi Ink + glass border (UC10 & reusable)
+   Apply to DialogPane via: getStyleClass().add("michiru-dialog-pane")
+   Stylesheet: /com/example/michiru/michiru-styles.css  (classpath root)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.michiru-dialog-pane {
+    -fx-background-color:
+        linear-gradient(to bottom right,
+            rgba(38, 44, 38, 0.98) 0%,
+            rgba(26, 30, 26, 0.96) 100%);
+    -fx-border-color: rgba(92, 122, 90, 0.42);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.72), 48, 0.14, 0, 14);
+    -fx-padding: 0;
+    /* Avoid white bleed under rounded corners when stage is TRANSPARENT */
+    -fx-background-insets: 0;
+}
+
+.michiru-dialog-pane > .header-panel {
+    -fx-background-color: rgba(255, 255, 255, 0.03);
+    -fx-border-color: transparent transparent rgba(92, 122, 90, 0.18) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.michiru-dialog-pane > .header-panel .label {
+    -fx-text-fill: rgba(248, 246, 241, 0.94);
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 15px;
+}
+
+.michiru-dialog-pane > .content {
+    -fx-background-color: transparent;
+}
+
+.michiru-dialog-pane > .content.label,
+.michiru-dialog-pane .content Text {
+    -fx-fill: rgba(248, 246, 241, 0.72);
+}
+
+.michiru-dialog-pane > .content.label {
+    -fx-text-fill: rgba(248, 246, 241, 0.72);
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 12.5px;
+    -fx-wrap-text: true;
+}
+
+.michiru-dialog-pane > .button-bar {
+    -fx-background-color: rgba(0, 0, 0, 0.18);
+    -fx-border-color: rgba(92, 122, 90, 0.15) transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.michiru-dialog-pane > .button-bar > .container > .button {
+    -fx-background-color:
+        linear-gradient(to bottom right,
+            rgba(92, 122, 90, 0.82),
+            rgba(68, 96, 66, 0.76));
+    -fx-border-color: rgba(163, 184, 153, 0.38);
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-text-fill: rgba(248, 246, 241, 0.95);
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 12px;
+    -fx-padding: 8 22 8 22;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.michiru-dialog-pane > .button-bar > .container > .button:hover {
+    -fx-background-color:
+        linear-gradient(to bottom right,
+            rgba(110, 145, 108, 0.92),
+            rgba(85, 115, 83, 0.86));
 }
