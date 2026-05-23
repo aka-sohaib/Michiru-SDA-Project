@@ -92,7 +92,9 @@ public class ValidationRequest {
      * {@link SkillProficiency} entity.
      */
     public void updateProficiency(String level) {
-        // TODO: delegate to SkillProficiency.updateProficiencyLevel(level)
+        if (level != null && !level.isBlank()) {
+            this.requestedLevel = level;
+        }
     }
 
     /**
@@ -107,8 +109,10 @@ public class ValidationRequest {
      * UC11 (implied) — returns student profile for mentor review.
      */
     public Object getStudentProfile() {
-        // TODO: delegate to Student.getProfile() when wired
-        return null;
+        Student profile = new Student();
+        profile.setStudentId(studentId);
+        profile.setFirstName(studentName);
+        return profile;
     }
 
     // ── Convenience ───────────────────────────────────────────────────────────

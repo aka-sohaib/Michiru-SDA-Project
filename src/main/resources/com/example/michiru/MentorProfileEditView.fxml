@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!-- Mentor profile edit modal. Opened as an undecorated application-modal stage. -->
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.michiru.MentorProfileEditViewController"
+           styleClass="edit-modal-root"
+           stylesheets="@michiru-styles.css"
+           prefWidth="580" prefHeight="650"
+           minWidth="520" minHeight="580">
+
+    <VBox styleClass="edit-modal-card"
+          spacing="0"
+          maxWidth="Infinity" maxHeight="Infinity"
+          StackPane.alignment="CENTER">
+
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <padding><Insets top="22" right="24" bottom="18" left="24"/></padding>
+
+            <StackPane styleClass="identity-avatar-circle"
+                       minWidth="40" minHeight="40" maxWidth="40" maxHeight="40">
+                <FontIcon iconLiteral="fas-user-edit" iconSize="16" styleClass="identity-avatar-icon"/>
+            </StackPane>
+
+            <VBox spacing="3" HBox.hgrow="ALWAYS">
+                <Label text="Update Profile &amp; Skills"
+                       styleClass="edit-modal-title"/>
+                <Label text="Keep your mentor profile sharp for students browsing expertise."
+                       styleClass="edit-modal-subtitle"/>
+            </VBox>
+
+            <Button fx:id="btnClose"
+                    styleClass="modal-close-btn"
+                    onAction="#handleClose"
+                    mnemonicParsing="false"
+                    minWidth="32" maxWidth="32" minHeight="32" maxHeight="32">
+                <graphic>
+                    <FontIcon iconLiteral="fas-times" iconSize="13" styleClass="modal-close-icon"/>
+                </graphic>
+            </Button>
+        </HBox>
+
+        <Separator styleClass="edit-modal-divider"/>
+
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER"
+                    styleClass="assessment-scroll-pane"
+                    VBox.vgrow="ALWAYS">
+
+            <VBox spacing="12">
+                <padding><Insets top="18" right="22" bottom="20" left="22"/></padding>
+
+                <VBox styleClass="edit-section-card" spacing="0">
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="edit-section-header">
+                        <StackPane styleClass="edit-section-icon-pill"
+                                   minWidth="28" minHeight="28"
+                                   maxWidth="28" maxHeight="28">
+                            <FontIcon iconLiteral="fas-align-left" iconSize="11" styleClass="edit-section-icon"/>
+                        </StackPane>
+                        <VBox spacing="2" HBox.hgrow="ALWAYS">
+                            <Label text="Bio" styleClass="edit-section-title"/>
+                            <Label text="Background, expertise, and teaching style"
+                                   styleClass="edit-section-hint"/>
+                        </VBox>
+                        <Button styleClass="edit-section-chevron-btn"
+                                onAction="#toggleBioSection"
+                                mnemonicParsing="false">
+                            <graphic>
+                                <FontIcon fx:id="bioChevron"
+                                          iconLiteral="fas-chevron-down"
+                                          iconSize="11"
+                                          styleClass="edit-section-chevron"/>
+                            </graphic>
+                        </Button>
+                    </HBox>
+                    <VBox fx:id="bioSectionContent" spacing="8" styleClass="edit-section-content">
+                        <TextArea fx:id="areaBio"
+                                  styleClass="edit-textarea"
+                                  promptText="Tell students about your background, expertise, and teaching style..."
+                                  wrapText="true"
+                                  prefRowCount="4"
+                                  maxWidth="Infinity"/>
+                    </VBox>
+                </VBox>
+
+                <VBox styleClass="edit-section-card" spacing="0">
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="edit-section-header">
+                        <StackPane styleClass="edit-section-icon-pill"
+                                   minWidth="28" minHeight="28"
+                                   maxWidth="28" maxHeight="28">
+                            <FontIcon iconLiteral="fas-briefcase" iconSize="11" styleClass="edit-section-icon"/>
+                        </StackPane>
+                        <VBox spacing="2" HBox.hgrow="ALWAYS">
+                            <Label text="Experience &amp; Cost" styleClass="edit-section-title"/>
+                            <Label text="Years of experience and credit cost per session"
+                                   styleClass="edit-section-hint"/>
+                        </VBox>
+                        <Button styleClass="edit-section-chevron-btn"
+                                onAction="#toggleExperienceSection"
+                                mnemonicParsing="false">
+                            <graphic>
+                                <FontIcon fx:id="experienceChevron"
+                                          iconLiteral="fas-chevron-down"
+                                          iconSize="11"
+                                          styleClass="edit-section-chevron"/>
+                            </graphic>
+                        </Button>
+                    </HBox>
+                    <VBox fx:id="experienceSectionContent" spacing="8" styleClass="edit-section-content">
+                        <HBox spacing="14">
+                            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                <Label text="YEARS OF EXPERIENCE" styleClass="edit-section-label"/>
+                                <TextField fx:id="fieldYearsExp"
+                                           styleClass="edit-field-input"
+                                           promptText="e.g. 5"
+                                           maxWidth="Infinity"/>
+                            </VBox>
+                            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                <Label text="CREDIT COST PER SESSION" styleClass="edit-section-label"/>
+                                <TextField fx:id="fieldCreditCost"
+                                           styleClass="edit-field-input"
+                                           promptText="e.g. 10"
+                                           maxWidth="Infinity"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </VBox>
+
+                <VBox styleClass="edit-section-card" spacing="0">
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="edit-section-header">
+                        <StackPane styleClass="edit-section-icon-pill"
+                                   minWidth="28" minHeight="28"
+                                   maxWidth="28" maxHeight="28">
+                            <FontIcon iconLiteral="fas-toggle-on" iconSize="12" styleClass="edit-section-icon"/>
+                        </StackPane>
+                        <VBox spacing="2" HBox.hgrow="ALWAYS">
+                            <Label text="Availability" styleClass="edit-section-title"/>
+                            <Label text="Control whether students can request you"
+                                   styleClass="edit-section-hint"/>
+                        </VBox>
+                        <Button styleClass="edit-section-chevron-btn"
+                                onAction="#toggleAvailabilitySection"
+                                mnemonicParsing="false">
+                            <graphic>
+                                <FontIcon fx:id="availabilityChevron"
+                                          iconLiteral="fas-chevron-down"
+                                          iconSize="11"
+                                          styleClass="edit-section-chevron"/>
+                            </graphic>
+                        </Button>
+                    </HBox>
+                    <VBox fx:id="availabilitySectionContent" spacing="8" styleClass="edit-section-content">
+                        <CheckBox fx:id="chkAvailable"
+                                  text="I am currently available to accept new mentorship requests"
+                                  styleClass="edit-available-checkbox"/>
+                    </VBox>
+                </VBox>
+
+                <VBox styleClass="edit-section-card" spacing="0">
+                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="edit-section-header">
+                        <StackPane styleClass="edit-section-icon-pill"
+                                   minWidth="28" minHeight="28"
+                                   maxWidth="28" maxHeight="28">
+                            <FontIcon iconLiteral="fas-layer-group" iconSize="11" styleClass="edit-section-icon"/>
+                        </StackPane>
+                        <VBox spacing="2" HBox.hgrow="ALWAYS">
+                            <Label text="Expert Skills" styleClass="edit-section-title"/>
+                            <Label text="Tags students use to find your mentorship"
+                                   styleClass="edit-section-hint"/>
+                        </VBox>
+                        <Button styleClass="edit-section-chevron-btn"
+                                onAction="#toggleSkillsSection"
+                                mnemonicParsing="false">
+                            <graphic>
+                                <FontIcon fx:id="skillsChevron"
+                                          iconLiteral="fas-chevron-down"
+                                          iconSize="11"
+                                          styleClass="edit-section-chevron"/>
+                            </graphic>
+                        </Button>
+                    </HBox>
+                    <VBox fx:id="skillsSectionContent" spacing="10" styleClass="edit-section-content">
+                        <Label text="Select the skills you teach. Students filter mentors by these tags."
+                               styleClass="edit-modal-subtitle" wrapText="true"/>
+                        <ScrollPane fx:id="skillsScrollPane"
+                                    fitToWidth="true"
+                                    hbarPolicy="NEVER"
+                                    styleClass="edit-skills-scroll"
+                                    prefHeight="160" maxHeight="180">
+                            <VBox fx:id="skillsContainer" spacing="8">
+                                <padding><Insets top="10" right="14" bottom="10" left="14"/></padding>
+                            </VBox>
+                        </ScrollPane>
+                    </VBox>
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
+
+        <Separator styleClass="edit-modal-divider"/>
+
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <padding><Insets top="16" right="24" bottom="18" left="24"/></padding>
+
+            <Label fx:id="lblStatus" text="" styleClass="edit-status-label"
+                   HBox.hgrow="ALWAYS" wrapText="false"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button fx:id="btnCancel"
+                    text="Cancel"
+                    styleClass="action-btn-secondary"
+                    onAction="#handleClose"
+                    mnemonicParsing="false"/>
+
+            <Button fx:id="btnSave"
+                    styleClass="action-btn-primary"
+                    onAction="#handleSave"
+                    mnemonicParsing="false">
+                <graphic>
+                    <HBox alignment="CENTER" spacing="7">
+                        <FontIcon iconLiteral="fas-save" iconSize="12" styleClass="action-btn-icon"/>
+                        <Label text="Save Changes" styleClass="action-btn-label" mouseTransparent="true"/>
+                    </HBox>
+                </graphic>
+            </Button>
+
+        </HBox>
+
+    </VBox>
+
+</StackPane>

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+  ValidationReviewView — UC12: Validate Skill Proficiency (Mentor Review)
+
+  Layer structure:
+    StackPane (assessment-root)              ← inherits dark dash-root canvas
+      ├── VBox (assessment-main-view)
+      │     ├── Page header HBox
+      │     └── SplitPane (.vr-split-pane)  ← custom dark SplitPane
+      │           ├── LEFT  VBox (.glass-panel) — pending requests TableView (.vr-table)
+      │           └── RIGHT StackPane (.glass-panel) — review detail panel
+      ├── StackPane overlayDim  (reject-feedback modal dim)
+      └── StackPane modalWrapper (reject-feedback / confirm modal card)
+-->
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.michiru.ValidationReviewViewController"
+           maxWidth="Infinity" maxHeight="Infinity"
+           styleClass="assessment-root"
+           stylesheets="@michiru-styles.css">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LAYER 0 — Main content
+         ═══════════════════════════════════════════════════════════════════ -->
+    <VBox maxWidth="Infinity" maxHeight="Infinity"
+          spacing="0"
+          styleClass="assessment-main-view">
+        <padding><Insets top="28" right="28" bottom="20" left="28"/></padding>
+
+        <!-- ── Page header ───────────────────────────────────────────────── -->
+        <HBox alignment="CENTER_LEFT" spacing="14">
+            <padding><Insets bottom="20"/></padding>
+
+            <StackPane styleClass="page-title-icon-pill"
+                       minWidth="44" minHeight="44"
+                       maxWidth="44" maxHeight="44">
+                <FontIcon iconLiteral="fas-check-circle"
+                          iconSize="18"
+                          styleClass="page-title-icon"/>
+            </StackPane>
+
+            <VBox spacing="4">
+                <Label text="Validation Review"
+                       styleClass="assessment-page-title"/>
+                <Label text="Review student skill validation requests — approve to upgrade proficiency or reject with feedback"
+                       styleClass="assessment-page-subtitle"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Pending count badge -->
+            <VBox alignment="CENTER" spacing="2">
+                <Label fx:id="lblPendingCount"
+                       text="—"
+                       styleClass="assessment-skill-count-num"/>
+                <Label text="pending"
+                       styleClass="assessment-skill-count-lbl"/>
+            </VBox>
+        </HBox>
+
+        <!-- ── SplitPane: LEFT table │ RIGHT review panel ───────────────── -->
+        <SplitPane fx:id="splitPane"
+                   VBox.vgrow="ALWAYS"
+                   dividerPositions="0.44"
+                   styleClass="vr-split-pane">
+
+            <!-- ── LEFT: Pending Requests ──────────────────────────────── -->
+            <VBox styleClass="glass-panel" spacing="0"
+                  minWidth="280" prefWidth="360">
+
+                <!-- Card header -->
+                <HBox alignment="CENTER_LEFT" spacing="10"
+                      styleClass="glass-card-header">
+                    <padding><Insets top="14" right="18" bottom="12" left="16"/></padding>
+                    <FontIcon iconLiteral="fas-list-ul" iconSize="13"
+                              styleClass="page-title-icon"/>
+                    <Label text="Pending Requests"
+                           styleClass="glass-card-title"/>
+                </HBox>
+
+                <!-- Styled dark TableView -->
+                <TableView fx:id="tblRequests"
+                           VBox.vgrow="ALWAYS"
+                           styleClass="vr-table">
+                    <columns>
+                        <TableColumn fx:id="colStudent"  text="Student"  prefWidth="115"/>
+                        <TableColumn fx:id="colSkill"    text="Skill"    prefWidth="105"/>
+                        <TableColumn fx:id="colLevel"    text="Level"    prefWidth="100"/>
+                        <TableColumn fx:id="colEvidence" text="Evidence" prefWidth="90"/>
+                        <TableColumn fx:id="colDate"     text="Date"     prefWidth="88"/>
+                    </columns>
+                    <placeholder>
+                        <VBox alignment="CENTER" spacing="12">
+                            <padding><Insets top="48" bottom="48"/></padding>
+                            <FontIcon iconLiteral="fas-inbox"
+                                      iconSize="34"
+                                      styleClass="assessment-empty-icon"/>
+                            <Label text="No pending validation requests"
+                                   styleClass="assessment-empty-label"/>
+                            <Label text="New student submissions will appear here."
+                                   styleClass="assessment-page-subtitle"/>
+                        </VBox>
+                    </placeholder>
+                </TableView>
+
+            </VBox>
+
+            <!-- ── RIGHT: Review Panel host ────────────────────────────── -->
+            <StackPane fx:id="reviewPanelHost"
+                       styleClass="glass-panel"
+                       minWidth="320">
+
+                <!-- Empty-state (before any row is selected) -->
+                <VBox fx:id="reviewEmptyState"
+                      alignment="CENTER" spacing="14">
+                    <FontIcon iconLiteral="fas-hand-pointer"
+                              iconSize="38"
+                              styleClass="assessment-empty-icon"/>
+                    <Label text="Select a request to review"
+                           styleClass="assessment-empty-label"/>
+                    <Label text="Click any row on the left to load the full details here."
+                           styleClass="assessment-page-subtitle"/>
+                </VBox>
+
+                <!-- Programmatic review content injected by the controller -->
+                <VBox fx:id="reviewPanel"
+                      spacing="0"
+                      maxWidth="Infinity" maxHeight="Infinity"
+                      fillWidth="true"
+                      visible="false" managed="false"/>
+
+            </StackPane>
+
+        </SplitPane>
+
+    </VBox>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LAYER 1 — Overlay dim (shared by reject modal + approve confirm)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="overlayDim"
+               maxWidth="Infinity" maxHeight="Infinity"
+               styleClass="assessment-overlay-dim"
+               visible="false"/>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LAYER 2 — Custom modal card (reject feedback OR approve confirm)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="modalWrapper"
+               maxWidth="Infinity" maxHeight="Infinity"
+               alignment="CENTER"
+               visible="false">
+
+        <VBox fx:id="modalCard"
+              styleClass="assessment-modal-card"
+              maxWidth="500"
+              alignment="TOP_LEFT"/>
+
+    </StackPane>
+
+</StackPane>

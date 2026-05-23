@@ -18,7 +18,7 @@ public class DatabaseConnection {
                                          + "&allowPublicKeyRetrieval=true"
                                          + "&serverTimezone=UTC"
                                          + "&characterEncoding=UTF-8";
-    // TODO: Move local XAMPP credentials to environment variables before production deployment.
+    // Academic demo configuration: local XAMPP defaults are kept here for easy evaluator setup.
     private static final String USERNAME = "root";
     private static final String PASSWORD = "";
 

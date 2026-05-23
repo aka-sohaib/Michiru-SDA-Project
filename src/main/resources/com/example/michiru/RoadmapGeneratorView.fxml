@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.geometry.Pos?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.TextAlignment?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+  RoadmapGeneratorView — UC10: Generate AI Roadmap (Mentor Side)
+
+  Layer structure:
+    StackPane (assessment-root)
+      ├── LAYER 0: VBox (assessment-main-view)
+      │     ├── Page header HBox
+      │     └── SplitPane (vr-split-pane, dividerPositions=0.42)
+      │           ├── LEFT  VBox (glass-panel) — inputs: student selector,
+      │           │                               skill gaps, modifiers, notes
+      │           └── RIGHT StackPane (glass-panel) — task preview / empty state
+      ├── LAYER 1: StackPane overlayDim  (assessment-overlay-dim)
+      └── LAYER 2: StackPane loadingWrapper  (loading card + spinner)
+-->
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.michiru.RoadmapGeneratorViewController"
+           maxWidth="Infinity" maxHeight="Infinity"
+           styleClass="assessment-root"
+           stylesheets="@michiru-styles.css">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LAYER 0 — Main content
+         ═══════════════════════════════════════════════════════════════════ -->
+    <VBox fx:id="mainContentPane"
+          maxWidth="Infinity" maxHeight="Infinity"
+          spacing="0"
+          styleClass="assessment-main-view">
+        <padding><Insets top="28" right="28" bottom="20" left="28"/></padding>
+
+        <!-- ── Page header ───────────────────────────────────────────────── -->
+        <HBox alignment="CENTER_LEFT" spacing="14">
+            <padding><Insets bottom="20"/></padding>
+
+            <StackPane styleClass="page-title-icon-pill"
+                       minWidth="44" minHeight="44"
+                       maxWidth="44" maxHeight="44">
+                <FontIcon iconLiteral="fas-map"
+                          iconSize="18"
+                          styleClass="page-title-icon"/>
+            </StackPane>
+
+            <VBox spacing="4">
+                <Label text="Roadmap Generator"
+                       styleClass="assessment-page-title"/>
+                <Label text="Select a mentored student, configure modifiers, then generate a personalised AI learning roadmap"
+                       styleClass="assessment-page-subtitle"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- AI model badge -->
+            <VBox alignment="CENTER" spacing="2">
+                <Label text="Llama 3.3"
+                       styleClass="assessment-skill-count-num"/>
+                <Label text="via Groq API"
+                       styleClass="assessment-skill-count-lbl"/>
+            </VBox>
+        </HBox>
+
+        <!-- ── SplitPane: LEFT inputs │ RIGHT preview ───────────────────── -->
+        <SplitPane fx:id="splitPane"
+                   VBox.vgrow="ALWAYS"
+                   dividerPositions="0.42"
+                   styleClass="vr-split-pane">
+
+            <!-- ════════════════════════════════════════════════════════════
+                 LEFT PANEL — Configuration Inputs
+                 ════════════════════════════════════════════════════════════ -->
+            <VBox styleClass="glass-panel" spacing="0"
+                  minWidth="280" prefWidth="380">
+
+                <!-- Card header -->
+                <HBox alignment="CENTER_LEFT" spacing="10"
+                      styleClass="glass-card-header">
+                    <padding><Insets top="14" right="18" bottom="12" left="16"/></padding>
+                    <FontIcon iconLiteral="fas-sliders-h" iconSize="13"
+                              styleClass="page-title-icon"/>
+                    <Label text="Configure Roadmap"
+                           styleClass="glass-card-title"/>
+                </HBox>
+
+                <!-- Scrollable input area -->
+                <ScrollPane VBox.vgrow="ALWAYS"
+                            fitToWidth="true"
+                            hbarPolicy="NEVER"
+                            styleClass="assessment-scroll-pane">
+
+                    <VBox fx:id="inputsContainer"
+                          spacing="0"
+                          fillWidth="true">
+                        <padding><Insets top="4" right="18" bottom="18" left="18"/></padding>
+
+                        <!-- ── Student Selection ──────────────────────── -->
+                        <Label text="SELECT STUDENT"
+                               styleClass="rg-section-label"/>
+                        <ComboBox fx:id="studentCombo"
+                                  promptText="Choose a mentored student…"
+                                  maxWidth="Infinity"
+                                  styleClass="glass-combo-box"/>
+
+                        <!-- ── Skill Gaps ─────────────────────────────── -->
+                        <Label text="STUDENT SKILL GAPS"
+                               styleClass="rg-section-label"/>
+                        <!-- Gap rows are built programmatically by the controller -->
+                        <VBox fx:id="gapsContainer"
+                              spacing="6">
+                            <!-- empty-state placeholder shown before a student is selected -->
+                            <Label fx:id="gapsPlaceholder"
+                                   text="Select a student to view their skill gaps."
+                                   styleClass="assessment-page-subtitle"
+                                   wrapText="true"/>
+                        </VBox>
+
+                        <!-- ── Roadmap Modifiers ──────────────────────── -->
+                        <Label text="ROADMAP MODIFIERS"
+                               styleClass="rg-section-label"/>
+                        <VBox spacing="8">
+                            <CheckBox fx:id="chkIntensive"
+                                      text="Intensive (compressed timeline)"
+                                      styleClass="glass-check"/>
+                            <CheckBox fx:id="chkProjectBased"
+                                      text="Project-Based (hands-on deliverables)"
+                                      styleClass="glass-check"/>
+                            <CheckBox fx:id="chkTheoryHeavy"
+                                      text="Theory-Heavy (foundational concepts first)"
+                                      styleClass="glass-check"/>
+                            <CheckBox fx:id="chkFastTrack"
+                                      text="Fast-Track (minimum viable path)"
+                                      styleClass="glass-check"/>
+                        </VBox>
+
+                        <!-- ── Mentor Notes ───────────────────────────── -->
+                        <Label text="MENTOR FOCUS NOTES"
+                               styleClass="rg-section-label"/>
+                        <TextArea fx:id="mentorNotesArea"
+                                  promptText="Optional — describe any specific focus areas (max 100 words). Longer notes will be automatically trimmed."
+                                  prefRowCount="4"
+                                  wrapText="true"
+                                  styleClass="glass-text-area"/>
+
+                    </VBox>
+                </ScrollPane>
+
+                <!-- Action row pinned to bottom of left panel -->
+                <HBox alignment="CENTER_LEFT" spacing="10"
+                      styleClass="glass-card-header">
+                    <padding><Insets top="12" right="16" bottom="12" left="16"/></padding>
+                    <Label fx:id="lblCreditInfo"
+                           text="Select a student to check credits."
+                           styleClass="rg-credit-label"
+                           HBox.hgrow="ALWAYS"
+                           wrapText="true"/>
+                    <Button fx:id="btnGenerate"
+                            text="Generate AI Roadmap"
+                            styleClass="action-btn-primary"
+                            onAction="#handleGenerate"
+                            disable="true">
+                        <graphic>
+                            <FontIcon iconLiteral="fas-magic"
+                                      iconSize="12"
+                                      styleClass="action-btn-icon"/>
+                        </graphic>
+                    </Button>
+                </HBox>
+
+            </VBox>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 RIGHT PANEL — Generated Roadmap Preview
+                 ════════════════════════════════════════════════════════════ -->
+            <StackPane fx:id="rightPanelHost"
+                       styleClass="glass-panel"
+                       minWidth="320">
+
+                <!-- Empty state (before generation) -->
+                <VBox fx:id="rightEmptyState"
+                      alignment="CENTER" spacing="14">
+                    <FontIcon iconLiteral="fas-route"
+                              iconSize="40"
+                              styleClass="assessment-empty-icon"/>
+                    <Label text="No roadmap generated yet"
+                           styleClass="assessment-empty-label"/>
+                    <Label text="Configure the inputs on the left, then click &quot;Generate AI Roadmap&quot;."
+                           styleClass="assessment-page-subtitle"
+                           wrapText="true"
+                           maxWidth="280"/>
+                </VBox>
+
+                <!-- Result panel (shown after successful generation) -->
+                <VBox fx:id="resultPanel"
+                      spacing="0"
+                      maxWidth="Infinity" maxHeight="Infinity"
+                      fillWidth="true"
+                      visible="false" managed="false">
+
+                    <!-- Result header with task count -->
+                    <HBox alignment="CENTER_LEFT" spacing="10"
+                          styleClass="glass-card-header">
+                        <padding><Insets top="14" right="18" bottom="12" left="16"/></padding>
+                        <FontIcon iconLiteral="fas-list-ol" iconSize="13"
+                                  styleClass="page-title-icon"/>
+                        <Label text="Generated Roadmap"
+                               styleClass="glass-card-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="lblTaskCount"
+                               text=""
+                               styleClass="rg-task-count"/>
+                    </HBox>
+
+                    <!-- Task TableView -->
+                    <TableView fx:id="taskTable"
+                               VBox.vgrow="ALWAYS"
+                               styleClass="vr-table">
+                        <columns>
+                            <TableColumn fx:id="colTitle"
+                                         text="Task"
+                                         prefWidth="180"/>
+                            <TableColumn fx:id="colDesc"
+                                         text="Description"
+                                         prefWidth="320"/>
+                            <TableColumn fx:id="colDays"
+                                         text="Days"
+                                         prefWidth="60"/>
+                        </columns>
+                        <placeholder>
+                            <VBox alignment="CENTER" spacing="10">
+                                <padding><Insets top="40" bottom="40"/></padding>
+                                <FontIcon iconLiteral="fas-inbox"
+                                          iconSize="30"
+                                          styleClass="assessment-empty-icon"/>
+                                <Label text="No tasks generated."
+                                       styleClass="assessment-empty-label"/>
+                            </VBox>
+                        </placeholder>
+                    </TableView>
+
+                    <!-- Approve footer -->
+                    <HBox alignment="CENTER_RIGHT" spacing="12"
+                          styleClass="glass-card-header">
+                        <padding><Insets top="12" right="18" bottom="12" left="18"/></padding>
+                        <Label fx:id="lblApproveInfo"
+                               text="Approve to save this roadmap and deduct credits."
+                               styleClass="rg-credit-label"
+                               HBox.hgrow="ALWAYS"
+                               wrapText="true"/>
+                        <Button fx:id="btnRegenerate"
+                                text="Regenerate"
+                                styleClass="action-btn-secondary"
+                                onAction="#handleGenerate">
+                            <graphic>
+                                <FontIcon iconLiteral="fas-redo"
+                                          iconSize="11"
+                                          styleClass="action-btn-icon"/>
+                            </graphic>
+                        </Button>
+                        <Button fx:id="btnApprove"
+                                text="Approve &amp; Save"
+                                styleClass="action-btn-primary"
+                                onAction="#handleApprove"
+                                disable="true">
+                            <graphic>
+                                <FontIcon iconLiteral="fas-check"
+                                          iconSize="11"
+                                          styleClass="action-btn-icon"/>
+                            </graphic>
+                        </Button>
+                    </HBox>
+
+                </VBox>
+
+            </StackPane>
+
+        </SplitPane>
+    </VBox>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LAYER 1 — Overlay dim
+         ═══════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="overlayDim"
+               maxWidth="Infinity" maxHeight="Infinity"
+               styleClass="assessment-overlay-dim"
+               visible="false"/>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         LAYER 2 — Loading card (spinner + message)
+         Full-screen StackPane only blocks clicks; inner card stays compact.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <StackPane fx:id="loadingWrapper"
+               maxWidth="Infinity" maxHeight="Infinity"
+               alignment="CENTER"
+               visible="false"
+               mouseTransparent="false">
+
+        <HBox styleClass="loading-overlay-card"
+              alignment="CENTER"
+              spacing="20"
+              minHeight="110"
+              prefHeight="130"
+              maxHeight="180"
+              maxWidth="480">
+            <padding><Insets top="26" right="34" bottom="26" left="30"/></padding>
+            <ProgressIndicator styleClass="loading-spinner"
+                               minWidth="48" minHeight="48"
+                               prefWidth="48" prefHeight="48"
+                               maxWidth="48" maxHeight="48"/>
+            <Label fx:id="loadingMsg"
+                   text="Generating AI Roadmap… Please wait."
+                   styleClass="loading-overlay-msg"
+                   wrapText="true"
+                   maxWidth="320"
+                   HBox.hgrow="ALWAYS"
+                   alignment="CENTER_LEFT"
+                   textAlignment="LEFT"/>
+        </HBox>
+
+    </StackPane>
+
+</StackPane>

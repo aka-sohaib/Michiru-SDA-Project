@@ -106,8 +106,11 @@ public class MentorshipRequest {
      * UC09 step 2.1.2 — delegates to associated Student's getProfile().
      */
     public Object getStudentProfile() {
-        // TODO: delegate to Student.getProfile() when wired
-        return null;
+        Student profile = new Student();
+        profile.setStudentId(studentId);
+        profile.setFirstName(studentFirstName);
+        profile.setLastName(studentLastName);
+        return profile;
     }
 
     /**

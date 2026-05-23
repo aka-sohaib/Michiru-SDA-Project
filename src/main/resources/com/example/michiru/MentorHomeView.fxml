@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+  MentorHomeView — Landing view loaded into MentorDashboard contentArea.
+  Asymmetrical layout matching the Coordinator premium standard:
+  narrow identity pane on the left, KPI ribbon + data panels on the right.
+-->
+<HBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.michiru.MentorHomeController"
+      maxWidth="Infinity" maxHeight="Infinity"
+      spacing="18"
+      styleClass="dashboard-home-root"
+      stylesheets="@michiru-styles.css">
+    <padding><Insets top="24" right="26" bottom="26" left="26"/></padding>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         LEFT — Identity pane
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <VBox fx:id="identityPane"
+          prefWidth="204" minWidth="180"
+          styleClass="dashboard-identity-pane"
+          spacing="0">
+        <padding><Insets top="28" right="20" bottom="24" left="20"/></padding>
+
+        <!-- Avatar + name + role badge -->
+        <VBox alignment="CENTER" spacing="10">
+
+            <StackPane styleClass="identity-avatar-circle"
+                       minWidth="72" minHeight="72"
+                       maxWidth="72" maxHeight="72">
+                <FontIcon iconLiteral="fas-chalkboard-teacher"
+                          iconSize="28"
+                          styleClass="identity-avatar-icon"/>
+            </StackPane>
+
+            <Label fx:id="lblMentorName"
+                   text="—"
+                   styleClass="identity-name-label"
+                   wrapText="false"
+                   maxWidth="164"/>
+
+            <HBox alignment="CENTER">
+                <Label text="Mentor"
+                       styleClass="identity-role-badge"/>
+            </HBox>
+
+        </VBox>
+
+        <!-- Separator -->
+        <Separator styleClass="identity-separator">
+            <VBox.margin><Insets top="22" bottom="20"/></VBox.margin>
+        </Separator>
+
+        <!-- Email detail row -->
+        <HBox alignment="CENTER_LEFT" spacing="9">
+            <FontIcon iconLiteral="fas-envelope"
+                      iconSize="12"
+                      styleClass="identity-detail-icon"/>
+            <Label fx:id="lblMentorEmail"
+                   text="—"
+                   styleClass="identity-detail-label"
+                   wrapText="false"
+                   maxWidth="148"/>
+        </HBox>
+
+        <!-- Spacer pushes actions to bottom -->
+        <Region VBox.vgrow="ALWAYS"/>
+
+        <!-- Update Profile / Skills button -->
+        <Button text="Update Profile / Skills"
+                styleClass="action-btn-secondary"
+                onAction="#handleUpdateProfile"
+                maxWidth="Infinity"
+                mnemonicParsing="false">
+            <graphic>
+                <FontIcon iconLiteral="fas-user-edit" iconSize="11" styleClass="action-btn-icon"/>
+            </graphic>
+            <VBox.margin><Insets bottom="10"/></VBox.margin>
+        </Button>
+
+        <!-- System online status pill -->
+        <HBox styleClass="system-online-pill"
+              alignment="CENTER"
+              spacing="8"
+              maxWidth="Infinity">
+            <padding><Insets top="9" right="14" bottom="9" left="14"/></padding>
+            <StackPane styleClass="system-online-dot"
+                       minWidth="7" minHeight="7"
+                       maxWidth="7" maxHeight="7"/>
+            <Label text="System Online" styleClass="system-online-label"/>
+        </HBox>
+
+    </VBox>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         RIGHT — KPI ribbon + mentee roster + recent requests
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <VBox HBox.hgrow="ALWAYS" spacing="16">
+
+        <!-- KPI Ribbon -->
+        <HBox fx:id="kpiRibbon" spacing="14">
+
+            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
+                <padding><Insets top="18" right="20" bottom="18" left="20"/></padding>
+                <HBox spacing="14" alignment="CENTER_LEFT">
+                    <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-amber"
+                               minWidth="46" minHeight="46" maxWidth="46" maxHeight="46">
+                        <FontIcon iconLiteral="fas-inbox" iconSize="18" styleClass="kpi-icon kpi-icon-amber"/>
+                    </StackPane>
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblKpiPendingRequests" text="—" styleClass="kpi-count-label"/>
+                        <Label text="Pending requests" styleClass="kpi-title-label"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
+                <padding><Insets top="18" right="20" bottom="18" left="20"/></padding>
+                <HBox spacing="14" alignment="CENTER_LEFT">
+                    <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-green"
+                               minWidth="46" minHeight="46" maxWidth="46" maxHeight="46">
+                        <FontIcon iconLiteral="fas-clipboard-check" iconSize="18" styleClass="kpi-icon kpi-icon-green"/>
+                    </StackPane>
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblKpiPendingValidations" text="—" styleClass="kpi-count-label"/>
+                        <Label text="Pending validations" styleClass="kpi-title-label"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
+                <padding><Insets top="18" right="20" bottom="18" left="20"/></padding>
+                <HBox spacing="14" alignment="CENTER_LEFT">
+                    <StackPane styleClass="kpi-icon-pill, kpi-icon-pill-blue"
+                               minWidth="46" minHeight="46" maxWidth="46" maxHeight="46">
+                        <FontIcon iconLiteral="fas-route" iconSize="18" styleClass="kpi-icon kpi-icon-blue"/>
+                    </StackPane>
+                    <VBox spacing="4" HBox.hgrow="ALWAYS">
+                        <Label fx:id="lblKpiRoadmaps" text="—" styleClass="kpi-count-label"/>
+                        <Label text="Active roadmaps" styleClass="kpi-title-label"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+        </HBox>
+
+        <!-- Roster + Recent Requests -->
+        <HBox spacing="16" alignment="TOP_LEFT" VBox.vgrow="ALWAYS">
+
+            <!-- Active mentee roster -->
+            <VBox spacing="12" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS"
+                  styleClass="recent-activity-panel">
+                <padding><Insets top="18" right="20" bottom="20" left="20"/></padding>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <FontIcon iconLiteral="fas-user-friends" iconSize="14" styleClass="recent-section-icon"/>
+                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                        <Label text="Active mentees" styleClass="recent-panel-title"/>
+                        <Label text="Students with an active mentorship" styleClass="recent-panel-subtitle"/>
+                    </VBox>
+                </HBox>
+                <Separator styleClass="recent-separator"/>
+                <TableView fx:id="rosterTable"
+                           styleClass="michiru-table"
+                           prefHeight="260" minHeight="180" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="colStudent" text="Student" prefWidth="200"/>
+                        <TableColumn fx:id="colStarted" text="Started" prefWidth="120"/>
+                        <TableColumn fx:id="colDays" text="Days active" prefWidth="100"/>
+                    </columns>
+                </TableView>
+            </VBox>
+
+            <!-- Recent mentorship requests -->
+            <VBox spacing="12" prefWidth="360" minWidth="300" maxWidth="420"
+                  styleClass="recent-activity-panel">
+                <padding><Insets top="18" right="20" bottom="20" left="20"/></padding>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <FontIcon iconLiteral="fas-history" iconSize="14" styleClass="recent-section-icon"/>
+                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                        <Label text="Recent mentorship requests" styleClass="recent-panel-title"/>
+                        <Label text="Latest activity from students" styleClass="recent-panel-subtitle"/>
+                    </VBox>
+                </HBox>
+                <Separator styleClass="recent-separator"/>
+                <VBox fx:id="recentContainer" spacing="10"/>
+            </VBox>
+
+        </HBox>
+
+    </VBox>
+
+</HBox>

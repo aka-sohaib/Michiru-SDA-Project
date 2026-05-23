@@ -3220,9 +3220,10 @@ public class MySQLHandler implements DatabaseCatalog {
      * Hashes a plain-text password using SHA-256 and returns the result
      * as a 64-character lowercase hex string.
      *
-     * <p>SHA-256 is deterministic and produces the same hash for the same
-     * input, which is all we need for comparison.  Replace with BCrypt for
-     * production to add salting and a work factor.</p>
+     * <p>This academic prototype uses deterministic SHA-256 so evaluator
+     * machines can run without extra dependencies. A production deployment
+     * would use a salted, adaptive password hashing scheme such as BCrypt or
+     * PBKDF2.</p>
      *
      * @param plainText the plain-text password; must not be {@code null}
      * @return 64-char hex digest, or {@code null} if SHA-256 is unavailable
