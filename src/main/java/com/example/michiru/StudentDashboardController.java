@@ -1,9 +1,5 @@
 package com.example.michiru;
 
-/**
- * Class definition for StudentDashboardController.
- */
-
 import com.example.michiru.facade.AccessAndOverviewFacade;
 import com.example.michiru.facade.AccessAndOverviewFacade.Role;
 import com.example.michiru.model.User;
@@ -45,6 +41,9 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class StudentDashboardController implements Initializable {
+
+    private static final java.util.logging.Logger LOGGER =
+            java.util.logging.Logger.getLogger(StudentDashboardController.class.getName());
 
     private static final String STYLE_ACTIVE   = "nav-item-active";
 
@@ -100,13 +99,7 @@ public class StudentDashboardController implements Initializable {
     private Button activeNavButton;
     private List<Button> allNavButtons;
 
-    /**
-     * Builds navigation state, loads the snapshot, and renders the student home dashboard cards.
-     */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         allNavButtons = List.of(
                 btnDashboard,
@@ -406,7 +399,7 @@ public class StudentDashboardController implements Initializable {
         try {
             URL loginUrl = getClass().getResource("LoginView.fxml");
             if (loginUrl == null) {
-                System.err.println("[StudentDashboardController] LoginView.fxml not found.");
+                LOGGER.warning("LoginView.fxml not found.");
                 return;
             }
             Parent loginRoot = FXMLLoader.load(loginUrl);
@@ -423,12 +416,12 @@ public class StudentDashboardController implements Initializable {
             stage.show();
 
         } catch (IOException e) {
-            System.err.println("[StudentDashboardController] logout error: " + e.getMessage());
+            LOGGER.log(java.util.logging.Level.SEVERE, "Unable to load login view during logout.", e);
         }
     }
 
     /**
-     * Executes navigateTo.
+     * Loads the requested student sub-view into the dashboard content area.
      */
     public void navigateTo(String fxmlFileName) {
         try {
@@ -441,9 +434,8 @@ public class StudentDashboardController implements Initializable {
             swapContent(newView);
 
         } catch (IOException e) {
-            System.err.println("[StudentDashboardController] navigateTo(" +
-                    fxmlFileName + ") error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(java.util.logging.Level.SEVERE,
+                    "Unable to load student view: " + fxmlFileName, e);
             showComingSoon(fxmlFileName);
         }
     }
@@ -513,4 +505,3 @@ public class StudentDashboardController implements Initializable {
         ).play();
     }
 }
-

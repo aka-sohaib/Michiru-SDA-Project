@@ -1,7 +1,7 @@
 package com.example.michiru.model;
 
 /**
- * Class definition for MentorshipRequest.
+ * Defines the MentorshipRequest component in the Michiru application.
  */
 
 import java.util.ArrayList;
@@ -35,9 +35,6 @@ public class MentorshipRequest {
         }
 
         /** Short display label (capitalised first letter). */
-        /**
-         * Executes getLevelLabel.
-         */
         public String getLevelLabel() {
             if (level == null || level.isEmpty()) return "Novice";
             return level.charAt(0) + level.substring(1).toLowerCase();
@@ -86,9 +83,6 @@ public class MentorshipRequest {
     public int            getCreditCost()       { return creditCost; }
     public List<SkillTag> getSkillTags()        { return skillTags; }
 
-    /**
-     * Executes setSkillTags.
-     */
     public void setSkillTags(List<SkillTag> tags) {
         this.skillTags = tags != null ? tags : new ArrayList<>();
     }
@@ -137,9 +131,6 @@ public class MentorshipRequest {
     // ── Display helpers ───────────────────────────────────────────────────────
 
     /** e.g. {@code "Jane Doe"} */
-    /**
-     * Executes getFullName.
-     */
     public String getFullName() {
         return studentFirstName + " " + studentLastName;
     }
@@ -157,17 +148,11 @@ public class MentorshipRequest {
     }
 
     /** {@code true} when the student included a non-blank intro message. */
-    /**
-     * Executes hasMessage.
-     */
     public boolean hasMessage() {
         return message != null && !message.isBlank();
     }
 
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "MentorshipRequest{requestId=" + requestId
                + ", student='" + getFullName() + "'}";

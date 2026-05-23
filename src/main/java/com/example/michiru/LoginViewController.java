@@ -1,9 +1,5 @@
 package com.example.michiru;
 
-/**
- * Class definition for LoginViewController.
- */
-
 import com.example.michiru.facade.AccessAndOverviewFacade;
 import com.example.michiru.model.User;
 import com.example.michiru.session.UserSession;
@@ -42,6 +38,9 @@ import java.util.ResourceBundle;
 
 
 public class LoginViewController implements Initializable {
+
+    private static final java.util.logging.Logger LOGGER =
+            java.util.logging.Logger.getLogger(LoginViewController.class.getName());
 
     @FXML
     private ToggleButton loginTab;
@@ -110,9 +109,6 @@ public class LoginViewController implements Initializable {
      * Wires FXML controls and listeners after the scene graph is loaded.
      */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
 
         registerRole.getItems().addAll("Student", "Mentor");
@@ -259,9 +255,6 @@ public class LoginViewController implements Initializable {
              * Advances parallax interpolation and subtle idle motion each frame.
              */
             @Override
-            /**
-             * Executes handle.
-             */
             public void handle(long now) {
                 if (startTime[0] == -1) startTime[0] = now;
                 double t = (now - startTime[0]) / 1_000_000_000.0;
@@ -470,7 +463,7 @@ public class LoginViewController implements Initializable {
 
         } catch (IOException e) {
             showError("Could not load dashboard. " + e.getMessage());
-            System.err.println("[LoginViewController] switchScene error: " + e.getMessage());
+            LOGGER.log(java.util.logging.Level.SEVERE, "Unable to switch to dashboard scene.", e);
         }
     }
 

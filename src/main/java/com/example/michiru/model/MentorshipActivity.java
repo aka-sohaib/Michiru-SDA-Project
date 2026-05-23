@@ -1,7 +1,7 @@
 package com.example.michiru.model;
 
 /**
- * Class definition for MentorshipActivity.
+ * Defines the MentorshipActivity component in the Michiru application.
  */
 
 public class MentorshipActivity {
@@ -63,9 +63,6 @@ public class MentorshipActivity {
     // ── Display helpers ───────────────────────────────────────────────────────
 
     /** e.g. {@code "Steve Jobs"} */
-    /**
-     * Executes getMentorFullName.
-     */
     public String getMentorFullName() {
         return mentorFirstName + " " + mentorLastName;
     }
@@ -83,34 +80,22 @@ public class MentorshipActivity {
     }
 
     /** {@code true} when the student sent a non-blank intro message. */
-    /**
-     * Executes hasMessage.
-     */
     public boolean hasMessage() {
         return message != null && !message.isBlank();
     }
 
     /** {@code true} when a decline reason is available. */
-    /**
-     * Executes hasDeclineReason.
-     */
     public boolean hasDeclineReason() {
         return "DECLINED".equalsIgnoreCase(requestStatus)
                 && declineReason != null && !declineReason.isBlank();
     }
 
     /** {@code true} when an active mentorship row is linked (ACTIVE or COMPLETED). */
-    /**
-     * Executes hasMentorshipDates.
-     */
     public boolean hasMentorshipDates() {
         return mentorshipId != null && startDate != null;
     }
 
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "MentorshipActivity{id=" + requestId
                + ", mentor='" + getMentorFullName()

@@ -1,7 +1,7 @@
 package com.example.michiru.model;
 
 /**
- * Class definition for ValidationRequest.
+ * Defines the ValidationRequest component in the Michiru application.
  */
 
 public class ValidationRequest {
@@ -142,9 +142,6 @@ public class ValidationRequest {
     }
 
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "ValidationRequest{id=" + validationId
                + ", skill='" + skillName + "'"

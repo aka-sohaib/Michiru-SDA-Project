@@ -1,7 +1,7 @@
 package com.example.michiru;
 
 /**
- * Class definition for ReadinessViewController.
+ * Defines the ReadinessViewController component in the Michiru application.
  */
 
 import com.example.michiru.facade.EvaluationFacade;
@@ -17,6 +17,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -53,9 +54,6 @@ public class ReadinessViewController implements Initializable {
      * Wires FXML controls and listeners after the scene graph is loaded.
      */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         studentId = UserSession.getInstance().getCurrentUser().getUserId();
         loadTemplateGrid();
@@ -398,7 +396,9 @@ public class ReadinessViewController implements Initializable {
         centerCol.setAlignment(Pos.CENTER);
         centerCol.getChildren().addAll(scoreLbl, subtitleLbl);
 
-        StackPane ring = new StackPane(bgArc, progressArc, centerCol);
+        Group arcsGroup = new Group(bgArc, progressArc);
+
+        StackPane ring = new StackPane(arcsGroup, centerCol);
         ring.setMinSize(size, size);
         ring.setPrefSize(size, size);
         ring.setMaxSize(size, size);

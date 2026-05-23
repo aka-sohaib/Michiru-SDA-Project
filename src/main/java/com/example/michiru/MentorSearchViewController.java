@@ -1,7 +1,7 @@
 package com.example.michiru;
 
 /**
- * Class definition for MentorSearchViewController.
+ * Defines the MentorSearchViewController component in the Michiru application.
  */
 
 import com.example.michiru.facade.MentorshipLifecycleFacade;
@@ -23,7 +23,6 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -53,9 +52,6 @@ public class MentorSearchViewController implements Initializable {
      * Wires FXML controls and listeners after the scene graph is loaded.
      */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         studentId = UserSession.getInstance().getCurrentUser().getUserId();
 
@@ -674,5 +670,4 @@ public class MentorSearchViewController implements Initializable {
         tl.play();
     }
 }
-
 

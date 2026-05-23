@@ -2195,7 +2195,7 @@
     -fx-border-width: 1;
     -fx-border-radius: 20;
     -fx-background-radius: 20;
-    -fx-max-height: 650;
+    -fx-max-height: 680;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.60), 48, 0.12, 0, 16);
 }
 
@@ -2215,7 +2215,72 @@
     -fx-font-family: "Segoe UI Semibold";
     -fx-font-size: 10.5px;
     -fx-text-fill: rgba(163, 184, 153, 0.70);
-    -fx-letter-spacing: 0.5px;
+    -fx-letter-spacing: 0;
+}
+
+.edit-section-card {
+    -fx-background-color:
+        linear-gradient(to bottom right,
+            rgba(248, 246, 241, 0.060),
+            rgba(248, 246, 241, 0.030));
+    -fx-border-color: rgba(163, 184, 153, 0.14);
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 14, 0.06, 0, 3);
+}
+
+.edit-section-header {
+    -fx-padding: 12 14 11 14;
+}
+
+.edit-section-content {
+    -fx-padding: 0 14 14 14;
+}
+
+.edit-section-icon-pill {
+    -fx-background-color: rgba(92, 122, 90, 0.22);
+    -fx-border-color: rgba(163, 184, 153, 0.20);
+    -fx-border-width: 1;
+    -fx-border-radius: 9;
+    -fx-background-radius: 9;
+}
+
+.edit-section-icon {
+    -fx-icon-color: rgba(163, 184, 153, 0.86);
+}
+
+.edit-section-title {
+    -fx-font-family: "Segoe UI Semibold";
+    -fx-font-size: 13px;
+    -fx-text-fill: rgba(248, 246, 241, 0.90);
+}
+
+.edit-section-hint {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 10.5px;
+    -fx-text-fill: rgba(248, 246, 241, 0.34);
+}
+
+.edit-section-chevron-btn {
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 8 6 8;
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.edit-section-chevron-btn:hover {
+    -fx-background-color: rgba(92, 122, 90, 0.18);
+    -fx-border-color: rgba(163, 184, 153, 0.25);
+}
+
+.edit-section-chevron {
+    -fx-icon-color: rgba(248, 246, 241, 0.56);
 }
 
 .edit-field-input {
@@ -5018,26 +5083,27 @@
 .loading-overlay-card {
     -fx-background-color:
         linear-gradient(to bottom right,
-            rgba(36, 44, 36, 0.95) 0%,
-            rgba(28, 36, 30, 0.92) 100%);
-    -fx-border-color:        rgba(92, 122, 90, 0.30);
+            rgba(36, 44, 36, 0.96) 0%,
+            rgba(28, 36, 30, 0.93) 55%,
+            rgba(42, 56, 40, 0.40) 100%);
+    -fx-border-color:        rgba(163, 184, 153, 0.26), rgba(92, 122, 90, 0.42);
     -fx-border-width:        1;
-    -fx-border-radius:       20;
-    -fx-background-radius:   20;
-    -fx-effect:              dropshadow(gaussian, rgba(0,0,0,0.55), 40, 0.0, 0, 10);
-    /* Spinner + message row — vertically centred as one unit */
-    -fx-alignment:           center-left;
-    /* Padding applied in FXML so height stays compact */
+    -fx-border-radius:       22;
+    -fx-background-radius:   22;
+    -fx-effect:              dropshadow(gaussian, rgba(92, 122, 90, 0.20), 28, 0.14, 0, 0);
+    -fx-alignment:           center;
     -fx-padding:             0;
+    -fx-min-width:           380;
 }
 
 .loading-overlay-msg {
     -fx-font-family:  "Segoe UI";
-    -fx-font-size:    13px;
-    -fx-text-fill:    rgba(248, 246, 241, 0.72);
+    -fx-font-size:    13.5px;
+    -fx-text-fill:    rgba(248, 246, 241, 0.75);
     -fx-font-style:   italic;
     -fx-wrap-text:    true;
     -fx-text-alignment: left;
+    -fx-alignment: center-left;
 }
 
 /* ── Roadmap modifiers — dark glass CheckBox (UC10) ──────────────────────── */
@@ -5178,9 +5244,14 @@
 }
 
 .michiru-dialog-pane > .header-panel {
-    -fx-background-color: rgba(255, 255, 255, 0.03);
+    -fx-background-color:
+        linear-gradient(to right,
+            rgba(92, 122, 90, 0.16),
+            rgba(255, 255, 255, 0.03));
     -fx-border-color: transparent transparent rgba(92, 122, 90, 0.18) transparent;
     -fx-border-width: 0 0 1 0;
+    -fx-padding: 18 20 16 20;
+    -fx-background-radius: 16 16 0 0;
 }
 
 .michiru-dialog-pane > .header-panel .label {
@@ -5191,6 +5262,7 @@
 
 .michiru-dialog-pane > .content {
     -fx-background-color: transparent;
+    -fx-padding: 18 22 18 22;
 }
 
 .michiru-dialog-pane > .content.label,
@@ -5209,6 +5281,8 @@
     -fx-background-color: rgba(0, 0, 0, 0.18);
     -fx-border-color: rgba(92, 122, 90, 0.15) transparent transparent transparent;
     -fx-border-width: 1 0 0 0;
+    -fx-padding: 14 18 16 18;
+    -fx-background-radius: 0 0 16 16;
 }
 
 .michiru-dialog-pane > .button-bar > .container > .button {
@@ -5234,4 +5308,14 @@
         linear-gradient(to bottom right,
             rgba(110, 145, 108, 0.92),
             rgba(85, 115, 83, 0.86));
+    -fx-effect: dropshadow(gaussian, rgba(92, 122, 90, 0.34), 14, 0.16, 0, 3);
+}
+
+.michiru-dialog-pane > .graphic-container {
+    -fx-padding: 18 0 0 20;
+}
+
+.michiru-dialog-icon {
+    -fx-icon-color: rgba(163, 184, 153, 0.92);
+    -fx-effect: dropshadow(gaussian, rgba(92, 122, 90, 0.45), 12, 0.24, 0, 0);
 }

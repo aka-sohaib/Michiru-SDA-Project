@@ -1,7 +1,7 @@
 package com.example.michiru.model;
 
 /**
- * Class definition for ReadinessSkillResult.
+ * Defines the ReadinessSkillResult component in the Michiru application.
  */
 
 public class ReadinessSkillResult {
@@ -47,9 +47,6 @@ public class ReadinessSkillResult {
     public double getSkillScorePct() { return skillScore * 100.0; }
 
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "ReadinessSkillResult{skill='" + skillName
                 + "', current=" + currentLevel

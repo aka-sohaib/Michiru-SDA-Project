@@ -1,9 +1,5 @@
 package com.example.michiru;
 
-/**
- * Class definition for MentorDashboardController.
- */
-
 import com.example.michiru.session.UserSession;
 
 import javafx.animation.Interpolator;
@@ -32,6 +28,9 @@ import java.util.ResourceBundle;
 
 public class MentorDashboardController implements Initializable {
 
+    private static final java.util.logging.Logger LOGGER =
+            java.util.logging.Logger.getLogger(MentorDashboardController.class.getName());
+
     private static final String STYLE_ACTIVE = "nav-item-active";
 
     private static final Interpolator SILK =
@@ -50,13 +49,7 @@ public class MentorDashboardController implements Initializable {
     private Button activeNavButton;
     private List<Button> allNavButtons;
 
-    /**
-     * Registers navigation handlers and opens the default mentor home view.
-     */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         allNavButtons = List.of(
                 btnDashboard,
@@ -115,7 +108,7 @@ public class MentorDashboardController implements Initializable {
         try {
             URL loginUrl = getClass().getResource("LoginView.fxml");
             if (loginUrl == null) {
-                System.err.println("[MentorDashboardController] LoginView.fxml not found.");
+                LOGGER.warning("LoginView.fxml not found.");
                 return;
             }
 
@@ -133,12 +126,12 @@ public class MentorDashboardController implements Initializable {
             stage.show();
 
         } catch (IOException e) {
-            System.err.println("[MentorDashboardController] logout error: " + e.getMessage());
+            LOGGER.log(java.util.logging.Level.SEVERE, "Unable to load login view during logout.", e);
         }
     }
 
     /**
-     * Executes navigateTo.
+     * Loads the requested mentor sub-view into the dashboard content area.
      */
     public void navigateTo(String fxmlFileName) {
         if ("MentorProfileEditView.fxml".equals(fxmlFileName)) {
@@ -157,21 +150,18 @@ public class MentorDashboardController implements Initializable {
             swapContent(newView);
 
         } catch (IOException e) {
-            System.err.println("[MentorDashboardController] navigateTo(" +
-                    fxmlFileName + ") error: " + e.getMessage());
+            LOGGER.log(java.util.logging.Level.SEVERE,
+                    "Unable to load mentor view: " + fxmlFileName, e);
             showComingSoon(fxmlFileName);
         }
     }
 
     /** Opens the mentor profile/skills edit form as a centered application-modal window. */
-    /**
-     * Executes openProfileEditModal.
-     */
     public void openProfileEditModal() {
         try {
             URL fxmlUrl = getClass().getResource("MentorProfileEditView.fxml");
             if (fxmlUrl == null) {
-                System.err.println("[MentorDashboardController] MentorProfileEditView.fxml not found.");
+                LOGGER.warning("MentorProfileEditView.fxml not found.");
                 return;
             }
 
@@ -193,7 +183,7 @@ public class MentorDashboardController implements Initializable {
             modal.showAndWait();
 
         } catch (IOException e) {
-            System.err.println("[MentorDashboardController] openProfileEditModal error: " + e.getMessage());
+            LOGGER.log(java.util.logging.Level.SEVERE, "Unable to open mentor profile edit modal.", e);
         }
     }
 
@@ -257,4 +247,3 @@ public class MentorDashboardController implements Initializable {
         ).play();
     }
 }
-

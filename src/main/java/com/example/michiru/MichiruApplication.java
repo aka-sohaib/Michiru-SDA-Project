@@ -1,7 +1,7 @@
 package com.example.michiru;
 
 /**
- * Class definition for MichiruApplication.
+ * Defines the MichiruApplication component in the Michiru application.
  */
 
 import javafx.application.Application;
@@ -21,9 +21,6 @@ public class MichiruApplication extends Application {
      * Builds the primary stage with the login FXML, application icon, and minimum window size.
      */
     @Override
-    /**
-     * Executes start.
-     */
     public void start(Stage stage) throws IOException {
         URL loginUrl = getClass().getResource("LoginView.fxml");
         if (loginUrl == null) {

@@ -1,20 +1,24 @@
 package com.example.michiru.db;
 
-/**
- * Class definition for DatabaseConnection.
- */
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+/**
+ * Centralized MySQL connection manager for the persistence tier.
+ */
 public class DatabaseConnection {
+
+    private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
 
     private static final String URL = "jdbc:mysql://localhost:3306/michiru_db"
                                          + "?useSSL=false"
                                          + "&allowPublicKeyRetrieval=true"
                                          + "&serverTimezone=UTC"
                                          + "&characterEncoding=UTF-8";
+    // TODO: Move local XAMPP credentials to environment variables before production deployment.
     private static final String USERNAME = "root";
     private static final String PASSWORD = "";
 
@@ -24,9 +28,9 @@ public class DatabaseConnection {
     private DatabaseConnection() {
         try {
             this.connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            System.out.println("[DB] Connected to michiru_db successfully.");
+            LOGGER.info("Connected to michiru_db successfully.");
         } catch (SQLException e) {
-            System.err.println("[DB] Initial connection failed: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Initial database connection failed.", e);
         }
     }
 
@@ -49,9 +53,9 @@ public class DatabaseConnection {
      */
     public Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            System.out.println("[DB] Connection lost — attempting reconnect…");
+            LOGGER.info("Database connection lost; attempting reconnect.");
             connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            System.out.println("[DB] Reconnected to michiru_db.");
+            LOGGER.info("Reconnected to michiru_db.");
         }
         return connection;
     }
@@ -70,11 +74,10 @@ public class DatabaseConnection {
         if (connection != null) {
             try {
                 connection.close();
-                System.out.println("[DB] Connection closed.");
+                LOGGER.info("Database connection closed.");
             } catch (SQLException e) {
-                System.err.println("[DB] Error closing connection: " + e.getMessage());
+                LOGGER.log(Level.WARNING, "Error closing database connection.", e);
             }
         }
     }
 }
-

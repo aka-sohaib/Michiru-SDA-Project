@@ -1,7 +1,7 @@
 package com.example.michiru.session;
 
 /**
- * Class definition for UserSession.
+ * Defines the UserSession component in the Michiru application.
  */
 
 import com.example.michiru.model.User;
@@ -67,9 +67,6 @@ public class UserSession {
      * Returns a short diagnostic representation of session state.
      */
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "UserSession{currentUser=" + currentUser + '}';
     }

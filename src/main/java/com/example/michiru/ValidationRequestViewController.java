@@ -1,7 +1,7 @@
 package com.example.michiru;
 
 /**
- * Class definition for ValidationRequestViewController.
+ * Defines the ValidationRequestViewController component in the Michiru application.
  */
 
 import com.example.michiru.facade.MentorshipLifecycleFacade;
@@ -28,7 +28,6 @@ import javafx.util.StringConverter;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -57,6 +56,12 @@ public class ValidationRequestViewController implements Initializable {
     @FXML private TableColumn<ValidationRequest, String> colStatus;
     @FXML private TableColumn<ValidationRequest, String> colDate;
 
+    // Loading overlay FXML nodes
+    @FXML private VBox      mainContentPane;
+    @FXML private StackPane overlayDim;
+    @FXML private StackPane loadingWrapper;
+    @FXML private Label     loadingMsg;
+
     /** Full unfiltered list — always holds the complete DB result set. */
     private ObservableList<ValidationRequest> allHistory;
     /** Filtered view wired to the search field. */
@@ -64,6 +69,8 @@ public class ValidationRequestViewController implements Initializable {
 
     private final MentorshipLifecycleFacade facade = new MentorshipLifecycleFacade();
     private int studentId;
+
+    private OverlayManager overlay;
 
     private static final java.util.List<String> LEVELS =
             ProficiencyLadder.allLevelNames();
@@ -75,17 +82,21 @@ public class ValidationRequestViewController implements Initializable {
      * Wires FXML controls and listeners after the scene graph is loaded.
      */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         studentId = UserSession.getInstance().getCurrentUser().getUserId();
+
+        // Wire up the loading overlay with blur on the main content
+        overlay = new OverlayManager(overlayDim, loadingWrapper, loadingMsg);
+        overlay.setBlurTarget(mainContentPane);
 
         configureComboBoxes();
         configureTableColumns();
 
         historySearchField.textProperty().addListener(
                 (obs, oldVal, newVal) -> applySearchFilter(newVal));
+
+        // Show loading overlay while data loads
+        overlay.show("Loading validation data…\nPlease wait.");
 
         Task<Void> initTask = new Task<>() {
             @Override
@@ -99,6 +110,9 @@ public class ValidationRequestViewController implements Initializable {
                 return null;
             }
         };
+        initTask.setOnSucceeded(e -> Platform.runLater(() -> overlay.hide()));
+        initTask.setOnFailed(e -> Platform.runLater(() -> overlay.hide()));
+
         Thread t = new Thread(initTask, "vr-init-thread");
         t.setDaemon(true);
         t.start();
@@ -212,6 +226,7 @@ public class ValidationRequestViewController implements Initializable {
      * An empty query shows all rows.
      */
     private void applySearchFilter(String query) {
+        if (filteredHistory == null) return;
         if (query == null || query.isBlank()) {
             filteredHistory.setPredicate(r -> true);
         } else {
@@ -234,6 +249,7 @@ public class ValidationRequestViewController implements Initializable {
 
     /** Shows/hides the empty-state pane based on the filtered row count. */
     private void refreshEmptyState() {
+        if (filteredHistory == null) return;
         boolean empty = filteredHistory.isEmpty();
         vboxEmpty.setManaged(empty);
         vboxEmpty.setVisible(empty);
@@ -380,5 +396,3 @@ public class ValidationRequestViewController implements Initializable {
         };
     }
 }
-
-

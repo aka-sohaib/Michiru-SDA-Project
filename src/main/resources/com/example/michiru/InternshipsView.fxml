@@ -43,6 +43,19 @@
                 <Label fx:id="lblSubtitle" text="Loading templates…" styleClass="page-subtitle"/>
             </VBox>
             <Region HBox.hgrow="ALWAYS"/>
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <StackPane styleClass="search-icon-wrap"
+                           minWidth="34" minHeight="34"
+                           maxWidth="34" maxHeight="34">
+                    <FontIcon iconLiteral="fas-search"
+                              iconSize="11"
+                              styleClass="search-field-icon"/>
+                </StackPane>
+                <TextField fx:id="searchField"
+                           promptText="Search internships..."
+                           prefWidth="250"
+                           styleClass="assessment-search-field"/>
+            </HBox>
             <Button fx:id="btnAdd"
                     styleClass="action-btn-primary"
                     onAction="#handleOpenAddModal"

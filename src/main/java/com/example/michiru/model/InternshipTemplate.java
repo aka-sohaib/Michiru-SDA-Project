@@ -1,7 +1,7 @@
 package com.example.michiru.model;
 
 /**
- * Class definition for InternshipTemplate.
+ * Defines the InternshipTemplate component in the Michiru application.
  */
 
 public class InternshipTemplate {
@@ -53,9 +53,6 @@ public class InternshipTemplate {
     public void setSkillCount(int skillCount)    { this.skillCount  = skillCount; }
 
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "InternshipTemplate{id=" + templateId + ", name='" + name + "', active=" + isActive + "}";
     }

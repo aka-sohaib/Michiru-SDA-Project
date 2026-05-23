@@ -1,7 +1,7 @@
 package com.example.michiru;
 
 /**
- * Class definition for ProgressTrackingViewController.
+ * Defines the ProgressTrackingViewController component in the Michiru application.
  */
 
 import com.example.michiru.facade.MentorshipLifecycleFacade;
@@ -22,7 +22,6 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -43,9 +42,6 @@ public class ProgressTrackingViewController implements Initializable {
      * Wires FXML controls and listeners after the scene graph is loaded.
      */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         studentId = UserSession.getInstance().getCurrentUser().getUserId();
 
@@ -363,5 +359,4 @@ public class ProgressTrackingViewController implements Initializable {
         return s.charAt(0) + s.substring(1).toLowerCase();
     }
 }
-
 

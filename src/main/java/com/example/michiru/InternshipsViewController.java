@@ -1,7 +1,7 @@
 package com.example.michiru;
 
 /**
- * Class definition for InternshipsViewController.
+ * Defines the InternshipsViewController component in the Michiru application.
  */
 
 import com.example.michiru.facade.CatalogAndInternshipFacade;
@@ -48,6 +48,7 @@ public class InternshipsViewController implements Initializable {
 
     @FXML private Label  lblSubtitle;
     @FXML private Button btnAdd;
+    @FXML private TextField searchField;
 
     @FXML private ScrollPane listScrollPane;
     @FXML private VBox        cardContainer;
@@ -78,6 +79,9 @@ public class InternshipsViewController implements Initializable {
     /** All active skills fetched once at init and reused for every modal open. */
     private List<SkillOption> allSkills = new ArrayList<>();
 
+    /** Full template list kept so search can filter without re-querying on every keypress. */
+    private List<InternshipTemplate> allTemplates = new ArrayList<>();
+
     /** Non-null when editing; null when adding. */
     private InternshipTemplate editingTemplate;
 
@@ -88,12 +92,10 @@ public class InternshipsViewController implements Initializable {
      * Wires FXML controls and listeners after the scene graph is loaded.
      */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         hideOverlayAndModals();
         loadAllSkills();
+        searchField.textProperty().addListener((obs, oldText, newText) -> applyTemplateFilter());
         refreshList();
         wireLiquidScale(btnAdd);
     }
@@ -106,17 +108,38 @@ public class InternshipsViewController implements Initializable {
      * Re-queries the database and rebuilds the card list with a fade-in.
      */
     private void refreshList() {
-        List<InternshipTemplate> templates = facade.getAllInternshipTemplates();
+        allTemplates = facade.getAllInternshipTemplates();
+        applyTemplateFilter();
+    }
 
-        int count = templates.size();
-        lblSubtitle.setText(count == 0
+    private void applyTemplateFilter() {
+        String query = searchField.getText() == null
+                ? ""
+                : searchField.getText().trim().toLowerCase();
+
+        List<InternshipTemplate> templates = query.isBlank()
+                ? allTemplates
+                : allTemplates.stream()
+                        .filter(template -> matchesSearch(template, query))
+                        .toList();
+
+        int totalCount = allTemplates.size();
+        int visibleCount = templates.size();
+        lblSubtitle.setText(query.isBlank()
+                ? (totalCount == 0
                 ? "No templates registered yet"
-                : count + " template" + (count == 1 ? "" : "s") + " registered");
+                : totalCount + " template" + (totalCount == 1 ? "" : "s") + " registered")
+                : visibleCount + " of " + totalCount + " template"
+                + (totalCount == 1 ? "" : "s") + " shown");
 
         cardContainer.getChildren().clear();
 
         if (templates.isEmpty()) {
-            cardContainer.getChildren().add(buildEmptyState());
+            cardContainer.getChildren().add(query.isBlank()
+                    ? buildEmptyState("No internship templates yet",
+                            "Click \"Add New Internship\" to create the first template.")
+                    : buildEmptyState("No internships match your search",
+                            "Try a different name, description, or status."));
             return;
         }
 
@@ -137,6 +160,17 @@ public class InternshipsViewController implements Initializable {
             );
             tl.play();
         }
+    }
+
+    private boolean matchesSearch(InternshipTemplate template, String query) {
+        String status = template.isActive() ? "active" : "inactive";
+        return containsIgnoreCase(template.getName(), query)
+                || containsIgnoreCase(template.getDescription(), query)
+                || status.contains(query);
+    }
+
+    private boolean containsIgnoreCase(String value, String query) {
+        return value != null && value.toLowerCase().contains(query);
     }
 
     private HBox buildCard(InternshipTemplate t) {
@@ -223,7 +257,7 @@ public class InternshipsViewController implements Initializable {
         return card;
     }
 
-    private Node buildEmptyState() {
+    private Node buildEmptyState(String title, String hintText) {
         VBox box = new VBox(12);
         box.setAlignment(Pos.CENTER);
         box.setPadding(new Insets(60, 0, 60, 0));
@@ -232,10 +266,10 @@ public class InternshipsViewController implements Initializable {
         icon.setIconSize(42);
         icon.getStyleClass().add("empty-state-icon");
 
-        Label lbl = new Label("No internship templates yet");
+        Label lbl = new Label(title);
         lbl.getStyleClass().add("empty-state-label");
 
-        Label hint = new Label("Click \"Add New Internship\" to create the first template.");
+        Label hint = new Label(hintText);
         hint.getStyleClass().add("empty-state-hint");
 
         box.getChildren().addAll(icon, lbl, hint);

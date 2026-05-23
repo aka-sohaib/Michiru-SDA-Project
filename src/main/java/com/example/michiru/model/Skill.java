@@ -1,7 +1,7 @@
 package com.example.michiru.model;
 
 /**
- * Class definition for Skill.
+ * Defines the Skill component in the Michiru application.
  */
 
 public class Skill {
@@ -59,9 +59,6 @@ public class Skill {
     public void setCreatedAt(String createdAt)           { this.createdAt               = createdAt; }
 
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "Skill{id=" + skillId + ", name='" + name + "', tier='" + difficultyTier + "', active=" + isActive + "}";
     }

@@ -1,7 +1,7 @@
 package com.example.michiru.model;
 
 /**
- * Class definition for SkillAssignment.
+ * Defines the SkillAssignment component in the Michiru application.
  */
 
 public class SkillAssignment {
@@ -55,9 +55,6 @@ public class SkillAssignment {
     public void setStatus(String status)               { this.status = status; }
 
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "SkillAssignment{skillId=" + skillId + ", name='" + skillName +
                "', weight=" + weight + ", level='" + minimumProficiencyLevel + "'}";

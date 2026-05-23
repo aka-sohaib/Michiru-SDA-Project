@@ -1,9 +1,5 @@
 package com.example.michiru;
 
-/**
- * Class definition for CoordinatorDashboardController.
- */
-
 import com.example.michiru.session.UserSession;
 
 import javafx.animation.Interpolator;
@@ -30,6 +26,9 @@ import java.util.ResourceBundle;
 
 public class CoordinatorDashboardController implements Initializable {
 
+    private static final java.util.logging.Logger LOGGER =
+            java.util.logging.Logger.getLogger(CoordinatorDashboardController.class.getName());
+
     private static final String STYLE_ACTIVE = "nav-item-active";
 
     private static final Interpolator SILK =
@@ -48,13 +47,7 @@ public class CoordinatorDashboardController implements Initializable {
     private Button activeNavButton;
     private List<Button> allNavButtons;
 
-    /**
-     * Binds navigation buttons and loads the default coordinator home module.
-     */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         allNavButtons = List.of(
                 btnDashboard,
@@ -84,33 +77,24 @@ public class CoordinatorDashboardController implements Initializable {
     }
 
     /** Invoked from Coordinator home quick-action buttons. */
-    /**
-     * Executes openSkillCatalogueView.
-     */
     public void openSkillCatalogueView() {
         setActiveNav(btnSkillCatalogue);
         navigateTo("SkillCatalogueView.fxml");
     }
 
-    /**
-     * Executes openQuestionBankView.
-     */
+    /** Opens the question bank management view. */
     public void openQuestionBankView() {
         setActiveNav(btnQuestionBank);
         navigateTo("QuestionBankView.fxml");
     }
 
-    /**
-     * Executes openInternshipsView.
-     */
+    /** Opens the internship template management view. */
     public void openInternshipsView() {
         setActiveNav(btnInternships);
         navigateTo("InternshipsView.fxml");
     }
 
-    /**
-     * Executes openDashboardHomeView.
-     */
+    /** Opens the coordinator dashboard overview. */
     public void openDashboardHomeView() {
         setActiveNav(btnDashboard);
         navigateTo("CoordinatorDashboardHomeView.fxml");
@@ -143,7 +127,7 @@ public class CoordinatorDashboardController implements Initializable {
         try {
             URL loginUrl = getClass().getResource("LoginView.fxml");
             if (loginUrl == null) {
-                System.err.println("[CoordinatorDashboardController] LoginView.fxml not found.");
+                LOGGER.warning("LoginView.fxml not found.");
                 return;
             }
 
@@ -161,12 +145,12 @@ public class CoordinatorDashboardController implements Initializable {
             stage.show();
 
         } catch (IOException e) {
-            System.err.println("[CoordinatorDashboardController] logout error: " + e.getMessage());
+            LOGGER.log(java.util.logging.Level.SEVERE, "Unable to load login view during logout.", e);
         }
     }
 
     /**
-     * Executes navigateTo.
+     * Loads the requested coordinator sub-view into the dashboard content area.
      */
     public void navigateTo(String fxmlFileName) {
         try {
@@ -180,8 +164,8 @@ public class CoordinatorDashboardController implements Initializable {
             swapContent(newView);
 
         } catch (IOException e) {
-            System.err.println("[CoordinatorDashboardController] navigateTo(" +
-                    fxmlFileName + ") error: " + e.getMessage());
+            LOGGER.log(java.util.logging.Level.SEVERE,
+                    "Unable to load coordinator view: " + fxmlFileName, e);
             showComingSoon(fxmlFileName);
         }
     }
@@ -246,4 +230,3 @@ public class CoordinatorDashboardController implements Initializable {
         ).play();
     }
 }
-

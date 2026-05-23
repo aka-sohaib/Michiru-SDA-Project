@@ -1,7 +1,7 @@
 package com.example.michiru.model;
 
 /**
- * Class definition for MentorProfile.
+ * Defines the MentorProfile component in the Michiru application.
  */
 
 import java.util.ArrayList;
@@ -24,9 +24,6 @@ public class MentorProfile {
 
     // ── Constructors ──────────────────────────────────────────────────────────
 
-    /**
-     * Executes MentorProfile.
-     */
     public MentorProfile() {
         this.skillNames = new ArrayList<>();
     }
@@ -79,9 +76,6 @@ public class MentorProfile {
     // ── Display helpers ───────────────────────────────────────────────────────
 
     /** e.g. {@code "John Doe"} */
-    /**
-     * Executes getFullName.
-     */
     public String getFullName() {
         return firstName + " " + lastName;
     }
@@ -97,18 +91,12 @@ public class MentorProfile {
     }
 
     /** e.g. {@code "3 yrs exp"} or {@code "New mentor"} */
-    /**
-     * Executes getExperienceLabel.
-     */
     public String getExperienceLabel() {
         if (yearsOfExperience <= 0) return "New mentor";
         return yearsOfExperience == 1 ? "1 yr exp" : yearsOfExperience + " yrs exp";
     }
 
     /** e.g. {@code "4.5"} — returns {@code "—"} when rating is zero/unset */
-    /**
-     * Executes getRatingDisplay.
-     */
     public String getRatingDisplay() {
         return rating <= 0 ? "—" : String.format("%.1f", rating);
     }
@@ -155,9 +143,6 @@ public class MentorProfile {
     // ── Filtering helper ──────────────────────────────────────────────────────
 
     /** {@code true} when this mentor teaches the given skill (case-insensitive). */
-    /**
-     * Executes teachesSkill.
-     */
     public boolean teachesSkill(String skillName) {
         if (skillName == null || skillName.isBlank()) return true;
         String lower = skillName.toLowerCase();
@@ -172,9 +157,6 @@ public class MentorProfile {
     }
 
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return "MentorProfile{id=" + mentorId + ", name='" + getFullName()
                + "', rating=" + rating + ", available=" + isAvailable + "}";

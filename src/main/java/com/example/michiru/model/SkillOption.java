@@ -1,7 +1,7 @@
 package com.example.michiru.model;
 
 /**
- * Class definition for SkillOption.
+ * Defines the SkillOption component in the Michiru application.
  */
 
 public class SkillOption {
@@ -14,9 +14,6 @@ public class SkillOption {
 
     public SkillOption() {}
 
-    /**
-     * Executes SkillOption.
-     */
     public SkillOption(int skillId, String name, String category) {
         this.skillId  = skillId;
         this.name     = name;
@@ -38,9 +35,6 @@ public class SkillOption {
      * Format: "Skill Name  (Category)"
      */
     @Override
-    /**
-     * Executes toString.
-     */
     public String toString() {
         return name + "  (" + category + ")";
     }

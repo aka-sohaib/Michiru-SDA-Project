@@ -1,7 +1,7 @@
 package com.example.michiru;
 
 /**
- * Class definition for SkillCatalogueViewController.
+ * Defines the SkillCatalogueViewController component in the Michiru application.
  */
 
 import com.example.michiru.facade.CatalogAndInternshipFacade;
@@ -88,9 +88,6 @@ public class SkillCatalogueViewController implements Initializable {
      * Wires search listeners, form defaults, and loads the initial skill catalogue list.
      */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         hideOverlayAndModals();
         setupFormControls();

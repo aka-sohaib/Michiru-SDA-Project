@@ -1,7 +1,7 @@
 package com.example.michiru;
 
 /**
- * Class definition for MentorshipRequestsViewController.
+ * Defines the MentorshipRequestsViewController component in the Michiru application.
  */
 
 import com.example.michiru.facade.MentorshipLifecycleFacade;
@@ -51,9 +51,6 @@ public class MentorshipRequestsViewController implements Initializable {
      * Wires FXML controls and listeners after the scene graph is loaded.
      */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         mentorId = UserSession.getInstance().getCurrentUser().getUserId();
 

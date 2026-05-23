@@ -1,7 +1,7 @@
 package com.example.michiru;
 
 /**
- * Class definition for QuestionBankViewController.
+ * Defines the QuestionBankViewController component in the Michiru application.
  */
 
 import com.example.michiru.facade.CatalogAndInternshipFacade;
@@ -97,9 +97,6 @@ public class QuestionBankViewController implements Initializable {
      * Wires FXML controls and listeners after the scene graph is loaded.
      */
     @Override
-    /**
-     * Executes initialize.
-     */
     public void initialize(URL location, ResourceBundle resources) {
         hideOverlayAndModals();
         setupFormControls();
@@ -124,9 +121,6 @@ public class QuestionBankViewController implements Initializable {
              * Renders a skill row as name plus category for the combo display.
              */
             @Override
-            /**
-             * Executes toString.
-             */
             public String toString(Skill s) {
                 return s == null ? "" : s.getName() + "  (" + s.getCategory() + ")";
             }

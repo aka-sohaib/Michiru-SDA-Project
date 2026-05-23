@@ -1,9 +1,5 @@
 package com.example.michiru.db;
 
-/**
- * Class definition for MySQLHandler.
- */
-
 import com.example.michiru.model.Assessment;
 import com.example.michiru.model.InternshipTemplate;
 import com.example.michiru.model.MentorProfile;
@@ -40,11 +36,17 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+/**
+ * MySQL implementation of the persistence gateway used by the facade layer.
+ */
 public class MySQLHandler implements DatabaseCatalog {
+
+    private static final Logger LOGGER = Logger.getLogger(MySQLHandler.class.getName());
 
     // ─── SQL statements — exact column / table names from schema ───────────
 
@@ -98,9 +100,6 @@ public class MySQLHandler implements DatabaseCatalog {
      * <p>Uses {@code SELECT 1} for a lightweight existence check.</p>
      */
     @Override
-    /**
-     * Executes checkEmailExists.
-     */
     public boolean checkEmailExists(String email) {
         try {
             Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -111,8 +110,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] checkEmailExists error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] checkEmailExists error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false; // fail-safe: don't block UI on a DB hiccup
         }
     }
@@ -124,9 +123,6 @@ public class MySQLHandler implements DatabaseCatalog {
      * SHA-256 hash of the supplied plain-text password.</p>
      */
     @Override
-    /**
-     * Executes loginUser.
-     */
     public User loginUser(String email, String password) {
         try {
             Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -156,8 +152,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] loginUser error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] loginUser error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return null;
         }
     }
@@ -175,9 +171,6 @@ public class MySQLHandler implements DatabaseCatalog {
      * </ol>
      */
     @Override
-    /**
-     * Executes registerUser.
-     */
     public String registerUser(User user) {
 
         // ── 1. Guard: e-mail uniqueness ──────────────────────────────────────
@@ -202,8 +195,8 @@ public class MySQLHandler implements DatabaseCatalog {
         try {
             conn = DatabaseConnection.getInstance().getConnection();
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] registerUser — cannot get connection: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] registerUser — cannot get connection: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return "Database error";
         }
 
@@ -259,13 +252,13 @@ public class MySQLHandler implements DatabaseCatalog {
             return "Registration successful!";
 
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] registerUser SQL error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] registerUser SQL error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             try {
                 conn.rollback();
             } catch (SQLException rollbackEx) {
-                System.err.println("[MySQLHandler] Rollback failed: " + rollbackEx.getMessage());
-                rollbackEx.printStackTrace();
+                LOGGER.severe(String.valueOf("[MySQLHandler] Rollback failed: " + rollbackEx.getMessage()));
+                LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", rollbackEx);
             }
             return "Database error";
         } finally {
@@ -273,8 +266,8 @@ public class MySQLHandler implements DatabaseCatalog {
             try {
                 conn.setAutoCommit(true);
             } catch (SQLException e) {
-                System.err.println("[MySQLHandler] Could not restore auto-commit: " + e.getMessage());
-                e.printStackTrace();
+                LOGGER.severe(String.valueOf("[MySQLHandler] Could not restore auto-commit: " + e.getMessage()));
+                LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             }
         }
     }
@@ -373,8 +366,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getAllInternshipTemplates error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getAllInternshipTemplates error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
@@ -408,8 +401,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getSkillRequirements error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getSkillRequirements error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
@@ -435,8 +428,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getAllActiveSkills error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getAllActiveSkills error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
@@ -460,8 +453,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] checkTemplateNameExists error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] checkTemplateNameExists error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -494,8 +487,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] createTemplate error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] createTemplate error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return -1;
     }
@@ -521,8 +514,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] addSkillRequirement error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] addSkillRequirement error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -546,8 +539,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] updateTemplate error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] updateTemplate error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -569,8 +562,8 @@ public class MySQLHandler implements DatabaseCatalog {
         try {
             conn = DatabaseConnection.getInstance().getConnection();
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] replaceSkillRequirements — cannot get connection: "
-                    + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] replaceSkillRequirements — cannot get connection: "
+                    + e.getMessage()));
             return false;
         }
         try {
@@ -596,15 +589,15 @@ public class MySQLHandler implements DatabaseCatalog {
             return true;
 
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] replaceSkillRequirements SQL error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] replaceSkillRequirements SQL error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             try { conn.rollback(); } catch (SQLException rb) {
-                System.err.println("[MySQLHandler] rollback failed: " + rb.getMessage());
+                LOGGER.severe(String.valueOf("[MySQLHandler] rollback failed: " + rb.getMessage()));
             }
             return false;
         } finally {
             try { conn.setAutoCommit(true); } catch (SQLException e) {
-                System.err.println("[MySQLHandler] could not restore auto-commit: " + e.getMessage());
+                LOGGER.severe(String.valueOf("[MySQLHandler] could not restore auto-commit: " + e.getMessage()));
             }
         }
     }
@@ -626,15 +619,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] checkActiveEnrollments error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] checkActiveEnrollments error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return 0;
     }
 
-    /**
-     * Executes checkReadinessReportUsage.
-     */
     public int checkReadinessReportUsage(int templateId) {
         try {
             Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -645,8 +635,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] checkReadinessReportUsage error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] checkReadinessReportUsage error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return 0;
     }
@@ -664,8 +654,8 @@ public class MySQLHandler implements DatabaseCatalog {
         try {
             conn = DatabaseConnection.getInstance().getConnection();
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] deleteTemplate - cannot get connection: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] deleteTemplate - cannot get connection: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
 
@@ -689,15 +679,15 @@ public class MySQLHandler implements DatabaseCatalog {
             conn.commit();
             return true;
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] deleteTemplate error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] deleteTemplate error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             try { conn.rollback(); } catch (SQLException rb) {
-                System.err.println("[MySQLHandler] deleteTemplate rollback failed: " + rb.getMessage());
+                LOGGER.severe(String.valueOf("[MySQLHandler] deleteTemplate rollback failed: " + rb.getMessage()));
             }
             return false;
         } finally {
             try { conn.setAutoCommit(true); } catch (SQLException e) {
-                System.err.println("[MySQLHandler] deleteTemplate could not restore auto-commit: " + e.getMessage());
+                LOGGER.severe(String.valueOf("[MySQLHandler] deleteTemplate could not restore auto-commit: " + e.getMessage()));
             }
         }
     }
@@ -772,8 +762,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getAllSkills error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getAllSkills error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
@@ -795,8 +785,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getDistinctCategories error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getDistinctCategories error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
@@ -819,8 +809,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] checkSkillNameExists error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] checkSkillNameExists error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -850,8 +840,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] createSkill error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] createSkill error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return -1;
     }
@@ -877,8 +867,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] updateSkill error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] updateSkill error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -911,8 +901,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] checkSkillDependencies error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] checkSkillDependencies error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return counts;
     }
@@ -932,8 +922,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] deleteSkill error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] deleteSkill error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -953,8 +943,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] deactivateSkill error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] deactivateSkill error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -1039,8 +1029,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getQuestionsForSkill error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getQuestionsForSkill error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
@@ -1062,8 +1052,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getActiveQuestionCountForSkill error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getActiveQuestionCountForSkill error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return 0;
     }
@@ -1089,8 +1079,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] checkQuestionAssessmentUsage error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] checkQuestionAssessmentUsage error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return 0;
     }
@@ -1116,8 +1106,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] checkDuplicateQuestionText error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] checkDuplicateQuestionText error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -1150,8 +1140,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] createQuestion error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] createQuestion error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return -1;
     }
@@ -1181,8 +1171,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] updateQuestion error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] updateQuestion error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -1201,8 +1191,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] deleteQuestion error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] deleteQuestion error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -1221,8 +1211,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] deactivateQuestion error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] deactivateQuestion error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
@@ -1266,8 +1256,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getActiveInternshipTemplates error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getActiveInternshipTemplates error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
@@ -1303,8 +1293,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getStudentHighestProficiencies error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getStudentHighestProficiencies error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return map;
     }
@@ -1334,8 +1324,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] saveReadinessReport error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] saveReadinessReport error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return -1;
     }
@@ -1372,8 +1362,8 @@ public class MySQLHandler implements DatabaseCatalog {
             }
             conn.commit();
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] saveSkillGaps error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] saveSkillGaps error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             if (conn != null) try { conn.rollback(); } catch (SQLException ignored) {}
         } finally {
             if (conn != null) try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
@@ -1406,27 +1396,18 @@ public class MySQLHandler implements DatabaseCatalog {
             "LIMIT ?";
 
     /** @return count of active internship templates; {@code 0} on error */
-    /**
-     * Executes getActiveInternshipCount.
-     */
     public int getActiveInternshipCount() {
         return querySingleCount(SQL_ACTIVE_INTERNSHIP_COUNT,
                 "[MySQLHandler] getActiveInternshipCount");
     }
 
     /** @return count of active skills; {@code 0} on error */
-    /**
-     * Executes getActiveSkillCount.
-     */
     public int getActiveSkillCount() {
         return querySingleCount(SQL_ACTIVE_SKILL_COUNT,
                 "[MySQLHandler] getActiveSkillCount");
     }
 
     /** @return count of active questions; {@code 0} on error */
-    /**
-     * Executes getActiveQuestionCount.
-     */
     public int getActiveQuestionCount() {
         return querySingleCount(SQL_ACTIVE_QUESTION_COUNT,
                 "[MySQLHandler] getActiveQuestionCount");
@@ -1461,9 +1442,9 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getRecentInternshipTemplates error: "
-                    + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getRecentInternshipTemplates error: "
+                    + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
@@ -1477,8 +1458,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 if (rs.next()) return rs.getInt("cnt");
             }
         } catch (SQLException e) {
-            System.err.println(logPrefix + " error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf(logPrefix + " error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return 0;
     }
@@ -1522,8 +1503,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getSkillsWithStudentProficiency error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getSkillsWithStudentProficiency error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
@@ -1576,8 +1557,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] fetchExamQuestions error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] fetchExamQuestions error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
@@ -1598,8 +1579,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] createAssessment error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] createAssessment error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return -1;
     }
@@ -1652,8 +1633,8 @@ public class MySQLHandler implements DatabaseCatalog {
 
             conn.commit();
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] finalizeAssessment error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] finalizeAssessment error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             if (conn != null) try { conn.rollback(); } catch (SQLException ignored) {}
         } finally {
             if (conn != null) try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
@@ -1679,8 +1660,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] recordProficiencyAchievement error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] recordProficiencyAchievement error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
     }
 
@@ -1699,7 +1680,7 @@ public class MySQLHandler implements DatabaseCatalog {
             "WHERE assessment_id = ?";
 
         if (assessment.getResponses().isEmpty()) {
-            System.err.println("[MySQLHandler] saveAssessment: no responses to save.");
+            LOGGER.severe(String.valueOf("[MySQLHandler] saveAssessment: no responses to save."));
             return -1;
         }
 
@@ -1760,8 +1741,8 @@ public class MySQLHandler implements DatabaseCatalog {
             return generatedId;
 
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] saveAssessment error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] saveAssessment error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return -1;
         }
     }
@@ -1771,9 +1752,6 @@ public class MySQLHandler implements DatabaseCatalog {
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
-    /**
-     * Executes getAvailableMentors.
-     */
     public List<MentorProfile> getAvailableMentors() {
         final String sql =
             "SELECT u.user_id, u.first_name, u.last_name, " +
@@ -1808,15 +1786,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getAvailableMentors error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getAvailableMentors error: " + e.getMessage()));
         }
         return list;
     }
 
     @Override
-    /**
-     * Executes getMentorOwnProfile.
-     */
     public MentorProfile getMentorOwnProfile(int userId) {
         final String sql =
             "SELECT u.user_id, u.first_name, u.last_name, " +
@@ -1849,15 +1824,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getMentorOwnProfile error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getMentorOwnProfile error: " + e.getMessage()));
         }
         return null;
     }
 
     @Override
-    /**
-     * Executes getMentorExpertiseSkillIds.
-     */
     public List<Integer> getMentorExpertiseSkillIds(int userId) {
         final String sql =
             "SELECT skill_id FROM mentor_expertise_skills WHERE mentor_id = ? ORDER BY skill_id";
@@ -1871,7 +1843,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getMentorExpertiseSkillIds error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getMentorExpertiseSkillIds error: " + e.getMessage()));
         }
         return ids;
     }
@@ -1893,15 +1865,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] updateMentorProfile error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] updateMentorProfile error: " + e.getMessage()));
             return false;
         }
     }
 
     @Override
-    /**
-     * Executes setMentorExpertiseSkills.
-     */
     public boolean setMentorExpertiseSkills(int userId, List<Integer> skillIds) {
         final String sqlDelete = "DELETE FROM mentor_expertise_skills WHERE mentor_id = ?";
         final String sqlInsert = "INSERT INTO mentor_expertise_skills (mentor_id, skill_id) VALUES (?, ?)";
@@ -1933,7 +1902,7 @@ public class MySQLHandler implements DatabaseCatalog {
                     /* ignored */
                 }
             }
-            System.err.println("[MySQLHandler] setMentorExpertiseSkills error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] setMentorExpertiseSkills error: " + e.getMessage()));
             return false;
         } finally {
             if (conn != null) {
@@ -1947,9 +1916,6 @@ public class MySQLHandler implements DatabaseCatalog {
     }
 
     @Override
-    /**
-     * Executes getMentorSkillFilters.
-     */
     public List<String> getMentorSkillFilters() {
         final String sql =
             "SELECT DISTINCT s.name " +
@@ -1965,15 +1931,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 while (rs.next()) list.add(rs.getString("name"));
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getMentorSkillFilters error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getMentorSkillFilters error: " + e.getMessage()));
         }
         return list;
     }
 
     @Override
-    /**
-     * Executes hasExistingMentorshipRequest.
-     */
     public boolean hasExistingMentorshipRequest(int studentId, int mentorId) {
         final String sql =
             "SELECT COUNT(*) FROM mentorship_requests " +
@@ -1990,7 +1953,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] hasExistingMentorshipRequest error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] hasExistingMentorshipRequest error: " + e.getMessage()));
         }
         return false;
     }
@@ -2013,15 +1976,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] saveMentorshipRequest error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] saveMentorshipRequest error: " + e.getMessage()));
         }
         return false;
     }
 
     @Override
-    /**
-     * Executes getPendingRequestsForMentor.
-     */
     public List<MentorshipRequest> getPendingRequestsForMentor(int mentorId) {
         final String sql =
             "SELECT mr.request_id, mr.student_id, " +
@@ -2056,15 +2016,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getPendingRequestsForMentor error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getPendingRequestsForMentor error: " + e.getMessage()));
         }
         return list;
     }
 
     @Override
-    /**
-     * Executes getStudentSkillTags.
-     */
     public List<MentorshipRequest.SkillTag> getStudentSkillTags(int studentId) {
         final String sql =
             "SELECT s.name AS skill_name, " +
@@ -2092,15 +2049,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getStudentSkillTags error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getStudentSkillTags error: " + e.getMessage()));
         }
         return tags;
     }
 
     @Override
-    /**
-     * Executes acceptMentorshipRequest.
-     */
     public boolean acceptMentorshipRequest(MentorshipRequest request, int mentorId) {
         final String sqlAccept =
             "UPDATE mentorship_requests SET status = 'ACCEPTED' WHERE request_id = ?";
@@ -2130,15 +2084,12 @@ public class MySQLHandler implements DatabaseCatalog {
             conn.commit();
             return true;
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] acceptMentorshipRequest error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] acceptMentorshipRequest error: " + e.getMessage()));
             return false;
         }
     }
 
     @Override
-    /**
-     * Executes declineMentorshipRequest.
-     */
     public boolean declineMentorshipRequest(int requestId, String reason) {
         final String sql =
             "UPDATE mentorship_requests " +
@@ -2153,15 +2104,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] declineMentorshipRequest error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] declineMentorshipRequest error: " + e.getMessage()));
         }
         return false;
     }
 
     @Override
-    /**
-     * Executes getStudentMentorshipActivity.
-     */
     public List<MentorshipActivity> getStudentMentorshipActivity(int studentId) {
         final String sql =
             "SELECT mr.request_id, " +
@@ -2209,7 +2157,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getStudentMentorshipActivity error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getStudentMentorshipActivity error: " + e.getMessage()));
         }
         return list;
     }
@@ -2219,9 +2167,6 @@ public class MySQLHandler implements DatabaseCatalog {
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
-    /**
-     * Executes getActiveSkillsForValidation.
-     */
     public List<Skill> getActiveSkillsForValidation() {
         final String sql =
             "SELECT skill_id, name, category, description, difficulty_tier, " +
@@ -2248,15 +2193,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getActiveSkillsForValidation error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getActiveSkillsForValidation error: " + e.getMessage()));
         }
         return list;
     }
 
     @Override
-    /**
-     * Executes findActiveMentorForStudent.
-     */
     public Integer findActiveMentorForStudent(int studentId) {
         final String sql =
             "SELECT mentor_id FROM mentorships " +
@@ -2275,15 +2217,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] findActiveMentorForStudent error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] findActiveMentorForStudent error: " + e.getMessage()));
         }
         return null;
     }
 
     @Override
-    /**
-     * Executes hasPendingValidationRequest.
-     */
     public boolean hasPendingValidationRequest(int studentId, int skillId, String level) {
         final String sql =
             "SELECT COUNT(*) FROM validation_requests " +
@@ -2301,7 +2240,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] hasPendingValidationRequest error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] hasPendingValidationRequest error: " + e.getMessage()));
         }
         return false;
     }
@@ -2327,15 +2266,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] saveValidationRequest error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] saveValidationRequest error: " + e.getMessage()));
         }
         return false;
     }
 
     @Override
-    /**
-     * Executes getValidationHistory.
-     */
     public List<ValidationRequest> getValidationHistory(int studentId) {
         final String sql =
             "SELECT vr.validation_id, vr.student_id, vr.mentor_id, " +
@@ -2376,7 +2312,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getValidationHistory error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getValidationHistory error: " + e.getMessage()));
         }
         return list;
     }
@@ -2386,9 +2322,6 @@ public class MySQLHandler implements DatabaseCatalog {
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
-    /**
-     * Executes getPendingValidationsForMentor.
-     */
     public List<ValidationRequest> getPendingValidationsForMentor(int mentorId) {
         final String sql =
             "SELECT vr.validation_id, vr.student_id, vr.mentor_id, " +
@@ -2434,16 +2367,13 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getPendingValidationsForMentor error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getPendingValidationsForMentor error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return list;
     }
 
     @Override
-    /**
-     * Executes getValidationRequestDetail.
-     */
     public ValidationRequest getValidationRequestDetail(int requestId) {
         final String sql =
             "SELECT vr.validation_id, vr.student_id, vr.mentor_id, " +
@@ -2487,8 +2417,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getValidationRequestDetail error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getValidationRequestDetail error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return null;
     }
@@ -2537,16 +2467,13 @@ public class MySQLHandler implements DatabaseCatalog {
                 throw inner;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] approveValidationRequest error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] approveValidationRequest error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
 
     @Override
-    /**
-     * Executes rejectValidationRequest.
-     */
     public boolean rejectValidationRequest(int requestId, String feedback) {
         final String sql =
             "UPDATE validation_requests " +
@@ -2561,16 +2488,13 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] rejectValidationRequest error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] rejectValidationRequest error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
             return false;
         }
     }
 
     @Override
-    /**
-     * Executes getCurrentProficiencyLevel.
-     */
     public String getCurrentProficiencyLevel(int studentId, int skillId) {
         final String sql =
             "SELECT proficiency_level " +
@@ -2590,8 +2514,8 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getCurrentProficiencyLevel error: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.severe(String.valueOf("[MySQLHandler] getCurrentProficiencyLevel error: " + e.getMessage()));
+            LOGGER.log(Level.SEVERE, "Stack trace from persistence operation.", e);
         }
         return "NOVICE";
     }
@@ -2601,9 +2525,6 @@ public class MySQLHandler implements DatabaseCatalog {
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
-    /**
-     * Executes getMentoredStudents.
-     */
     public List<MentorshipStudentDTO> getMentoredStudents(int mentorId) {
         final String sql = """
                 SELECT
@@ -2646,15 +2567,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getMentoredStudents error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getMentoredStudents error: " + e.getMessage()));
         }
         return result;
     }
 
     @Override
-    /**
-     * Executes getStudentReadinessProfile.
-     */
     public StudentReadinessDTO getStudentReadinessProfile(int studentId) {
         final String reportSql = """
                 SELECT rr.report_id, rr.overall_score, rr.template_id, it.name AS target_field
@@ -2752,7 +2670,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getStudentReadinessProfile error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getStudentReadinessProfile error: " + e.getMessage()));
             return null;
         }
     }
@@ -2805,9 +2723,6 @@ public class MySQLHandler implements DatabaseCatalog {
     }
 
     @Override
-    /**
-     * Executes getStudentCreditBalance.
-     */
     public int getStudentCreditBalance(int studentId) {
         final String sql = "SELECT credit_balance FROM students WHERE user_id = ?";
         try {
@@ -2819,15 +2734,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getStudentCreditBalance error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getStudentCreditBalance error: " + e.getMessage()));
         }
         return 0;
     }
 
     @Override
-    /**
-     * Executes saveRoadmap.
-     */
     public int saveRoadmap(int mentorId, int studentId, String title, int creditCost) {
         final String sql = """
                 INSERT INTO roadmaps (mentor_id, student_id, title, status, credit_cost)
@@ -2846,15 +2758,12 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] saveRoadmap error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] saveRoadmap error: " + e.getMessage()));
         }
         return -1;
     }
 
     @Override
-    /**
-     * Executes saveRoadmapTasks.
-     */
     public boolean saveRoadmapTasks(int roadmapId, List<Task> tasks) {
         final String sql = """
                 INSERT INTO tasks (roadmap_id, title, description, due_date, status)
@@ -2874,7 +2783,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] saveRoadmapTasks error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] saveRoadmapTasks error: " + e.getMessage()));
             return false;
         }
     }
@@ -2956,19 +2865,16 @@ public class MySQLHandler implements DatabaseCatalog {
 
             } catch (SQLException inner) {
                 txConn.rollback();
-                System.err.println("[MySQLHandler] saveGeneratedRoadmap rolled back: " + inner.getMessage());
+                LOGGER.severe(String.valueOf("[MySQLHandler] saveGeneratedRoadmap rolled back: " + inner.getMessage()));
                 return -1;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] saveGeneratedRoadmap connection error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] saveGeneratedRoadmap connection error: " + e.getMessage()));
             return -1;
         }
     }
 
     @Override
-    /**
-     * Executes updateRoadmapTasks.
-     */
     public boolean updateRoadmapTasks(int roadmapId, List<Task> tasks) {
         final String deleteSql = "DELETE FROM tasks WHERE roadmap_id = ?";
         final String insertSql = """
@@ -2996,19 +2902,16 @@ public class MySQLHandler implements DatabaseCatalog {
                 return true;
             } catch (SQLException inner) {
                 txConn.rollback();
-                System.err.println("[MySQLHandler] updateRoadmapTasks rolled back: " + inner.getMessage());
+                LOGGER.severe(String.valueOf("[MySQLHandler] updateRoadmapTasks rolled back: " + inner.getMessage()));
                 return false;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] updateRoadmapTasks connection error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] updateRoadmapTasks connection error: " + e.getMessage()));
             return false;
         }
     }
 
     @Override
-    /**
-     * Executes approveRoadmap.
-     */
     public boolean approveRoadmap(int roadmapId) {
         final String sql = """
                 UPDATE roadmaps
@@ -3022,7 +2925,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 return ps.executeUpdate() > 0;
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] approveRoadmap error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] approveRoadmap error: " + e.getMessage()));
             return false;
         }
     }
@@ -3032,9 +2935,6 @@ public class MySQLHandler implements DatabaseCatalog {
     // ═══════════════════════════════════════════════════════════════════════════
 
     @Override
-    /**
-     * Executes getStudentDashboardSnapshot.
-     */
     public StudentDashboardSnapshot getStudentDashboardSnapshot(int studentId) {
         int credits = getStudentCreditBalance(studentId);
 
@@ -3057,7 +2957,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getStudentDashboardSnapshot mentorship counts: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getStudentDashboardSnapshot mentorship counts: " + e.getMessage()));
         }
 
         LatestReadinessSummary readiness = null;
@@ -3082,7 +2982,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getStudentDashboardSnapshot readiness: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getStudentDashboardSnapshot readiness: " + e.getMessage()));
         }
 
         CurrentRoadmapSummary roadmap = null;
@@ -3110,7 +3010,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getStudentDashboardSnapshot roadmap: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getStudentDashboardSnapshot roadmap: " + e.getMessage()));
         }
 
         List<DashboardTaskPreview> tasks = new ArrayList<>();
@@ -3131,7 +3031,7 @@ public class MySQLHandler implements DatabaseCatalog {
                     }
                 }
             } catch (SQLException e) {
-                System.err.println("[MySQLHandler] getStudentDashboardSnapshot tasks: " + e.getMessage());
+                LOGGER.severe(String.valueOf("[MySQLHandler] getStudentDashboardSnapshot tasks: " + e.getMessage()));
             }
         }
 
@@ -3156,7 +3056,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getStudentDashboardSnapshot credits: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getStudentDashboardSnapshot credits: " + e.getMessage()));
         }
 
         return new StudentDashboardSnapshot(
@@ -3164,9 +3064,6 @@ public class MySQLHandler implements DatabaseCatalog {
     }
 
     @Override
-    /**
-     * Executes getMentorHomeData.
-     */
     public MentorHomeData getMentorHomeData(int mentorId) {
         int pendingMr = 0;
         final String sqlP =
@@ -3180,7 +3077,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getMentorHomeData pending MR: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getMentorHomeData pending MR: " + e.getMessage()));
         }
 
         int pendingVal = 0;
@@ -3197,7 +3094,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getMentorHomeData pending VR: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getMentorHomeData pending VR: " + e.getMessage()));
         }
 
         int roadmaps = 0;
@@ -3212,7 +3109,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getMentorHomeData roadmaps: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getMentorHomeData roadmaps: " + e.getMessage()));
         }
 
         List<MentorActiveMenteeRow> roster = new ArrayList<>();
@@ -3239,7 +3136,7 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getMentorHomeData roster: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getMentorHomeData roster: " + e.getMessage()));
         }
 
         List<MentorRecentRequestRow> recent = new ArrayList<>();
@@ -3264,16 +3161,13 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getMentorHomeData recent: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getMentorHomeData recent: " + e.getMessage()));
         }
 
         return new MentorHomeData(pendingMr, pendingVal, roadmaps, roster, recent);
     }
 
     @Override
-    /**
-     * Executes getUserRoleCounts.
-     */
     public UserRoleCounts getUserRoleCounts() {
         int st = 0, me = 0, co = 0;
         final String sql =
@@ -3294,16 +3188,13 @@ public class MySQLHandler implements DatabaseCatalog {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("[MySQLHandler] getUserRoleCounts error: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] getUserRoleCounts error: " + e.getMessage()));
         }
         int total = st + me + co;
         return new UserRoleCounts(st, me, co, total);
     }
 
     @Override
-    /**
-     * Executes getActiveInternshipEnrollmentCount.
-     */
     public int getActiveInternshipEnrollmentCount() {
         final String sql =
                 "SELECT COUNT(*) AS cnt FROM student_internship_enrollments WHERE status = 'IN_PROGRESS'";
@@ -3350,7 +3241,7 @@ public class MySQLHandler implements DatabaseCatalog {
             return hex.toString();
 
         } catch (NoSuchAlgorithmException e) {
-            System.err.println("[MySQLHandler] SHA-256 not available: " + e.getMessage());
+            LOGGER.severe(String.valueOf("[MySQLHandler] SHA-256 not available: " + e.getMessage()));
             return null;
         }
     }
@@ -3378,4 +3269,3 @@ public class MySQLHandler implements DatabaseCatalog {
         };
     }
 }
-
