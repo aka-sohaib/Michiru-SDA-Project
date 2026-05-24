@@ -168,14 +168,11 @@ The schema uses **Class Table Inheritance** to model the user hierarchy: a base 
 git clone https://github.com/aka-sohaib/Michiru-SDA-Project.git
 cd Michiru-SDA-Project
 
-# 2. Import the database schema
-#    Run the provided SQL dump in phpMyAdmin or MySQL CLI
-
-# 3. Set your Groq API key
+# 2. Set your Groq API key
 export GROQ_API_KEY=your_key_here          # macOS/Linux
 set GROQ_API_KEY=your_key_here             # Windows CMD
 
-# 4. Run
+# 3. Run
 mvn javafx:run
 ```
 
